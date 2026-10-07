@@ -1,0 +1,228 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Category {
+  EV
+  ARABA
+  ARSA
+  TARLA
+}
+
+model Listing {
+  id              String                 @id @default(cuid())
+  title           String
+  category        Category
+  province        String
+  district        String
+  neighborhood    String?
+  price           Decimal                @db.Decimal(18, 2)
+  sourceUrl       String?                @unique
+  externalId      String?
+  identityKey     String                 @unique
+  sourceId        String
+  source          ListingSource          @relation(fields: [sourceId], references: [id])
+  isDemo          Boolean                @default(false)
+  provenance      Json
+  collectedAt     DateTime               @default(now())
+  lastObservedAt  DateTime               @default(now())
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  property        PropertyDetails?
+  vehicle         VehicleDetails?
+  land            LandDetails?
+  prices          ListingPriceHistory[]
+  assessment      OpportunityAssessment?
+  comparableLinks ComparableListing[]    @relation("assessed")
+  comparedAs      ComparableListing[]    @relation("comparable")
+  watch           Watchlist?
+  notifications   Notification[]
+
+  @@unique([sourceId, externalId])
+  @@index([category, province, district])
+}
+
+model ListingSource {
+  id             String          @id
+  name           String
+  method         String
+  authorization  String
+  accessStatus   String          @default("DISCONNECTED")
+  lastSuccessAt  DateTime?
+  lastError      String?
+  freshnessHours Int             @default(168)
+  categories     Category[]
+  listings       Listing[]
+  logs           SourceSyncLog[]
+  imports        ImportJob[]
+}
+
+model ListingPriceHistory {
+  id         String   @id @default(cuid())
+  listingId  String
+  listing    Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  price      Decimal  @db.Decimal(18, 2)
+  observedAt DateTime @default(now())
+  provenance Json
+
+  @@index([listingId, observedAt])
+}
+
+model PropertyDetails {
+  listingId      String   @id
+  listing        Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  sizeM2         Decimal? @db.Decimal(12, 2)
+  propertyType   String?
+  rooms          String?
+  buildingAge    Int?
+  condition      String?
+  legalStatus    String?
+  earthquakeInfo String?
+}
+
+model VehicleDetails {
+  listingId     String  @id
+  listing       Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  make          String?
+  model         String?
+  trim          String?
+  modelYear     Int?
+  mileage       Int?
+  fuel          String?
+  transmission  String?
+  damageHistory String?
+}
+
+model LandDetails {
+  listingId                String   @id
+  listing                  Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  sizeM2                   Decimal? @db.Decimal(12, 2)
+  classification           String?
+  zoning                   String?
+  roadAccess               String?
+  parcelNumber             String?
+  sharedOwnership          String?
+  agriculturalRestrictions String?
+}
+
+model SearchProfile {
+  id        String    @id @default(cuid())
+  name      String
+  category  Category?
+  province  String?
+  district  String?
+  minPrice  Decimal?  @db.Decimal(18, 2)
+  maxPrice  Decimal?  @db.Decimal(18, 2)
+  alerts    Alert[]
+  createdAt DateTime  @default(now())
+}
+
+model ComparableListing {
+  id              String  @id @default(cuid())
+  listingId       String
+  listing         Listing @relation("assessed", fields: [listingId], references: [id], onDelete: Cascade)
+  comparableId    String
+  comparable      Listing @relation("comparable", fields: [comparableId], references: [id], onDelete: Cascade)
+  normalizedPrice Decimal @db.Decimal(18, 2)
+  reason          String
+
+  @@unique([listingId, comparableId])
+}
+
+model OpportunityAssessment {
+  id                 String   @id @default(cuid())
+  listingId          String   @unique
+  listing            Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  medianPrice        Decimal? @db.Decimal(18, 2)
+  rangeLow           Decimal? @db.Decimal(18, 2)
+  rangeHigh          Decimal? @db.Decimal(18, 2)
+  relativeDifference Decimal? @db.Decimal(10, 4)
+  priceChange        Decimal? @db.Decimal(10, 4)
+  sampleCount        Int
+  confidence         String
+  score              Int?
+  riskFlags          Json
+  explanation        String
+  assessedAt         DateTime @default(now())
+}
+
+model Alert {
+  id            String         @id @default(cuid())
+  profileId     String
+  profile       SearchProfile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  minScore      Int            @default(70)
+  enabled       Boolean        @default(true)
+  notifications Notification[]
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  dedupKey  String    @unique
+  listingId String
+  listing   Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  alertId   String?
+  alert     Alert?    @relation(fields: [alertId], references: [id], onDelete: SetNull)
+  title     String
+  body      String
+  channel   String    @default("IN_APP")
+  status    String    @default("PENDING")
+  attempts  Int       @default(0)
+  lastError String?
+  readAt    DateTime?
+  sentAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model ImportJob {
+  id          String        @id @default(cuid())
+  sourceId    String
+  source      ListingSource @relation(fields: [sourceId], references: [id])
+  format      String
+  status      String
+  total       Int           @default(0)
+  inserted    Int           @default(0)
+  updated     Int           @default(0)
+  duplicates  Int           @default(0)
+  errors      Json
+  createdAt   DateTime      @default(now())
+  completedAt DateTime?
+}
+
+model SourceSyncLog {
+  id        String        @id @default(cuid())
+  sourceId  String
+  source    ListingSource @relation(fields: [sourceId], references: [id])
+  status    String
+  attempts  Int           @default(1)
+  message   String
+  createdAt DateTime      @default(now())
+}
+
+model Watchlist {
+  listingId String   @id
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model AppSettings {
+  id                       String  @id @default("personal")
+  telegramEnabled          Boolean @default(false)
+  emailEnabled             Boolean @default(false)
+  minScore                 Int     @default(70)
+  includeDemoNotifications Boolean @default(false)
+}
+
+model AnalysisRun {
+  id          String    @id
+  status      String
+  attempts    Int       @default(1)
+  processed   Int       @default(0)
+  errors      Json
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+}

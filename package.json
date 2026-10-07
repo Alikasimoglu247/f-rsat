@@ -1,24 +1,61 @@
 {
-  "name": "f-rsat",
+  "name": "firsatradar-ai",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "engines": { "node": ">=22.12.0" },
-  "scripts": {
-    "dev": "vite --host 0.0.0.0 --port 5173 --strictPort",
-    "typecheck": "tsc --noEmit",
-    "build": "npm run typecheck && vite build",
-    "preview": "vite preview --host 0.0.0.0 --port 4173 --strictPort",
-    "test": "playwright test"
+  "engines": {
+    "node": ">=22.12.0"
   },
-  "dependencies": { "react": "19.3.0", "react-dom": "19.3.0" },
+  "scripts": {
+    "dev": "next dev --hostname 127.0.0.1 --port 3000",
+    "start": "next start --hostname 127.0.0.1 --port 3000",
+    "build": "next build --webpack",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run --project unit",
+    "test:integration": "vitest run --project integration",
+    "test:e2e": "tsx scripts/e2e.ts",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:seed": "tsx prisma/seed.ts",
+    "job:daily": "tsx scripts/daily.ts",
+    "scheduler": "tsx scripts/scheduler.ts",
+    "db:test": "tsx scripts/test-db.ts"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "7.10.0",
+    "@prisma/client": "7.10.0",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "csv-parse": "7.0.3",
+    "dotenv": "18.0.6",
+    "lucide-react": "1.52.0",
+    "next": "16.4.0",
+    "node-cron": "4.6.0",
+    "nodemailer": "10.0.16",
+    "pg": "8.23.1",
+    "radix-ui": "1.7.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "recharts": "3.10.1",
+    "tailwind-merge": "3.7.0",
+    "zod": "4.6.5"
+  },
   "devDependencies": {
     "@playwright/test": "1.64.0",
+    "@tailwindcss/postcss": "4.3.3",
     "@types/node": "26.6.4",
+    "@types/nodemailer": "7.0.11",
+    "@types/pg": "8.23.1",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
-    "@vitejs/plugin-react": "6.1.2",
-    "typescript": "7.0.2",
-    "vite": "8.3.3"
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.4.0",
+    "prettier": "3.9.9",
+    "prisma": "7.10.0",
+    "tailwindcss": "4.3.3",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "4.1.11"
   }
 }
