@@ -1,5 +1,9 @@
 # Gerçek ilan kaynağı araştırması — 9 Ekim 2026
 
+> Bu belge ilk ağ engelli araştırmanın tarihsel kaydıdır. Sonraki kontrolde
+> ana kaynaklar erişilebilir oldu; bazı yeni hedeflerde CONNECT 403 sürüyor.
+> Güncel izin/veri/test sonuçları: [Ağ sonrası yeniden kontrol](REAL_SOURCE_RECHECK_20261009.md).
+
 **Durum: engelli; çalışan canlı ilan entegrasyonu tamamlanmadı.**
 
 `feature/m2-email-discovery` üzerinde M2.2 `5406786` sonrasındaki araştırma.
