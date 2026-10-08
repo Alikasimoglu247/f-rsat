@@ -78,6 +78,8 @@ Günlük iş önce onaylı Gmail/izinli feed kayıtlarını alır, kimlik ve tar
 
 **Yetkili API / lisanslı feed:** kullanım hakkınız olan sabit HTTPS JSON endpoint için `AUTHORIZED_FEED_URL`, `AUTHORIZED_FEED_HOST` ve gerekirse `AUTHORIZED_FEED_TOKEN`. Aynı import sözleşmesini kullanır. Başarılı senkronizasyondan önce bağlı gösterilmez. Sahibinden, Arabam, Hepsiemlak, Emlakjet **planlanmış ve bağlı değildir**. API varlığı varsayılmaz; CAPTCHA/oturum/hız sınırı veya erişim kısıtı aşılmaz. Bulut ağ ayarlarında seçtiğiniz hizmetin alan adı izni ayrıca gerekebilir.
 
+**9 Ekim 2026 kaynak denetimi:** 29 servis/katalog/depo adayı araştırıldı; 65 farklı URL'ye 66 istek kaydedildi. Sağlayıcı veri sorguları ortamın ağ geçidinde engellendi. Erişilen araç kataloğu satılık ilan/fiyat/konum içermiyor; gerçek ilan sayısı hâlâ 0. Çalışan canlı entegrasyon tamamlanmış sayılmadı. [Bulgular ve erişim engelleri](docs/REAL_SOURCE_RESEARCH_20261009.md) · [İstek ve çalışma kanıtları](docs/research/20261009-source-evidence.json).
+
 **İsteğe bağlı AI:** `AI_ENABLED=true`, `AI_API_KEY`, `AI_MODEL`, OpenAI uyumlu `AI_BASE_URL`. AI yalnızca mevcut Türkçe kanıt cümlelerinin kimliklerini seçer; serbest fiyat/hasar/tapu iddiası üretemez. Sayılar ve puanlar deterministik motorda kalır. Kapalıyken kanıt açıklaması çalışır. Canlı sağlayıcı ayrıca doğrulanmalıdır.
 
 Satıcılara otomatik teklif veya ileti gönderilmez.
