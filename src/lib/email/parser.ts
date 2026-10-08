@@ -143,6 +143,7 @@ function proposal(
     ...(category ? { category } : {}),
     ...(province ? { province } : {}),
     ...(district ? { district } : {}),
+    ...(segments?.[2] ? { neighborhood: segments[2] } : {}),
     ...(uniquePrices.length === 1 ? { price: uniquePrices[0] } : {}),
   };
   const explicitTitle =
@@ -155,6 +156,12 @@ function proposal(
   )
     fields.title = heading;
   const optional: [keyof ListingInput, string][] = [
+    ["neighborhood", "Mahalle"],
+    ["transactionType", "İşlem"],
+    ["bodyType", "Gövde tipi"],
+    ["netM2", "Net m²"],
+    ["grossM2", "Brüt m²"],
+    ["sharedOwnership", "Hisse durumu"],
     ["make", "Marka"],
     ["model", "Model"],
     ["trim", "Donanım"],
@@ -179,7 +186,7 @@ function proposal(
     const field = listingSchema.shape[key];
     const integerText = value.replace(/\s*(?:km|yaş|yıl)$/iu, "");
     const result = field.safeParse(
-      key === "sizeM2"
+      ["sizeM2", "netM2", "grossM2"].includes(key)
         ? turkishPrice(value.replace(/\s*m[²2]$/i, ""))
         : ["mileage", "modelYear", "buildingAge"].includes(key)
           ? /^(?:\d{1,3}(?:[. ]\d{3})+|\d+)$/.test(integerText)

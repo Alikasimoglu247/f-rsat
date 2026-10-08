@@ -63,6 +63,8 @@ Bağlantı sonrası etiketleri gösterin; bir veya daha fazla **etiket ID'si** v
 
 ## Otomasyon ve isteğe bağlı bağlantılar
 
+**M2.1 pilotları:** Dashboard'da Silivri Gayrimenkul ve Marmara SUV kartları, varsayılan sınırsız bütçeli/70 puanlı profillerle gelir. Filtreler Dashboard veya Ayarlar'dan düzenlenir ve tekrar seed'de korunur. Silivri konutlarında mahalle + net/brüt m²; arazi karşılaştırmalarında hisse/imar/yol beyanı; SUV'da kaynak kanıtı onaylı gövde tipi gerekir. Belirsiz araçlar Veri Kaynakları'nda incelemeye gider; başlıktan SUV tahmin edilmez. Gerçek verisi olmayan kartlar boş durumu ve canlı alım eksikliğini açıkça gösterir. Kurallar, migration ve kullanıcı yetkileri: [M2.1 pilotları](docs/M21_PILOTS.md).
+
 ```sh
 npm run job:daily
 npm run scheduler

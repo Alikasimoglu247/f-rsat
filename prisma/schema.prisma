@@ -21,6 +21,7 @@ model Listing {
   province        String
   district        String
   neighborhood    String?
+  transactionType String?
   price           Decimal                @db.Decimal(18, 2)
   sourceUrl       String?
   externalId      String?
@@ -84,6 +85,8 @@ model PropertyDetails {
   listingId      String   @id
   listing        Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
   sizeM2         Decimal? @db.Decimal(12, 2)
+  netM2          Decimal? @db.Decimal(12, 2)
+  grossM2        Decimal? @db.Decimal(12, 2)
   propertyType   String?
   rooms          String?
   buildingAge    Int?
@@ -93,16 +96,19 @@ model PropertyDetails {
 }
 
 model VehicleDetails {
-  listingId     String  @id
-  listing       Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  make          String?
-  model         String?
-  trim          String?
-  modelYear     Int?
-  mileage       Int?
-  fuel          String?
-  transmission  String?
-  damageHistory String?
+  listingId        String  @id
+  listing          Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  make             String?
+  model            String?
+  trim             String?
+  modelYear        Int?
+  mileage          Int?
+  fuel             String?
+  transmission     String?
+  damageHistory    String?
+  bodyType         String?
+  bodyTypeVerified Boolean @default(false)
+  bodyTypeEvidence String?
 }
 
 model LandDetails {
@@ -118,15 +124,22 @@ model LandDetails {
 }
 
 model SearchProfile {
-  id        String    @id @default(cuid())
-  name      String
-  category  Category?
-  province  String?
-  district  String?
-  minPrice  Decimal?  @db.Decimal(18, 2)
-  maxPrice  Decimal?  @db.Decimal(18, 2)
-  alerts    Alert[]
-  createdAt DateTime  @default(now())
+  id              String     @id @default(cuid())
+  name            String
+  category        Category?
+  province        String?
+  district        String?
+  minPrice        Decimal?   @db.Decimal(18, 2)
+  maxPrice        Decimal?   @db.Decimal(18, 2)
+  pilotKey        String?    @unique
+  categories      Category[] @default([])
+  provinces       String[]   @default([])
+  bodyTypes       String[]   @default([])
+  fuels           String[]   @default([])
+  transactionType String?
+  trackPriceDrops Boolean    @default(false)
+  alerts          Alert[]
+  createdAt       DateTime   @default(now())
 }
 
 model ComparableListing {

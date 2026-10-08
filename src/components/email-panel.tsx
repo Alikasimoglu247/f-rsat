@@ -1,4 +1,5 @@
 "use client";
+import { BodyTypeReview } from "./pilots";
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { api, useApi } from "./use-api";
@@ -56,7 +57,7 @@ type EmailStatus = {
     kind: string;
     reason: string;
     sourceId: string;
-    input: { title?: string };
+    input: { title?: string; listingId?: string };
     candidateIds: string[];
   }[];
 };
@@ -523,6 +524,9 @@ export function EmailPanel() {
           <article className="email-receipt" key={review.id}>
             <h3>{review.input.title ?? "Kimliği belirsiz ilan"}</h3>
             <p>{review.reason}</p>
+            {review.kind === "VEHICLE_BODY_TYPE" && review.input.listingId && (
+              <BodyTypeReview listingId={review.input.listingId} />
+            )}
             <div className="form-actions">
               {review.kind === "WEAK_IDENTITY" && (
                 <Button

@@ -1,6 +1,8 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import { PilotCards, ProfileEditor } from "./pilots";
+import type { PilotView, ProfileView } from "./pilots";
 import type { FormEvent } from "react";
 import {
   ArrowUpRight,
@@ -152,6 +154,7 @@ interface Run {
   attempts: number;
 }
 interface Dashboard {
+  pilots: PilotView[];
   total: number;
   real: number;
   demo: number;
@@ -203,7 +206,7 @@ interface SettingsData {
   };
   schedule: string;
   timezone: string;
-  profiles: {
+  profiles: (ProfileView & {
     id: string;
     name: string;
     category: Category | null;
@@ -212,7 +215,7 @@ interface SettingsData {
     minPrice: string | null;
     maxPrice: string | null;
     alerts: { minScore: number; enabled: boolean }[];
-  }[];
+  })[];
 }
 const statusLabels: Record<string, string> = {
   AVAILABLE: "Kullanıma hazır",
@@ -384,6 +387,7 @@ function DashboardPage() {
           </div>
         ))}
       </div>
+      <PilotCards pilots={data.pilots} />
       <div className="dashboard-insights">
         <div className="panel radar-callout">
           <div className="callout-icon">
@@ -921,6 +925,11 @@ function DetailPage({ id }: { id: string }) {
 const fieldLabels: Record<string, string> = {
   sizeM2: "Alan (m²)",
   propertyType: "Konut tipi",
+  netM2: "Net alan (m²)",
+  grossM2: "Brüt alan (m²)",
+  bodyType: "Gövde tipi",
+  bodyTypeVerified: "Gövde tipi kullanıcı kanıtı onaylı",
+  bodyTypeEvidence: "Gövde tipi kanıt açıklaması",
   rooms: "Oda",
   buildingAge: "Bina yaşı",
   condition: "Genel durum",
@@ -1636,6 +1645,7 @@ function SettingsForm({
                 <Search size={17} />
                 <div>
                   <strong>{profile.name}</strong>
+                  <ProfileEditor profile={profile} />
                   <p>
                     {profile.category
                       ? categoryLabels[profile.category]

@@ -10,6 +10,7 @@ import { optionalAiExplanation } from "@/lib/ai";
 import type { ListingView } from "@/lib/listings";
 import { failure, HttpError, json, readJson } from "@/lib/http";
 import { z } from "zod";
+import { verifyBodyType, bodyReviewSchema } from "@/lib/vehicle-review";
 import { emailGet, emailPost } from "@/lib/email/api";
 import { sourceCoverage } from "@/lib/email/coverage";
 export const runtime = "nodejs";
@@ -91,7 +92,7 @@ export async function POST(request: Request, context: Context) {
         path[0] === "email" && path[1] === "eml" ? 2_750_000 : 2_100_000,
       );
     if (path[0] === "email") return await emailPost(path.slice(1), body);
-    if (path[0] === "listings") {
+    if (path[0] === "listings" && path.length === 1) {
       const input = listingSchema.parse(body);
       await ensureSources(db);
       return json(await importRecords([input], "manual", "MANUAL"), 201);
@@ -151,6 +152,31 @@ export async function POST(request: Request, context: Context) {
     }
     if (path[0] === "profiles") {
       const { minScore, ...profile } = profileSchema.parse(body);
+      if (path[1]) {
+        if (!(await db.searchProfile.findUnique({ where: { id: path[1] } })))
+          throw new HttpError(404, "Profil bulunamadı.");
+        return json(
+          await db.$transaction(async (tx) => {
+            const saved = await tx.searchProfile.update({
+              where: { id: path[1] },
+              data: {
+                ...profile,
+                category: profile.category ?? null,
+                province: profile.province ?? null,
+                district: profile.district ?? null,
+                minPrice: profile.minPrice ?? null,
+                maxPrice: profile.maxPrice ?? null,
+                transactionType: profile.transactionType ?? null,
+              },
+            });
+            await tx.alert.updateMany({
+              where: { profileId: saved.id },
+              data: { minScore },
+            });
+            return saved;
+          }),
+        );
+      }
       return json(
         await db.searchProfile.create({
           data: { ...profile, alerts: { create: { minScore } } },
@@ -158,6 +184,8 @@ export async function POST(request: Request, context: Context) {
         201,
       );
     }
+    if (path[0] === "listings" && path[1] && path[2] === "body-type")
+      return json(await verifyBodyType(path[1], bodyReviewSchema.parse(body)));
     if (path[0] === "notifications" && path[1] === "dispatch") {
       z.object({}).strict().parse(body);
       return json(await dispatchNotifications());

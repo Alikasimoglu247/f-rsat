@@ -5,6 +5,7 @@ import { listingInclude } from "./listings";
 import { categoryKeys, provinces } from "./constants";
 import { priceSchema } from "./validation";
 import { mailboxHealth } from "./email/coverage";
+import { pilotSummaries } from "./pilots";
 export const filtersSchema = z
   .object({
     q: z.string().max(100).optional(),
@@ -74,6 +75,7 @@ export async function dashboard() {
     lastRun,
     categoryCounts,
     emailHealth,
+    pilots,
   ] = await Promise.all([
     db.listing.count(),
     db.listing.count({ where: { isDemo: false } }),
@@ -101,9 +103,11 @@ export async function dashboard() {
     }),
     db.listing.groupBy({ by: ["category"], _count: true }),
     mailboxHealth(),
+    pilotSummaries(db),
   ]);
   return {
     total,
+    pilots,
     real,
     demo,
     newListings,

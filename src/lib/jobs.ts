@@ -8,6 +8,8 @@ import { licensedFeed } from "./providers/adapters";
 import type { ProviderAdapter } from "./providers/adapters";
 import { dispatchNotifications, notificationBody } from "./notifications";
 import { syncGmail } from "./email/gmail";
+import { matchesProfile, pilotSummaries } from "./pilots";
+import { dateTime } from "./constants";
 export const localDay = (now = new Date()) =>
   new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/Istanbul",
@@ -66,7 +68,7 @@ export async function runDaily(
     .slice(0, 16);
   const key =
     options.key ??
-    `${options.manual ? "manual" : "daily"}:m2:${localDay()}${options.manual ? `:${digest}` : ""}`;
+    `${options.manual ? "manual" : "daily"}:m21:${localDay()}${options.manual ? `:${digest}` : ""}`;
   const claim = await db.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT pg_advisory_xact_lock(451808)::text`;
     const existing = await tx.analysisRun.findUnique({ where: { id: key } });
@@ -95,6 +97,7 @@ export async function runDaily(
       processed: 0,
     };
   const failures: { source: string; message: string }[] = [];
+  let automaticIntake = false;
   try {
     if (
       mailbox?.accountHash &&
@@ -103,6 +106,8 @@ export async function runDaily(
     ) {
       try {
         const result = await retry(() => syncGmail());
+        automaticIntake =
+          result.status === "COMPLETED" || result.status === "MORE_PENDING";
         if (["DEFERRED", "RUNNING", "MORE_PENDING"].includes(result.status))
           failures.push({
             source: "gmail",
@@ -171,19 +176,11 @@ export async function runDaily(
           include: listingInclude,
         });
         for (const listing of opportunities) {
-          const matching = alerts.filter((alert) => {
-            const p = alert.profile;
-            return (
+          const matching = alerts.filter(
+            (alert) =>
               (listing.assessment!.score ?? 0) >= alert.minScore &&
-              (!p.category || listing.category === p.category) &&
-              (!p.province || listing.province === p.province) &&
-              (!p.district ||
-                listing.district.toLocaleLowerCase("tr-TR") ===
-                  p.district.toLocaleLowerCase("tr-TR")) &&
-              (!p.minPrice || listing.price.gte(p.minPrice)) &&
-              (!p.maxPrice || listing.price.lte(p.maxPrice))
-            );
-          });
+              matchesProfile(listing, alert.profile),
+          );
           const rules = alerts.length
             ? matching.map((alert) => ({
                 id: alert.id,
@@ -231,6 +228,7 @@ export async function runDaily(
             (a, b) => (b.assessment?.score ?? 0) - (a.assessment?.score ?? 0),
           )
           .slice(0, 10);
+        const pilots = await pilotSummaries(tx);
         const reportBody = [
           `FırsatRadar — ${localDay()} (Europe/Istanbul)`,
           "Yalnızca gerçek kayıtlar; istenen fiyat karşılaştırması, doğrulanmış satış değeri değildir.",
@@ -242,18 +240,56 @@ export async function runDaily(
               JSON.parse(JSON.stringify(listing)) as ListingView,
             ),
           ),
+          ...pilots.flatMap((p) => [
+            `${p.name}: ${p.totalReal} gerçek ilan; bugün ${p.discoveredToday} yeni; ${p.priceDrops} fiyat düşüşü; ${p.opportunities} yeterli emsalli fırsat.`,
+            p.top.length
+              ? p.top
+                  .map((l) =>
+                    notificationBody(
+                      JSON.parse(JSON.stringify(l)) as ListingView,
+                    ),
+                  )
+                  .join("\n\n")
+              : "Bu pilotta yeterli emsalli gerçek fırsat yok.",
+            p.reduced.length
+              ? "Fiyat düşüşleri (tek başına fırsat değildir):\n" +
+                p.reduced
+                  .map(
+                    (l) =>
+                      `${l.title}: ${l.price.toFixed(2)} TL — ${l.sourceUrl ?? "Kaynak URL yok"}`,
+                  )
+                  .join("\n")
+              : "Takip edilen fiyat düşüşü yok.",
+            p.lastSuccessfulIngestion
+              ? `Pilotun son gerçek Gmail alımı: ${dateTime(p.lastSuccessfulIngestion)} (Europe/Istanbul)`
+              : "Bu pilot için başarılı canlı bildirim alımı doğrulanmadı.",
+          ]),
+          automaticIntake
+            ? "İzinli Gmail taraması bu çalışmada gerçekleşti; şablon ve pilot kapsaması ayrı doğrulanır."
+            : "Bu çalışmada başarılı otomatik Gmail alımı doğrulanmadı. Mevcut kayıtlar analiz edildi.",
           failures.length
             ? `${failures.length} kaynakta alım eksik/hatalı; kaynak günlüklerini inceleyin.`
-            : "Kaynak işlemleri tamamlandı.",
+            : "Analiz ve rapor hazırlama tamamlandı.",
         ].join("\n\n");
         await tx.dailyReport.upsert({
           where: { runId: key },
           create: {
             runId: key,
             body: reportBody,
-            listingIds: best.map((l) => l.id),
+            listingIds: [
+              ...new Set(
+                [...best, ...pilots.flatMap((p) => p.top)].map((l) => l.id),
+              ),
+            ],
           },
-          update: { body: reportBody, listingIds: best.map((l) => l.id) },
+          update: {
+            body: reportBody,
+            listingIds: [
+              ...new Set(
+                [...best, ...pilots.flatMap((p) => p.top)].map((l) => l.id),
+              ),
+            ],
+          },
         });
         await tx.analysisRun.update({
           where: { id: key },

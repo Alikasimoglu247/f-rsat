@@ -4,8 +4,10 @@ import { db } from "../src/lib/db";
 import { ensureSources } from "../src/lib/providers/registry";
 import { analyzeAll, importRecords } from "../src/lib/listings";
 import { demoListings } from "./demo";
+import { ensurePilotProfiles } from "../src/lib/pilots";
 try {
   await ensureSources(db);
+  await ensurePilotProfiles(db);
   const result = await importRecords(demoListings(), "demo", "SEED");
   const originals = await db.listing.findMany({
     where: {

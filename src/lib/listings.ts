@@ -4,6 +4,9 @@ import { db } from "./db";
 import type { ListingInput } from "./validation";
 import type { Evidence, Assessment } from "./analysis";
 import { assess } from "./analysis";
+import { normalizeBodyType } from "./constants";
+import { queueBodyReview } from "./vehicle-review";
+import { HttpError } from "./http";
 
 export const listingInclude = {
   source: true,
@@ -97,6 +100,8 @@ function detailFields(input: ListingInput) {
     return {
       property: {
         sizeM2: input.sizeM2,
+        netM2: input.netM2,
+        grossM2: input.grossM2,
         propertyType: input.propertyType,
         rooms: input.rooms,
         buildingAge: input.buildingAge,
@@ -116,6 +121,9 @@ function detailFields(input: ListingInput) {
         fuel: input.fuel,
         transmission: input.transmission,
         damageHistory: input.damageHistory,
+        bodyType: input.bodyType,
+        bodyTypeVerified: input.bodyTypeVerified,
+        bodyTypeEvidence: input.bodyTypeEvidence,
       },
     };
   return {
@@ -141,6 +149,7 @@ export async function saveRecord(
     key = identityKey(input);
   const byId = input.externalId
     ? await tx.listing.findUnique({
+        include: { vehicle: true },
         where: {
           sourceId_externalId: { sourceId, externalId: input.externalId },
         },
@@ -148,6 +157,7 @@ export async function saveRecord(
     : null;
   const byUrl = sourceUrl
     ? await tx.listing.findUnique({
+        include: { vehicle: true },
         where: { sourceId_sourceUrl: { sourceId, sourceUrl } },
       })
     : null;
@@ -239,12 +249,33 @@ export async function saveRecord(
     ...context.provenance,
   };
   const details = detailFields(input);
+  if (
+    input.bodyTypeVerified &&
+    (!normalizeBodyType(input.bodyType) ||
+      !input.bodyTypeEvidence ||
+      input.bodyTypeEvidence.trim().length < 8)
+  )
+    throw new HttpError(
+      400,
+      "Gövde tipini doğrulamak için geçerli sınıf ve incelenmiş kanıt açıklaması gerekli.",
+    );
+  if (
+    details.vehicle &&
+    (input.bodyTypeVerified === false ||
+      (input.bodyType &&
+        input.bodyType !== existing?.vehicle?.bodyType &&
+        input.bodyTypeVerified !== true))
+  ) {
+    details.vehicle.bodyTypeVerified = false;
+    details.vehicle.bodyTypeEvidence = undefined;
+  }
   const common = {
     title: input.title,
     category: input.category,
     province: input.province,
     district: input.district,
     neighborhood: input.neighborhood,
+    transactionType: input.transactionType,
     price: new Prisma.Decimal(input.price),
     lastObservedAt: observedAt,
   };
@@ -318,6 +349,7 @@ export async function saveRecord(
         OR: [{ listingId: existing.id }, { comparableId: existing.id }],
       },
     });
+    await queueBodyReview(tx, existing.id);
     return {
       id: existing.id,
       outcome: changed ? "updated" : ("duplicate" as const),
@@ -338,6 +370,7 @@ export async function saveRecord(
       prices: { create: { price: input.price, observedAt, provenance } },
     },
   });
+  await queueBodyReview(tx, listing.id);
   return { id: listing.id, outcome: "inserted" as const };
 }
 export async function importRecords(

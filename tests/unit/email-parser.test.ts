@@ -7,6 +7,24 @@ import {
 } from "../../src/lib/email/parser";
 const fixture = (name: string) =>
   readFile(`tests/fixtures/emails/${name}-synthetic.eml`);
+it("pilot alanlarını yalnızca açık etiketlerden çıkarır; gövde tipini kendiliğinden doğrulamaz", async () => {
+  const raw = (await fixture("sahibinden"))
+    .toString()
+    .replace(
+      "Konum: İstanbul / Kadıköy",
+      "Konum: İstanbul / Silivri / Alibey\nİşlem: SATILIK\nNet m²: 85 m²\nBrüt m²: 110 m²\nGövde tipi: SUV\nHisse durumu: Beyan: hisseli",
+    );
+  const result = await parseEml(Buffer.from(raw));
+  expect(result.proposals[0].fields).toMatchObject({
+    neighborhood: "Alibey",
+    transactionType: "SATILIK",
+    netM2: "85",
+    grossM2: "110",
+    bodyType: "SUV",
+    sharedOwnership: "Beyan: hisseli",
+  });
+  expect(result.proposals[0].fields.bodyTypeVerified).toBeUndefined();
+});
 it("UTF-8 .eml metninden mevcut ilan bilgilerini ve tam kuruşu çıkarır", async () => {
   const parsed = await parseEml(await fixture("sahibinden"));
   expect(parsed.proposals).toHaveLength(1);

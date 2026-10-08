@@ -42,7 +42,13 @@ export function ManualForm() {
     const form = new FormData(event.currentTarget),
       record = Object.fromEntries(form);
     record.category = category;
-    const payload = { ...record, isDemo: form.get("isDemo") === "on" };
+    const payload = {
+      ...record,
+      isDemo: form.get("isDemo") === "on",
+      ...(category === "ARABA"
+        ? { bodyTypeVerified: form.get("bodyTypeVerified") === "on" }
+        : {}),
+    };
     try {
       setResult(await api<ImportResult>("listings", payload));
       window.dispatchEvent(new Event("radar:refresh"));
@@ -128,6 +134,20 @@ export function ManualForm() {
           <input name="externalId" maxLength={300} />
         </label>
       </div>
+      <label>
+        İşlem türü
+        <select name="transactionType">
+          <option value="">Bilinmiyor</option>
+          <option value="SATILIK">Satılık</option>
+          <option value="KIRALIK">Kiralık</option>
+        </select>
+      </label>
+      {category === "ARABA" && (
+        <label className="checkbox-row">
+          <input name="bodyTypeVerified" type="checkbox" />
+          Gövde tipi kaynak kanıtını inceledim; açıklama girdim.
+        </label>
+      )}
       <h3 className="form-section-title">
         {categoryLabels[category]} özellikleri
       </h3>
@@ -140,7 +160,7 @@ export function ManualForm() {
               type={field.type ?? "text"}
               min={field.type === "number" ? 0 : undefined}
               step={
-                field.name === "sizeM2"
+                ["sizeM2", "netM2", "grossM2"].includes(field.name)
                   ? "0.01"
                   : field.type === "number"
                     ? "1"

@@ -2,7 +2,7 @@ import { it, expect } from "vitest";
 import pg from "pg";
 import { readFile } from "node:fs/promises";
 import { randomBytes } from "node:crypto";
-it("M1→M2 migration fiyatları, kaynakları ve gözlemleri korur; eski birleşmeler puanlanmaz", async () => {
+it("M1→M2.1 migration fiyat/kaynak/geçmişi korur; eski SUV sınıfı tahmin edilmez", async () => {
   const target = new URL(process.env.TEST_DATABASE_URL!);
   const name = `radar_migration_${randomBytes(6).toString("hex")}_test`;
   target.pathname = "/postgres";
@@ -58,6 +58,58 @@ it("M1→M2 migration fiyatları, kaynakları ve gözlemleri korur; eski birleş
       (await pool.query(`SELECT COUNT(*)::int AS n FROM "ListingPriceHistory"`))
         .rows[0].n,
     ).toBe(2);
+    await pool.query(
+      `INSERT INTO "Listing" (id,title,category,province,district,price,"identityKey","sourceId",provenance,"updatedAt") VALUES ('old-car','SUV başlıklı eski araç','ARABA','Bursa','Nilüfer',900000,'old-car','csv','{}',NOW())`,
+    );
+    await pool.query(
+      `INSERT INTO "VehicleDetails" ("listingId",make,model) VALUES ('old-car','Toyota','RAV4')`,
+    );
+    await pool.query(
+      await readFile(
+        "prisma/migrations/202610080004_m21_pilots/migration.sql",
+        "utf8",
+      ),
+    );
+    expect(
+      (
+        await pool.query(
+          `SELECT "bodyType","bodyTypeVerified","bodyTypeEvidence" FROM "VehicleDetails" WHERE "listingId"='old-car'`,
+        )
+      ).rows[0],
+    ).toEqual({
+      bodyType: null,
+      bodyTypeVerified: false,
+      bodyTypeEvidence: null,
+    });
+    expect(
+      (
+        await pool.query(
+          `SELECT COUNT(*)::int AS n FROM "SearchProfile" WHERE "pilotKey" IS NOT NULL`,
+        )
+      ).rows[0].n,
+    ).toBe(2);
+    expect(
+      (
+        await pool.query(
+          `SELECT COUNT(*)::int AS n FROM "ListingReview" WHERE kind='VEHICLE_BODY_TYPE'`,
+        )
+      ).rows[0].n,
+    ).toBe(1);
+    expect(
+      (await pool.query(`SELECT COUNT(*)::int AS n FROM "ListingPriceHistory"`))
+        .rows[0].n,
+    ).toBe(2);
+    expect(
+      (
+        await pool.query(
+          `SELECT price,provenance,"transactionType" FROM "Listing" WHERE id='legacy'`,
+        )
+      ).rows[0],
+    ).toMatchObject({
+      price: "1234567.89",
+      provenance: { original: "preserve" },
+      transactionType: null,
+    });
     expect(
       (await pool.query(`SELECT COUNT(*)::int AS n FROM "Watchlist"`)).rows[0]
         .n,
@@ -81,7 +133,7 @@ it("M1→M2 migration fiyatları, kaynakları ve gözlemleri korur; eski birleş
     );
     expect(
       (await pool.query(`SELECT COUNT(*)::int AS n FROM "Listing"`)).rows[0].n,
-    ).toBe(2);
+    ).toBe(3);
   } finally {
     await pool.end();
     if (created) await admin.query(`DROP DATABASE "${name}"`);
