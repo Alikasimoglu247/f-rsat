@@ -4,6 +4,7 @@ import { db } from "./db";
 import { listingInclude } from "./listings";
 import { categoryKeys, provinces } from "./constants";
 import { priceSchema } from "./validation";
+import { mailboxHealth } from "./email/coverage";
 export const filtersSchema = z
   .object({
     q: z.string().max(100).optional(),
@@ -72,6 +73,7 @@ export async function dashboard() {
     top,
     lastRun,
     categoryCounts,
+    emailHealth,
   ] = await Promise.all([
     db.listing.count(),
     db.listing.count({ where: { isDemo: false } }),
@@ -93,8 +95,12 @@ export async function dashboard() {
         }),
       ),
     ),
-    db.analysisRun.findFirst({ orderBy: { startedAt: "desc" } }),
+    db.analysisRun.findFirst({
+      where: { id: { not: "gmail-sync-lease" } },
+      orderBy: { startedAt: "desc" },
+    }),
     db.listing.groupBy({ by: ["category"], _count: true }),
+    mailboxHealth(),
   ]);
   return {
     total,
@@ -103,7 +109,13 @@ export async function dashboard() {
     newListings,
     reductions,
     highConfidence,
-    sources,
+    sources: sources.map((source) =>
+      source.accessStatus === "CONNECTED" &&
+      ["sahibinden-email", "arabam-email"].includes(source.id) &&
+      emailHealth.status !== "CONNECTED"
+        ? { ...source, accessStatus: emailHealth.status }
+        : source,
+    ),
     top: top.filter((item) => item !== null),
     lastRun,
     categoryCounts: categoryCounts.map((item) => ({

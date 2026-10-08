@@ -44,6 +44,17 @@ export const sourceDefinitions = [
     authorization: "Sabit HTTPS hedefi ve veri kullanım anlaşması gerekir.",
     accessStatus: "DISCONNECTED",
   },
+  ...[
+    ["sahibinden-email", "Sahibinden bildirim e-postası"],
+    ["arabam-email", "Arabam.com bildirim e-postası"],
+  ].map(([id, name]) => ({
+    id,
+    name,
+    method: "USER_AUTHORIZED_EMAIL",
+    authorization:
+      "Kullanıcı seçimi ve örnek şablon onayı gerekir. Gerçek platform örneği depoda doğrulanmadı; ilan URL'si ziyaret edilmez.",
+    accessStatus: "NEEDS_SAMPLE",
+  })),
   ...["Sahibinden", "Arabam", "Hepsiemlak", "Emlakjet"].map((name) => ({
     id: name.toLocaleLowerCase("en-US"),
     name,
@@ -57,12 +68,17 @@ export async function ensureSources(client: PrismaClient) {
   for (const source of sourceDefinitions)
     await client.listingSource.upsert({
       where: { id: source.id },
-      create: { ...source, categories: [...categoryKeys] },
+      create: {
+        ...source,
+        categories:
+          source.id === "arabam-email" ? ["ARABA"] : [...categoryKeys],
+      },
       update: {
         name: source.name,
         method: source.method,
         authorization: source.authorization,
-        categories: [...categoryKeys],
+        categories:
+          source.id === "arabam-email" ? ["ARABA"] : [...categoryKeys],
       },
     });
   await client.appSettings.upsert({

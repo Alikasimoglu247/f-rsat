@@ -12,10 +12,12 @@
 | Hepsiemlak                  | Yetkili anlaşmaya bağlı                       | Planlandı, bağlı değil                       | Açık yetki/anlaşma gerekir                             |
 | Emlakjet                    | Yetkili anlaşmaya bağlı                       | Planlandı, bağlı değil                       | Açık yetki/anlaşma gerekir                             |
 
+M2 e-posta kanalları ayrı kaynaklardır: `sahibinden-email` ve `arabam-email`. `.eml` yükleme ve Gmail API `gmail.readonly` alımı uygulanmıştır; gerçek platform şablonları henüz canlı doğrulanmamıştır. Kullanıcı ilk örneği onaylamadan otomatik aktarım yoktur. Gmail OAuth izni, seçili etiket/gönderici alımı ve şablonun Gmail'de eşleşmesi ayrı durumlarla raporlanır. [Kurulum ve sınırlar](M2_EMAIL_DISCOVERY.md).
+
 API varlığı varsayılmaz. Stealth browser, proxy rotasyonu, CAPTCHA aşma, uydurma kimlik veya erişim engellerini aşma yoktur. Her kaynak için yöntem, yetki, durum, son başarı, hata, tazelik ve kategori kapsamı saklanır. Bir başarılı senkronizasyon gerçekleşmeden canlı kaynak bağlı sayılmaz.
 
 ## İçe aktarma sözleşmesi
 
 UTF-8 CSV başlıkları `title,category,province,district,price,sourceUrl,externalId,isDemo` ve kategori alanları (`sizeM2,propertyType,rooms,buildingAge,condition`, `make,model,trim,modelYear,mileage,fuel,transmission,damageHistory`, `classification,zoning,roadAccess,parcelNumber,sharedOwnership,agriculturalRestrictions`). Kategoriler `EV,ARABA,ARSA,TARLA`; fiyat pozitif ondalık metindir. Bilinmeyen alanlar boş bırakılır, doğrulanmış gibi sunulmaz. JSON aynı alanları nesne dizisi olarak kabul eder. E-posta içe aktarımı aynı yapıda bir JSON/CSV gövdesini açık kullanıcı yüklemesiyle alır; keyfi HTML mesajlarından veri uydurmaz.
 
-En fazla 500 kayıt/2 MB. Tüm dosya önce doğrulanır; hatalı satırlar satır numarasıyla raporlanır ve dosya kısmen kaydedilmez. Normalleştirilmiş URL, kaynak içi harici kimlik ve içerik parmak izi tekrarları önler. Yeni fiyat farklıysa gözlem eklenir; aynı fiyat yeniden içe aktarılırsa tarihçe şişmez. Koleksiyon zamanı, kaynak, import job ve köken korunur.
+En fazla 500 kayıt/2 MB. Tüm dosya önce doğrulanır; validasyon hatasında dosya kaydedilmez. Önce kaynak + harici ID, sonra aynı kaynağın kanonik URL'si kullanılır. Farklı kaynak/ID'lerde benzer kayıtlar birleşmez. Güçlü kimliği olmayan benzer kayıt ve ID/URL/alan adı çatışması, diğer geçerli kayıtların aktarımını engellemeden incelemeye alınır; yeni/güncellenen/tekrar/inceleme sayıları ayrı döner. Yeni fiyat farklıysa gözlem eklenir; aynı fiyat yeniden alınırsa tarihçe şişmez. Koleksiyon zamanı, kaynak, import job ve köken korunur.

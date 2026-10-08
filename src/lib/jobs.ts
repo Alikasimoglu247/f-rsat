@@ -7,6 +7,7 @@ import { ensureSources } from "./providers/registry";
 import { licensedFeed } from "./providers/adapters";
 import type { ProviderAdapter } from "./providers/adapters";
 import { dispatchNotifications, notificationBody } from "./notifications";
+import { syncGmail } from "./email/gmail";
 export const localDay = (now = new Date()) =>
   new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/Istanbul",
@@ -50,15 +51,22 @@ export async function runDaily(
     include: { profile: true },
     orderBy: { id: "asc" },
   });
+  const mailbox = await db.mailboxConnection.findUnique({
+    where: { id: "personal" },
+  });
+  const templates = await db.emailTemplate.findMany({
+    select: { id: true, status: true },
+    orderBy: { id: "asc" },
+  });
   const digest = createHash("sha256")
     .update(
-      `${revision._count}:${revision._max.updatedAt?.toISOString()}:${JSON.stringify(preferences)}:${JSON.stringify(rules)}`,
+      `${revision._count}:${revision._max.updatedAt?.toISOString()}:${JSON.stringify(preferences)}:${JSON.stringify(rules)}:${JSON.stringify({ account: mailbox?.accountHash, labels: mailbox?.labelIds, senders: mailbox?.senders, templates })}`,
     )
     .digest("hex")
     .slice(0, 16);
   const key =
     options.key ??
-    `${options.manual ? "manual" : "daily"}:${localDay()}${options.manual ? `:${digest}` : ""}`;
+    `${options.manual ? "manual" : "daily"}:m2:${localDay()}${options.manual ? `:${digest}` : ""}`;
   const claim = await db.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT pg_advisory_xact_lock(451808)::text`;
     const existing = await tx.analysisRun.findUnique({ where: { id: key } });
@@ -88,6 +96,27 @@ export async function runDaily(
     };
   const failures: { source: string; message: string }[] = [];
   try {
+    if (
+      mailbox?.accountHash &&
+      ["AUTHORIZED", "CONNECTED", "ERROR"].includes(mailbox.status) &&
+      mailbox.labelIds.length + mailbox.senders.length > 0
+    ) {
+      try {
+        const result = await retry(() => syncGmail());
+        if (["DEFERRED", "RUNNING", "MORE_PENDING"].includes(result.status))
+          failures.push({
+            source: "gmail",
+            message:
+              "Gmail alımı ertelendi veya devam sayfası bekliyor; kısmi veriler analiz edildi.",
+          });
+      } catch {
+        failures.push({
+          source: "gmail",
+          message:
+            "İzinli Gmail kaynağı alınamadı; diğer kaynaklar ve mevcut verilerle analiz devam etti.",
+        });
+      }
+    }
     for (const provider of options.providers ?? [licensedFeed]) {
       if (!provider.authorized()) continue;
       let attempts = 0;
@@ -189,6 +218,43 @@ export async function runDaily(
             }
           }
         }
+        const best = opportunities
+          .filter(
+            (listing) =>
+              !listing.isDemo &&
+              listing.identityStatus === "ACTIVE" &&
+              listing.assessment?.confidence !== "INSUFFICIENT" &&
+              (listing.assessment?.score ?? 0) >=
+                Math.max(70, settings.minScore),
+          )
+          .sort(
+            (a, b) => (b.assessment?.score ?? 0) - (a.assessment?.score ?? 0),
+          )
+          .slice(0, 10);
+        const reportBody = [
+          `FırsatRadar — ${localDay()} (Europe/Istanbul)`,
+          "Yalnızca gerçek kayıtlar; istenen fiyat karşılaştırması, doğrulanmış satış değeri değildir.",
+          best.length
+            ? `${best.length} yeterli kanıtlı fırsat:`
+            : "Yeterli kanıt ve puan eşiğini karşılayan gerçek fırsat yok. Eksik verili ilanlar fırsat olarak sunulmadı.",
+          ...best.map((listing) =>
+            notificationBody(
+              JSON.parse(JSON.stringify(listing)) as ListingView,
+            ),
+          ),
+          failures.length
+            ? `${failures.length} kaynakta alım eksik/hatalı; kaynak günlüklerini inceleyin.`
+            : "Kaynak işlemleri tamamlandı.",
+        ].join("\n\n");
+        await tx.dailyReport.upsert({
+          where: { runId: key },
+          create: {
+            runId: key,
+            body: reportBody,
+            listingIds: best.map((l) => l.id),
+          },
+          update: { body: reportBody, listingIds: best.map((l) => l.id) },
+        });
         await tx.analysisRun.update({
           where: { id: key },
           data: {

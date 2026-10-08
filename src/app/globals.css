@@ -1661,3 +1661,67 @@ td .badge {
     scroll-behavior: auto !important;
   }
 }
+/* M2: permissioned email review and source coverage. */
+.email-workspace {
+  display: grid;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+.email-workspace h2 {
+  margin-bottom: 12px;
+}
+.email-workspace .form-actions {
+  flex-wrap: wrap;
+}
+.email-workspace h3 {
+  margin: 16px 0 10px;
+}
+.email-workspace p {
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.email-selection {
+  margin-top: 24px;
+  border-top: 1px solid var(--border);
+  padding-top: 18px;
+}
+.email-receipt {
+  padding: 16px 0;
+  border-top: 1px solid var(--border);
+  overflow-wrap: anywhere;
+}
+.email-receipt summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.email-proposal {
+  padding: 14px;
+  margin: 12px 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.gmail-labels {
+  padding-left: 22px;
+  overflow-wrap: anywhere;
+}
+.source-summary-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.source-summary-stats strong {
+  display: block;
+  font-size: 28px;
+}
+.daily-report {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  line-height: 1.65;
+}
+@media (max-width: 700px) {
+  .source-summary-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

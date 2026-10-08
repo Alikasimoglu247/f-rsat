@@ -1,4 +1,6 @@
 import { expect, test } from "@playwright/test";
+import { resetE2eFixtures } from "./reset";
+test.beforeAll(resetE2eFixtures);
 test("dashboard, dört kategori ve il/ilçe/fiyat filtreleri", async ({
   page,
 }) => {
@@ -74,7 +76,7 @@ test("takip listesi sayfa yenilendikten sonra kalır", async ({ page }) => {
 test("CSV içe aktarımı, aynı dosyada mükerrer önleme ve hatalı satır", async ({
   page,
 }) => {
-  const csv = `title,category,province,district,price,isDemo\n[DEMO] E2E CSV ilanı,ARSA,Yalova,Merkez,775000.25,true`;
+  const csv = `title,category,province,district,price,isDemo,externalId\n[DEMO] E2E CSV ilanı,ARSA,Yalova,Merkez,775000.25,true,e2e-csv-42`;
   await page.goto("/veri-kaynaklari");
   await page
     .getByRole("button", { name: "İçe aktar", exact: true })

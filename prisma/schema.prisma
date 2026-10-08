@@ -22,9 +22,11 @@ model Listing {
   district        String
   neighborhood    String?
   price           Decimal                @db.Decimal(18, 2)
-  sourceUrl       String?                @unique
+  sourceUrl       String?
   externalId      String?
-  identityKey     String                 @unique
+  identityKey     String
+  identityVersion Int                    @default(2)
+  identityStatus  String                 @default("ACTIVE")
   sourceId        String
   source          ListingSource          @relation(fields: [sourceId], references: [id])
   isDemo          Boolean                @default(false)
@@ -44,6 +46,8 @@ model Listing {
   notifications   Notification[]
 
   @@unique([sourceId, externalId])
+  @@unique([sourceId, sourceUrl])
+  @@index([identityKey])
   @@index([category, province, district])
 }
 
@@ -60,6 +64,9 @@ model ListingSource {
   listings       Listing[]
   logs           SourceSyncLog[]
   imports        ImportJob[]
+  reviews        ListingReview[]
+  regions        String[]        @default([])
+  lastNewCount   Int             @default(0)
 }
 
 model ListingPriceHistory {
@@ -188,6 +195,7 @@ model ImportJob {
   inserted    Int           @default(0)
   updated     Int           @default(0)
   duplicates  Int           @default(0)
+  reviewed    Int           @default(0)
   errors      Json
   createdAt   DateTime      @default(now())
   completedAt DateTime?
@@ -218,11 +226,99 @@ model AppSettings {
 }
 
 model AnalysisRun {
-  id          String    @id
+  id          String       @id
   status      String
-  attempts    Int       @default(1)
-  processed   Int       @default(0)
+  attempts    Int          @default(1)
+  processed   Int          @default(0)
   errors      Json
-  startedAt   DateTime  @default(now())
+  startedAt   DateTime     @default(now())
   completedAt DateTime?
+  report      DailyReport?
+}
+
+model ListingReview {
+  id           String        @id @default(cuid())
+  sourceId     String
+  source       ListingSource @relation(fields: [sourceId], references: [id])
+  kind         String
+  status       String        @default("PENDING")
+  reason       String
+  dedupKey     String        @unique
+  input        Json
+  candidateIds Json
+  createdAt    DateTime      @default(now())
+  resolvedAt   DateTime?
+}
+
+model MailboxConnection {
+  id            String    @id @default("personal")
+  status        String    @default("DISCONNECTED")
+  accountHash   String?
+  labelIds      String[]  @default([])
+  senders       String[]  @default([])
+  lookbackDays  Int       @default(7)
+  lastSuccessAt DateTime?
+  lastError     String?
+  retryAfter    DateTime?
+  scanAfter     DateTime?
+  scanBefore    DateTime?
+  pageToken     String?
+  lastFetched   Int       @default(0)
+  lastImported  Int       @default(0)
+  updatedAt     DateTime  @updatedAt
+}
+
+model EmailMessage {
+  id             String          @id @default(cuid())
+  contentHash    String          @unique
+  deliveryKey    String?         @unique
+  transport      String
+  sender         String
+  subject        String
+  receivedAt     DateTime?
+  providerId     String?
+  status         String
+  proposals      Json
+  errors         Json
+  templateIds    String[]        @default([])
+  inserted       Int             @default(0)
+  updated        Int             @default(0)
+  duplicates     Int             @default(0)
+  reviewed       Int             @default(0)
+  createdAt      DateTime        @default(now())
+  processedAt    DateTime?
+  seenViaGmailAt DateTime?
+  deliveries     EmailDelivery[]
+}
+
+model EmailDelivery {
+  key       String       @id
+  messageId String
+  message   EmailMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  createdAt DateTime     @default(now())
+}
+
+model EmailTemplate {
+  id              String    @id
+  providerId      String
+  sender          String
+  parserVersion   String
+  sampleMessageId String
+  status          String    @default("USER_APPROVED")
+  confirmedAt     DateTime  @default(now())
+  liveValidatedAt DateTime?
+}
+
+model OAuthAttempt {
+  stateHash String    @id
+  expiresAt DateTime
+  usedAt    DateTime?
+}
+
+model DailyReport {
+  runId      String      @id
+  run        AnalysisRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  body       String
+  listingIds String[]
+  createdAt  DateTime    @default(now())
 }

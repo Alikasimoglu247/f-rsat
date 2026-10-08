@@ -26,6 +26,7 @@ type ImportResult = {
   inserted: number;
   updated: number;
   duplicates: number;
+  reviewed: number;
   ids: string[];
 };
 export function ManualForm() {
@@ -173,9 +174,15 @@ export function ManualForm() {
         <div className="success-box" role="status">
           <CheckCircle2 size={18} />
           <div>
-            İlan kaydedildi.{" "}
+            {result.reviewed
+              ? "İlan kimliği incelemeye alındı; otomatik birleştirme yapılmadı."
+              : "İlan kaydedildi."}{" "}
             {result.duplicates ? "Mevcut kayıtla eşleştirildi." : ""}{" "}
-            <Link href={`/ilan/${result.ids[0]}`}>İlanı aç →</Link>
+            {result.ids[0] ? (
+              <Link href={`/ilan/${result.ids[0]}`}>İlanı aç →</Link>
+            ) : (
+              <Link href="/veri-kaynaklari">İncelemeyi aç →</Link>
+            )}
             <p>Güncel karşılaştırma için günlük analizi çalıştırabilirsin.</p>
           </div>
         </div>
@@ -299,7 +306,8 @@ export function ImportDialog() {
             <div className="success-box" role="status">
               <CheckCircle2 size={18} />
               {result.inserted} yeni · {result.updated} güncellendi ·{" "}
-              {result.duplicates} tekrar. İşlem tamamlandı.
+              {result.duplicates} tekrar · {result.reviewed} inceleme. İşlem
+              tamamlandı.
             </div>
           )}
         </form>

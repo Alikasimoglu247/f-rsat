@@ -10,12 +10,15 @@ import { optionalAiExplanation } from "@/lib/ai";
 import type { ListingView } from "@/lib/listings";
 import { failure, HttpError, json, readJson } from "@/lib/http";
 import { z } from "zod";
+import { emailGet, emailPost } from "@/lib/email/api";
+import { sourceCoverage } from "@/lib/email/coverage";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 type Context = { params: Promise<{ path?: string[] }> };
 export async function GET(request: Request, context: Context) {
   try {
     const path = (await context.params).path ?? [];
+    if (path[0] === "email") return await emailGet(path.slice(1));
     if (path[0] === "health") {
       await db.$queryRaw`SELECT 1`;
       return json({ status: "ok", database: "connected" });
@@ -40,20 +43,7 @@ export async function GET(request: Request, context: Context) {
           Object.fromEntries(new URL(request.url).searchParams),
         ),
       );
-    if (path[0] === "sources")
-      return json({
-        sources: await db.listingSource.findMany({
-          include: {
-            logs: { orderBy: { createdAt: "desc" }, take: 5 },
-            _count: { select: { listings: true } },
-          },
-          orderBy: { name: "asc" },
-        }),
-        imports: await db.importJob.findMany({
-          orderBy: { createdAt: "desc" },
-          take: 20,
-        }),
-      });
+    if (path[0] === "sources") return json(await sourceCoverage());
     if (path[0] === "notifications")
       return json({
         notifications: await db.notification.findMany({
@@ -63,6 +53,10 @@ export async function GET(request: Request, context: Context) {
         runs: await db.analysisRun.findMany({
           orderBy: { startedAt: "desc" },
           take: 20,
+        }),
+        reports: await db.dailyReport.findMany({
+          orderBy: { createdAt: "desc" },
+          take: 10,
         }),
       });
     if (path[0] === "settings")
@@ -92,7 +86,11 @@ export async function GET(request: Request, context: Context) {
 export async function POST(request: Request, context: Context) {
   try {
     const path = (await context.params).path ?? [],
-      body = await readJson(request);
+      body = await readJson(
+        request,
+        path[0] === "email" && path[1] === "eml" ? 2_750_000 : 2_100_000,
+      );
+    if (path[0] === "email") return await emailPost(path.slice(1), body);
     if (path[0] === "listings") {
       const input = listingSchema.parse(body);
       await ensureSources(db);

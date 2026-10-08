@@ -25,11 +25,13 @@
   "dependencies": {
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
+    "cheerio": "1.2.0",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "csv-parse": "7.0.3",
     "dotenv": "18.0.6",
     "lucide-react": "1.52.0",
+    "mailparser": "3.9.36",
     "next": "16.4.0",
     "node-cron": "4.6.0",
     "nodemailer": "10.0.16",
@@ -44,6 +46,7 @@
   "devDependencies": {
     "@playwright/test": "1.64.0",
     "@tailwindcss/postcss": "4.3.3",
+    "@types/mailparser": "3.9.0",
     "@types/node": "26.6.4",
     "@types/nodemailer": "7.0.11",
     "@types/pg": "8.23.1",
