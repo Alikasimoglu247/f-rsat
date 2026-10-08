@@ -20,7 +20,8 @@
     "db:seed": "tsx prisma/seed.ts",
     "job:daily": "tsx scripts/daily.ts",
     "scheduler": "tsx scripts/scheduler.ts",
-    "db:test": "tsx scripts/test-db.ts"
+    "db:test": "tsx scripts/test-db.ts",
+    "test:runtime": "node scripts/runtime-smoke.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.0",

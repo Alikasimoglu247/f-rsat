@@ -49,6 +49,10 @@ jobs:
       - run: npm run typecheck
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+      - name: Build server image
+        run: docker build -t firsatradar:ci .
+      - name: Verify encrypted token persistence across container restarts
+        run: npm run test:runtime -- firsatradar:ci
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

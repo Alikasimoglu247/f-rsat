@@ -22,8 +22,16 @@ Readiness does not infer live success from credential presence. Scheduler state 
 
 Telegram and SMTP adapters remain opt-in. SMTP marks success only after recipient acceptance, rejects missing/partial acceptance and preserves ambiguous-delivery handling. Daily reports are prepared in-app/copiable; existing opportunity notifications dispatch through configured enabled channels. Whole-report delivery is not falsely claimed. Readiness tracks real-record SENT timestamps, meaning provider acceptance, not proof of inbox delivery. No external service test is performed without credentials and permission.
 
-GitHub Actions CI adds PostgreSQL migration, unit/integration, lint, build/types and production Playwright checks. It deploys nothing. Runtime readiness links to actual GitHub results instead of guessing workflow status from the presence of a YAML file.
+GitHub Actions CI adds PostgreSQL migration, unit/integration, lint, build/types and production Playwright checks. It also builds the runtime image and checks encrypted token persistence across separate containers with networking disabled. It deploys nothing. Runtime readiness links to actual GitHub results instead of guessing workflow status from the presence of a YAML file.
 
 ## Acceptance prerequisites
 
 Read `../CANLI_PILOT_KURULUM.md`. Real provider files, user template review, comparison/body evidence, Google OAuth permission, persistent storage/restart test, observed 09.00 scheduler execution and recipient-side live delivery remain user/operator acceptance steps. Synthetic fixture/protocol tests never certify genuine template support.
+
+## Verified implementation checks (M2.2)
+
+- 72 unit, 41 PostgreSQL integration and 18 production browser tests passed (131 total), plus lint, TypeScript and production build.
+- All five migrations applied without schema drift; the development backup was verified before the additive M2.2 migration. Development retains 36 demo and zero real listings, zero uploaded receipts/templates, and Gmail DISCONNECTED.
+- Scheduler process reports a current heartbeat at `0 9 * * *` / Europe/Istanbul. A heartbeat does not prove the morning remote task has run.
+- GitHub CI for implementation commit `a083274` passed for both push and PR events; later operational documentation/build changes require their own checks.
+- Container build preserves TLS/package verification. The cloud build uses the environment-provided trusted CA as an optional BuildKit secret and the supplied egress proxy; CA contents are not embedded in the image or repository. The local VFS Docker daemon exhausted its disk quota during container startup; temporary task images/cache were removed and PostgreSQL was preserved. CI runs the synthetic restart/permission test with networking disabled; check the exact PR head result. This is separate from genuine OAuth acceptance.
