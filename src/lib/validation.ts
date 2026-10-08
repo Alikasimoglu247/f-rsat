@@ -121,6 +121,14 @@ export const profileSchema = z
     fuels: z.array(z.string().trim().min(2).max(80)).max(10).default([]),
     transactionType: optionalText,
     trackPriceDrops: z.boolean().default(false),
+    mailLabelIds: z
+      .array(z.string().regex(/^[A-Za-z0-9_-]{1,100}$/))
+      .max(20)
+      .default([]),
+    mailSenders: z
+      .array(z.email().transform((v) => v.toLowerCase()))
+      .max(20)
+      .default([]),
     minScore: z.number().int().min(0).max(100).default(70),
   })
   .strict()

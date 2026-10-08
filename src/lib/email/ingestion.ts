@@ -12,12 +12,14 @@ type StoredProposal = EmailProposal & {
   outcome?: string;
   listingId?: string;
   reviewId?: string;
+  correctionIds?: string[];
 };
 export async function recordUnreadableGmail(
   raw: Buffer,
   sender: string,
   deliveryKey: string,
   time: Date,
+  gmailLabelIds: string[] = [],
 ) {
   return db.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT pg_advisory_xact_lock(451810)::text`;
@@ -42,6 +44,7 @@ export async function recordUnreadableGmail(
               ? time
               : null,
           seenViaGmailAt: new Date(),
+          gmailLabelIds,
           proposals: [],
           errors: [
             "Seçili mesaj MIME/gönderici/boyut kontrolünden geçmedi. İçerik aktarılmadı; izinli orijinal dosyayı inceleyin.",
@@ -99,6 +102,9 @@ async function processReceipt(tx: Prisma.TransactionClient, id: string) {
               ? "EMAIL_DATE_UNVERIFIED"
               : "COLLECTION_TIME",
         templateId: item.templateId,
+        ...(item.correctionIds?.length
+          ? { userCorrectionIds: item.correctionIds.join(",") }
+          : {}),
       },
     });
     const counts = {
@@ -174,6 +180,8 @@ export async function ingestEml(
     deliveryKey?: string;
     receivedAt?: Date;
     expectedSender?: string;
+    gmailLabelIds?: string[];
+    pilotIds?: string[];
   } = {},
 ) {
   let parsed;
@@ -191,6 +199,13 @@ export async function ingestEml(
   return db.$transaction(
     async (tx) => {
       await tx.$queryRaw`SELECT pg_advisory_xact_lock(451810)::text`;
+      if (
+        options.pilotIds?.length &&
+        (await tx.searchProfile.count({
+          where: { id: { in: options.pilotIds }, pilotKey: { not: null } },
+        })) !== new Set(options.pilotIds).size
+      )
+        throw new HttpError(400, "Seçilen pilot bulunamadı.");
       const delivery = options.deliveryKey
         ? await tx.emailDelivery.findUnique({
             where: { key: options.deliveryKey },
@@ -209,6 +224,15 @@ export async function ingestEml(
           where: { contentHash: parsed.contentHash },
         }));
       if (existing) {
+        if (options.pilotIds?.length)
+          await tx.emailMessage.update({
+            where: { id: existing.id },
+            data: {
+              pilotIds: [
+                ...new Set([...existing.pilotIds, ...options.pilotIds]),
+              ],
+            },
+          });
         if (options.deliveryKey && !delivery)
           await tx.emailDelivery.create({
             data: { key: options.deliveryKey, messageId: existing.id },
@@ -216,7 +240,17 @@ export async function ingestEml(
         if (options.transport === "GMAIL") {
           await tx.emailMessage.update({
             where: { id: existing.id },
-            data: { seenViaGmailAt: new Date() },
+            data: {
+              seenViaGmailAt: delivery
+                ? (existing.seenViaGmailAt ?? new Date())
+                : new Date(),
+              gmailLabelIds: [
+                ...new Set([
+                  ...existing.gmailLabelIds,
+                  ...(options.gmailLabelIds ?? []),
+                ]),
+              ],
+            },
           });
           if (existing.status === "IMPORTED")
             for (const templateId of existing.templateIds) {
@@ -249,6 +283,8 @@ export async function ingestEml(
           contentHash: parsed.contentHash,
           deliveryKey: options.deliveryKey,
           transport: options.transport ?? "EML",
+          gmailLabelIds: options.gmailLabelIds ?? [],
+          pilotIds: options.pilotIds ?? [],
           seenViaGmailAt:
             options.transport === "GMAIL" ? new Date() : undefined,
           sender: parsed.sender,

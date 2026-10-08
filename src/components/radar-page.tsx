@@ -1,6 +1,8 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import { DiscoveryPage } from "./discovery";
+import { LiveReadiness } from "./live-readiness";
 import { PilotCards, ProfileEditor } from "./pilots";
 import type { PilotView, ProfileView } from "./pilots";
 import type { FormEvent } from "react";
@@ -60,11 +62,18 @@ export type PageMode =
   | "sources"
   | "notifications"
   | "settings"
-  | "manual";
+  | "manual"
+  | "discovery";
 const titles: Record<
   PageMode,
   { title: string; description: string; eyebrow: string }
 > = {
+  discovery: {
+    title: "Yeni gerçek ilanlar",
+    description:
+      "Fırsat puanı olmasa da alınan gerçek ilanlar, eksik veriler ve emsal durumu.",
+    eyebrow: "GERÇEK VERİ",
+  },
   dashboard: {
     title: "Fırsatlar, radarında.",
     description:
@@ -312,7 +321,9 @@ export function RadarPage({
           doğrulanmış hukuki bilgi gibi sunulmaz.
         </span>
       </div>
-      {mode === "dashboard" ? (
+      {mode === "discovery" ? (
+        <DiscoveryPage />
+      ) : mode === "dashboard" ? (
         <DashboardPage />
       ) : mode === "listings" || mode === "watch" ? (
         <ListingsPage watch={mode === "watch"} />
@@ -1062,6 +1073,7 @@ function SourcesPage() {
           veya kimliği incelemede gerçek ilan
         </p>
       </div>
+      <LiveReadiness />
       <EmailPanel />
       <div className="source-grid">
         {data.sources.map((source) => {

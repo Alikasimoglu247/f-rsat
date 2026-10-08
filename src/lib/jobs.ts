@@ -9,6 +9,7 @@ import type { ProviderAdapter } from "./providers/adapters";
 import { dispatchNotifications, notificationBody } from "./notifications";
 import { syncGmail } from "./email/gmail";
 import { matchesProfile, pilotSummaries } from "./pilots";
+import { missingListingFields, comparableStatus } from "./listing-quality";
 import { dateTime } from "./constants";
 export const localDay = (now = new Date()) =>
   new Intl.DateTimeFormat("en-CA", {
@@ -68,7 +69,7 @@ export async function runDaily(
     .slice(0, 16);
   const key =
     options.key ??
-    `${options.manual ? "manual" : "daily"}:m21:${localDay()}${options.manual ? `:${digest}` : ""}`;
+    `${options.manual ? "manual" : "daily"}:m22:${localDay()}${options.manual ? `:${digest}` : ""}`;
   const claim = await db.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT pg_advisory_xact_lock(451808)::text`;
     const existing = await tx.analysisRun.findUnique({ where: { id: key } });
@@ -176,6 +177,12 @@ export async function runDaily(
           include: listingInclude,
         });
         for (const listing of opportunities) {
+          if (
+            !listing.isDemo &&
+            (missingListingFields(listing).length ||
+              comparableStatus(listing) !== "SUPPORTED")
+          )
+            continue;
           const matching = alerts.filter(
             (alert) =>
               (listing.assessment!.score ?? 0) >= alert.minScore &&
@@ -219,6 +226,8 @@ export async function runDaily(
           .filter(
             (listing) =>
               !listing.isDemo &&
+              missingListingFields(listing).length === 0 &&
+              comparableStatus(listing) === "SUPPORTED" &&
               listing.identityStatus === "ACTIVE" &&
               listing.assessment?.confidence !== "INSUFFICIENT" &&
               (listing.assessment?.score ?? 0) >=
@@ -242,6 +251,17 @@ export async function runDaily(
           ),
           ...pilots.flatMap((p) => [
             `${p.name}: ${p.totalReal} gerçek ilan; bugün ${p.discoveredToday} yeni; ${p.priceDrops} fiyat düşüşü; ${p.opportunities} yeterli emsalli fırsat.`,
+            `Huni: ${p.funnel.gmailNotifications} Gmail bildirimi; ${p.funnel.parsedListings} ayrıştırılan; ${p.funnel.pendingListings} inceleme; ${p.funnel.savedReal} kaydedilen; ${p.funnel.matchedListings} eşleşen; ${p.funnel.insufficientListings} emsal yetersiz; ${p.funnel.supportedOpportunities} fırsat. ${p.funnel.localEmlSamples} yerel .eml Gmail sayısına dahil değildir.`,
+            ...(!p.opportunities ? p.zeroReasons : []),
+            p.recentDrops.length
+              ? "Son 7 günlük ardışık fiyat düşüşleri (tek başına fırsat değildir):\n" +
+                p.recentDrops
+                  .map(
+                    (d) =>
+                      `${d.title}: ${d.previousPrice} TL → ${d.newPrice} TL; indirim ${d.amount} TL (%${d.percentage}); ${dateTime(d.observedAt)} — ${d.sourceUrl ?? "Kaynak URL yok"}`,
+                  )
+                  .join("\n")
+              : "Son 7 gün içinde ardışık fiyat düşüşü yok.",
             p.top.length
               ? p.top
                   .map((l) =>

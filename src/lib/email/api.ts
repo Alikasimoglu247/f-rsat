@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 import { json, HttpError } from "../http";
 import { emailStatus } from "./coverage";
+import { correctEmailFields, correctionSchema } from "./corrections";
 import {
   ingestEml,
   approveMessage,
@@ -25,6 +26,7 @@ export async function emailGet(path: string[]) {
 }
 export async function emailPost(path: string[], body: unknown) {
   const route = path.join("/");
+  if(route==="complete") return json(await correctEmailFields(correctionSchema.parse(body)));
   if (route === "eml") {
     const input = z
       .object({
@@ -34,13 +36,14 @@ export async function emailPost(path: string[], body: unknown) {
           .max(2_666_668)
           .regex(/^[A-Za-z0-9+/]+={0,2}$/),
         permitted: z.literal(true),
+        pilotIds: z.array(z.string().min(1)).max(2).optional(),
       })
       .strict()
       .parse(body);
     const raw = Buffer.from(input.rawBase64, "base64");
     if (raw.toString("base64") !== input.rawBase64)
       throw new HttpError(400, "EML kodlaması geçersiz.");
-    return json(await ingestEml(raw), 201);
+    return json(await ingestEml(raw, { pilotIds: input.pilotIds }), 201);
   }
   if (route === "approve") {
     const input = z

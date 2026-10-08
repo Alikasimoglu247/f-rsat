@@ -111,3 +111,11 @@ Bu ilk sürüm tek kullanıcılı yerel uygulamadır. İnternete açılırsa HTT
 [Mimari](docs/ARCHITECTURE.md) · [Uygulama planı](docs/IMPLEMENTATION_PLAN.md) · [Kaynaklar](docs/DATA_SOURCES.md)
 
 Prisma 7 pg adaptörü ve WASM sorgu derleyicisi kullanılır. Standart Prisma CLI temiz kurulumda migration aracı için **binaries.prisma.sh** erişimi ister; bulut ağ ayarlarında bu alan adına izin verin. Checksum/TLS kontrolleri kapatılmaz. Bulutta `NPM_CONFIG_CACHE=/workspace/.cache/npm` yazılabilir önbellek sağlar. Her bulut görevi ayrıdır; mevcut `/workspace/f-rsat` deposunu kullanın, ayrıca Git worktree oluşturmayın. Docker/Next.js/scheduler süreçlerinin yayımlama veya yeni görev sonrasında sürmesi varsayılmaz; kayıtlı başlangıç talimatları bunları yeniden başlatır.
+
+## M2.2 canlı pilot kabulü
+
+Teknik olmayan kurulum: [CANLI_PILOT_KURULUM.md](CANLI_PILOT_KURULUM.md). Huni, alan tamamlama, fiyat olayları ve canlı doğrulama sınırları: [M22_LIVE_PILOT.md](docs/M22_LIVE_PILOT.md).
+
+Üretim sunucusu için isteğe bağlı Compose overlay `compose.runtime.yaml` eklendi. Operatör güvenli `.env` ayarlarını hazırlamalı; konteynerlerin `DATABASE_URL` adresinde `127.0.0.1` yerine `postgres` kullanılmalı. Yeni sunucuda güçlü PostgreSQL parolası, `APP_ACCESS_TOKEN`, HTTPS reverse proxy ve yedekleme gerekir. Web/scheduler aynı şifreli kalıcı token volume’unu kullanır; şifreleme anahtarı ayrı güvenli sunucu ayarında korunur. `docker compose -f compose.yaml -f compose.runtime.yaml up --build -d` yalnızca operatör tarafından çalıştırılır; bu değişiklik otomatik yayın yapmaz. Mevcut veri volume’u ve parola taşınırken önce yedek alınmalı; `down -v` kullanılmamalı. `scripts/bootstrap.ts` gerçek kaynakları ve varsayılan pilotları kurar, demo eklemez. Günlük rapor uygulamada hazırlanır; harici kanallar mevcut fırsat bildirimlerini gönderir.
+
+GitHub CI: [Actions](https://github.com/Alikasimoglu247/f-rsat/actions). Kod testleri gerçek bildirim veya canlı servis kabulünün yerine geçmez.

@@ -29,6 +29,8 @@ export type ProfileView = {
   fuels: string[];
   transactionType: string | null;
   trackPriceDrops: boolean;
+  mailLabelIds: string[];
+  mailSenders: string[];
   alerts: { minScore: number; enabled: boolean }[];
 };
 export type PilotView = {
@@ -42,6 +44,20 @@ export type PilotView = {
   reduced: ListingView[];
   lastSuccessfulIngestion: string | null;
   profile: ProfileView;
+  funnel: Record<string, number>;
+  zeroReasons: string[];
+  unassignedGmail: number;
+  recentDropCount: number;
+  recentDrops: {
+    key: string;
+    listingId: string;
+    title: string;
+    previousPrice: string;
+    newPrice: string;
+    amount: string;
+    percentage: string;
+    observedAt: string;
+  }[];
 };
 export function ProfileEditor({ profile }: { profile: ProfileView }) {
   const [message, setMessage] = useState(""),
@@ -64,6 +80,14 @@ export function ProfileEditor({ profile }: { profile: ProfileView }) {
         transactionType: f.get("transactionType"),
         trackPriceDrops: f.get("trackPriceDrops") === "on",
         minScore: Number(f.get("minScore")),
+        mailLabelIds: String(f.get("mailLabelIds") ?? "")
+          .split(",")
+          .map((v) => v.trim())
+          .filter(Boolean),
+        mailSenders: String(f.get("mailSenders") ?? "")
+          .split(",")
+          .map((v) => v.trim())
+          .filter(Boolean),
       });
       setMessage("Profil filtreleri kaydedildi.");
       window.dispatchEvent(new Event("radar:refresh"));
@@ -203,6 +227,27 @@ export function ProfileEditor({ profile }: { profile: ProfileView }) {
           />
           {label("Fiyat düşüşlerini takip et")}
         </label>
+        <label>
+          {label("Bildirim etiket ID’leri")}
+          <input
+            name="mailLabelIds"
+            defaultValue={profile.mailLabelIds?.join(",") ?? ""}
+            placeholder="Virgülle ayır"
+          />
+        </label>
+        <label>
+          {label("Bildirim göndericileri")}
+          <input
+            name="mailSenders"
+            defaultValue={profile.mailSenders?.join(",") ?? ""}
+            placeholder="Virgülle ayır"
+          />
+        </label>
+        <p className="helper">
+          Bu eşleme, ayrıştırılamayan bildirimleri de pilot hunisine atar; Gmail
+          erişim iznini genişletmez. İkisi de doluysa tüm etiketler ve
+          göndericilerden biri eşleşmelidir.
+        </p>
         <p className="helper">
           Çoklu seçimde boş bırakılan filtre tümünü kapsar. Mahalle, marka,
           model, yıl ve kilometre için pilotta üst sınır yoktur.
@@ -218,6 +263,12 @@ export function ProfileEditor({ profile }: { profile: ProfileView }) {
 export function PilotCards({ pilots }: { pilots: PilotView[] }) {
   return (
     <section className="pilot-grid" aria-label="Gerçek veri pilotları">
+      {!!pilots[0]?.unassignedGmail && (
+        <p className="panel">
+          {pilots[0].unassignedGmail} Gmail bildirimi hiçbir pilota atanamadı.
+          Pilot etiket/gönderici eşlemesini düzenleyin.
+        </p>
+      )}
       {pilots.map((p) => (
         <article key={p.id} className="panel pilot-card" aria-label={p.name}>
           <h2>{p.name}</h2>
@@ -243,6 +294,58 @@ export function PilotCards({ pilots }: { pilots: PilotView[] }) {
             <p className="empty-state-text">
               Bu pilotta henüz gerçek ilan yok.
             </p>
+          )}
+          <h3>Veri toplama hunisi</h3>
+          <dl className="info-list pilot-funnel">
+            {[
+              ["Gmail’den gelen bildirim", "gmailNotifications"],
+              ["Başarıyla ayrıştırılan ilan", "parsedListings"],
+              ["İnceleme bekleyen ilan", "pendingListings"],
+              ["Veritabanına kaydedilen gerçek ilan", "savedReal"],
+              ["Pilot filtreleriyle eşleşen ilan", "matchedListings"],
+              [
+                "Emsal yetersizliği nedeniyle puanlanamayan ilan",
+                "insufficientListings",
+              ],
+              ["Yeterli kanıta sahip fırsat", "supportedOpportunities"],
+            ].map(([label, key]) => (
+              <div key={key}>
+                <dt>{label}</dt>
+                <dd>{p.funnel[key]}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="helper">
+            Gmail sayısı bildirim, diğerleri tekil ilandır; bir bildirim birden
+            çok ilan içerebilir. {p.funnel.localEmlSamples} yerel .eml bildirimi
+            Gmail sayısına dahil değildir. Kaydedilenler manuel/CSV kayıtlarını
+            da kapsar. {p.funnel.userCompletedListings} geçerli öneri kullanıcı
+            tarafından tamamlandı. Sayılar saklanan tüm kayıtlar içindir.
+          </p>
+          {!p.opportunities && (
+            <ul>
+              {p.zeroReasons.map((reason) => (
+                <li key={reason}>{reason}</li>
+              ))}
+            </ul>
+          )}
+          <Link href="/yeni-ilanlar">Puansız gerçek ilanları da göster</Link>
+          <h3>Son 7 günlük fiyat düşüşleri · {p.recentDropCount} olay</h3>
+          {p.recentDrops.length ? (
+            <ul className="pilot-results">
+              {p.recentDrops.map((d) => (
+                <li key={d.key}>
+                  <Link href={`/ilan/${d.listingId}`}>{d.title}</Link>
+                  <span>
+                    {money(d.previousPrice)} → {money(d.newPrice)} · indirim{" "}
+                    {money(d.amount)} (%{d.percentage}) ·{" "}
+                    {dateTime(d.observedAt)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>Son 7 gün içinde doğrulanabilen ardışık fiyat düşüşü yok.</p>
           )}
           <h3>En iyi 5 fırsat</h3>
           {p.top.length ? (

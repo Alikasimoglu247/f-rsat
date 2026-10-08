@@ -112,6 +112,7 @@ code {
   min-height: 100dvh;
 }
 .sidebar {
+  overflow-y: auto;
   width: 246px;
   flex-shrink: 0;
   background: var(--card);

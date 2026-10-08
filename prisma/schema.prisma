@@ -138,6 +138,8 @@ model SearchProfile {
   fuels           String[]   @default([])
   transactionType String?
   trackPriceDrops Boolean    @default(false)
+  mailLabelIds    String[]   @default([])
+  mailSenders     String[]   @default([])
   alerts          Alert[]
   createdAt       DateTime   @default(now())
 }
@@ -282,9 +284,9 @@ model MailboxConnection {
 }
 
 model EmailMessage {
-  id             String          @id @default(cuid())
-  contentHash    String          @unique
-  deliveryKey    String?         @unique
+  id             String                 @id @default(cuid())
+  contentHash    String                 @unique
+  deliveryKey    String?                @unique
   transport      String
   sender         String
   subject        String
@@ -293,15 +295,40 @@ model EmailMessage {
   status         String
   proposals      Json
   errors         Json
-  templateIds    String[]        @default([])
-  inserted       Int             @default(0)
-  updated        Int             @default(0)
-  duplicates     Int             @default(0)
-  reviewed       Int             @default(0)
-  createdAt      DateTime        @default(now())
+  templateIds    String[]               @default([])
+  inserted       Int                    @default(0)
+  updated        Int                    @default(0)
+  duplicates     Int                    @default(0)
+  reviewed       Int                    @default(0)
+  createdAt      DateTime               @default(now())
   processedAt    DateTime?
   seenViaGmailAt DateTime?
   deliveries     EmailDelivery[]
+  gmailLabelIds  String[]               @default([])
+  pilotIds       String[]               @default([])
+  corrections    EmailFieldCorrection[]
+}
+
+model EmailFieldCorrection {
+  id            String       @id @default(cuid())
+  messageId     String
+  message       EmailMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  proposalIndex Int
+  before        Json
+  after         Json
+  evidenceNote  String
+  createdAt     DateTime     @default(now())
+}
+
+model SchedulerHealth {
+  id              String    @id @default("personal")
+  instanceId      String?
+  status          String
+  lastHeartbeatAt DateTime
+  lastTickAt      DateTime?
+  lastResult      String?
+  schedule        String
+  timezone        String    @default("Europe/Istanbul")
 }
 
 model EmailDelivery {

@@ -526,6 +526,7 @@ export async function syncGmail() {
             deliveryKey,
             receivedAt,
             expectedSender: sender,
+            gmailLabelIds: raw.labelIds,
           });
         } catch (error) {
           if (!(error instanceof HttpError) || error.status !== 400)
@@ -535,6 +536,7 @@ export async function syncGmail() {
             sender,
             deliveryKey,
             receivedAt,
+            raw.labelIds,
           );
         }
         fetched++;

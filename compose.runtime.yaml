@@ -1,0 +1,57 @@
+# Operator opt-in only. Does not deploy or publish an environment.
+# DATABASE_URL in the server .env must address the postgres service, not loopback.
+services:
+  migrate:
+    build: .
+    image: firsatradar:local
+    env_file: .env
+    environment:
+      GMAIL_TOKEN_STORE: /var/lib/firsatradar/tokens/gmail.enc
+      GMAIL_TOKEN_STORE_PERSISTENT: "true"
+    command: ["sh", "-c", "npm run db:migrate && npx tsx scripts/bootstrap.ts"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - radar_tokens:/var/lib/firsatradar/tokens
+  web:
+    image: firsatradar:local
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      GMAIL_TOKEN_STORE: /var/lib/firsatradar/tokens/gmail.enc
+      GMAIL_TOKEN_STORE_PERSISTENT: "true"
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    volumes:
+      - radar_tokens:/var/lib/firsatradar/tokens
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "const h={};if(process.env.APP_ACCESS_TOKEN)h.authorization='Basic '+Buffer.from('radar:'+process.env.APP_ACCESS_TOKEN).toString('base64');fetch('http://127.0.0.1:3000/api/health',{headers:h}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  scheduler:
+    image: firsatradar:local
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      GMAIL_TOKEN_STORE: /var/lib/firsatradar/tokens/gmail.enc
+      GMAIL_TOKEN_STORE_PERSISTENT: "true"
+      DAILY_CRON: "0 9 * * *"
+    command: ["npm", "run", "scheduler"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    volumes:
+      - radar_tokens:/var/lib/firsatradar/tokens
+volumes:
+  radar_tokens:

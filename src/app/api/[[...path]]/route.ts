@@ -10,6 +10,8 @@ import { optionalAiExplanation } from "@/lib/ai";
 import type { ListingView } from "@/lib/listings";
 import { failure, HttpError, json, readJson } from "@/lib/http";
 import { z } from "zod";
+import { newRealListings } from "@/lib/discovery";
+import { liveReadiness } from "@/lib/readiness";
 import { verifyBodyType, bodyReviewSchema } from "@/lib/vehicle-review";
 import { emailGet, emailPost } from "@/lib/email/api";
 import { sourceCoverage } from "@/lib/email/coverage";
@@ -25,6 +27,13 @@ export async function GET(request: Request, context: Context) {
       return json({ status: "ok", database: "connected" });
     }
     if (path[0] === "dashboard") return json(await dashboard());
+    if (path[0] === "readiness") return json(await liveReadiness());
+    if (path[0] === "discovery")
+      return json(
+        await newRealListings(
+          Object.fromEntries(new URL(request.url).searchParams),
+        ),
+      );
     if (path[0] === "listings" && path[1]) {
       const listing = await db.listing.findUnique({
         where: { id: path[1] },

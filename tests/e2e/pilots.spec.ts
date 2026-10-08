@@ -12,7 +12,12 @@ test("iki pilot kartı boş gerçek kapsamı, canlı alım eksikliğini ve mobil
     const card = page.getByRole("article", { name });
     await expect(card).toContainText("henüz gerçek ilan yok");
     await expect(card).toContainText("canlı bildirim alımı doğrulanmadı");
-    await expect(card.locator("dd")).toHaveText(["0", "0", "0", "0"]);
+    await expect(card.locator(".pilot-stats dd")).toHaveText([
+      "0",
+      "0",
+      "0",
+      "0",
+    ]);
   }
   await page.setViewportSize({ width: 390, height: 844 });
   expect(
@@ -75,7 +80,7 @@ test("belirsiz SUV incelemeden sonra pilota alınır; yeterli emsal yoksa fırsa
   expect(response.ok()).toBe(true);
   await page.goto("/");
   const card = page.getByRole("article", { name: "Marmara SUV Fırsatları" });
-  await expect(card.locator("dd").first()).toHaveText("0");
+  await expect(card.locator(".pilot-stats dd").first()).toHaveText("0");
   await page.goto("/veri-kaynaklari");
   const review = page.getByRole("article").filter({
     has: page.getByRole("heading", { name: "Sentetik pilot SUV test aracı" }),
@@ -94,6 +99,6 @@ test("belirsiz SUV incelemeden sonra pilota alınır; yeterli emsal yoksa fırsa
     }),
   ).toHaveCount(0);
   await page.goto("/");
-  await expect(card.locator("dd").first()).toHaveText("1");
+  await expect(card.locator(".pilot-stats dd").first()).toHaveText("1");
   await expect(card).toContainText("Yeterli emsale sahip gerçek fırsat yok");
 });

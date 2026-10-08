@@ -95,7 +95,7 @@ async function identityReview(
   });
   return { id: "", reviewId: review.id, outcome: "reviewed" as const };
 }
-function detailFields(input: ListingInput) {
+export function detailFields(input: ListingInput) {
   if (input.category === "EV")
     return {
       property: {

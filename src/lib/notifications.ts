@@ -100,12 +100,17 @@ export async function sendNotification(
       socketTimeout: 15_000,
     });
     try {
-      await transporter.sendMail({
+      const delivery = await transporter.sendMail({
         from: process.env.SMTP_FROM,
         to: process.env.SMTP_TO,
         subject: title,
         text: body,
       });
+      if (!delivery.accepted?.length || delivery.rejected?.length)
+        throw new DeliveryError(
+          "SMTP alıcı kabulü doğrulanamadı; sunucu teslimat kaydını kontrol edin.",
+          true,
+        );
     } catch {
       throw new DeliveryError(
         "SMTP teslimat sonucu belirsiz; otomatik tekrar gönderilmeyecek.",

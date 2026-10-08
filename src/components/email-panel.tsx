@@ -1,4 +1,5 @@
 "use client";
+import { EmailCompletion } from "./email-completion";
 import { BodyTypeReview } from "./pilots";
 import { useState } from "react";
 import { Button } from "./ui/button";
@@ -20,10 +21,15 @@ type Message = {
   updated: number;
   duplicates: number;
   reviewed: number;
-  proposals: EmailProposal[];
+  proposals: (EmailProposal & {
+    userCompletedAt?: string;
+    correctionIds?: string[];
+  })[];
+  corrections: { id: string; evidenceNote: string; createdAt: string }[];
   errors: string[];
 };
 type EmailStatus = {
+  pilotProfiles: { id: string; name: string }[];
   configuration: {
     configured: boolean;
     missing: string[];
@@ -91,6 +97,7 @@ export function EmailPanel() {
   const [busy, setBusy] = useState(false),
     [message, setMessage] = useState(""),
     [actionError, setActionError] = useState("");
+  const [pilotIds, setPilotIds] = useState<string[]>([]);
   const [approved, setApproved] = useState<string[]>([]),
     [permitted, setPermitted] = useState(false),
     [labels, setLabels] = useState<{ id: string; name: string }[]>([]);
@@ -315,6 +322,26 @@ export function EmailPanel() {
           Bu bildirimi ve içerdiği veriyi işleme yetkim var.
         </label>
         <label>
+          Bu bildirim hangi pilotlara ait?
+          <select
+            multiple
+            value={pilotIds}
+            onChange={(e) =>
+              setPilotIds(Array.from(e.target.selectedOptions, (o) => o.value))
+            }
+          >
+            {data.pilotProfiles.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <p className="helper">
+          Seçim bildirim hunisini atar; ilanın pilot filtreleriyle eşleştiğini
+          garanti etmez.
+        </p>
+        <label>
           Bildirim .eml dosyası
           <input
             aria-label="Bildirim .eml dosyası"
@@ -342,7 +369,7 @@ export function EmailPanel() {
                 const result = await api<{
                   message: Message;
                   replayed: boolean;
-                }>("email/eml", { rawBase64, permitted: true });
+                }>("email/eml", { rawBase64, permitted: true, pilotIds });
                 setMessage(
                   result.replayed
                     ? "Bu e-posta daha önce işlenmiş; tekrar kayıt oluşturulmadı."
@@ -416,6 +443,18 @@ export function EmailPanel() {
                     {warning}
                   </p>
                 ))}
+                <EmailCompletion
+                  messageId={item.id}
+                  index={index}
+                  proposal={proposal}
+                  onSaved={refresh}
+                />
+                {proposal.userCompletedAt && (
+                  <p>
+                    Kullanıcı tamamlaması: {dateTime(proposal.userCompletedAt)};{" "}
+                    {proposal.correctionIds?.length ?? 0} kayıt.
+                  </p>
+                )}
                 <details>
                   <summary>Çıkarılan tüm alanlar</summary>
                   <dl className="info-list">
@@ -433,6 +472,16 @@ export function EmailPanel() {
                 </details>
               </article>
             ))}
+            {!!item.corrections?.length && (
+              <details>
+                <summary>Alan tamamlama kayıtları</summary>
+                {item.corrections.map((c) => (
+                  <p key={c.id}>
+                    {dateTime(c.createdAt)} · {c.evidenceNote}
+                  </p>
+                ))}
+              </details>
+            )}
             {item.status !== "IMPORTED" && (
               <>
                 <label className="checkbox-label">

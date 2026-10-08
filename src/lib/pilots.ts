@@ -3,6 +3,9 @@ import type { PrismaClient, SearchProfile } from "@prisma/client";
 import { provinces, pilotFuels, normalizeBodyType } from "./constants";
 import { listingInclude } from "./listings";
 import type { StoredListing } from "./listings";
+import { recentPriceDrops } from "./price-drops";
+import { missingListingFields, comparableStatus } from "./listing-quality";
+import { intakeFunnel, attributedReceipt } from "./intake-funnel";
 
 export const pilotDefaults = [
   {
@@ -105,28 +108,29 @@ export async function pilotSummaries(
   client: PrismaClient | Prisma.TransactionClient,
   now = new Date(),
 ) {
-  const [profiles, listings, receipts] = await Promise.all([
+  const [profiles, listings, receipts, reviews] = await Promise.all([
     client.searchProfile.findMany({
       where: { pilotKey: { not: null } },
       include: { alerts: true },
       orderBy: { id: "desc" },
     }),
     client.listing.findMany({
-      where: { isDemo: false, identityStatus: "ACTIVE" },
+      where: { isDemo: false },
       include: listingInclude,
     }),
-    client.emailMessage.findMany({
-      where: { seenViaGmailAt: { not: null }, status: "IMPORTED" },
-      select: { id: true, seenViaGmailAt: true, proposals: true },
-    }),
+    client.emailMessage.findMany(),
+    client.listingReview.findMany({ where: { status: "PENDING" } }),
   ]);
   return profiles.map((profile) => {
-    const selected = listings.filter((l) => matchesProfile(l, profile));
+    const selected = listings.filter(
+      (l) => l.identityStatus === "ACTIVE" && matchesProfile(l, profile),
+    );
     const threshold = profile.alerts[0]?.minScore ?? 70;
     const opportunities = selected
       .filter(
         (l) =>
           l.assessment?.score != null &&
+          missingListingFields(l).length === 0 &&
           l.assessment.score >= threshold &&
           l.assessment.confidence !== "INSUFFICIENT" &&
           l.assessment.sampleCount >= 5 &&
@@ -151,16 +155,18 @@ export async function pilotSummaries(
     const lastSuccessfulIngestion = receipts
       .filter(
         (r) =>
-          receiptIds.has(r.id) ||
-          (Array.isArray(r.proposals) &&
-            r.proposals.some(
-              (p) =>
-                p &&
-                typeof p === "object" &&
-                !Array.isArray(p) &&
-                typeof p.listingId === "string" &&
-                selectedIds.has(p.listingId),
-            )),
+          !!r.seenViaGmailAt &&
+          r.status === "IMPORTED" &&
+          (receiptIds.has(r.id) ||
+            (Array.isArray(r.proposals) &&
+              r.proposals.some(
+                (p) =>
+                  p &&
+                  typeof p === "object" &&
+                  !Array.isArray(p) &&
+                  typeof p.listingId === "string" &&
+                  selectedIds.has(p.listingId),
+              ))),
       )
       .reduce<Date | null>(
         (last, r) =>
@@ -170,11 +176,86 @@ export async function pilotSummaries(
         null,
       );
     const drops = profile.trackPriceDrops ? selected.filter(hasPriceDrop) : [];
+    const recentDrops = profile.trackPriceDrops
+      ? selected
+          .flatMap((l) =>
+            recentPriceDrops(l.id, l.prices, now).map((event) => ({
+              ...event,
+              title: l.title,
+              sourceUrl: l.sourceUrl,
+            })),
+          )
+          .sort((a, b) => b.observedAt.getTime() - a.observedAt.getTime())
+      : [];
+    const intake = intakeFunnel(profile, listings, receipts, reviews);
+    const insufficient = selected.filter(
+      (l) => comparableStatus(l, now) === "INSUFFICIENT",
+    ).length;
+    const analysisPending = selected.filter((l) =>
+      ["NOT_ANALYZED", "OUTDATED"].includes(comparableStatus(l, now)),
+    ).length;
+    const missingData = selected.filter(
+      (l) => missingListingFields(l).length > 0,
+    ).length;
+    const reasons = [
+      ...(!intake.gmailNotifications
+        ? [
+            "Bu pilot için Gmail bildirimi yok. Pilot etiket/gönderici eşlemesini ve bağlantı iznini kontrol edin.",
+          ]
+        : []),
+      ...(intake.unparsedNotifications
+        ? [
+            `${intake.unparsedNotifications} bildirimin içindeki ilanlar ayrıştırılamadı; gerçek .eml örneğini inceleyin.`,
+          ]
+        : []),
+      ...(intake.pendingListings
+        ? [
+            `${intake.pendingListings} ilan şablon, eksik alan, kimlik veya gövde tipi incelemesi bekliyor.`,
+          ]
+        : []),
+      ...(intake.savedReal && !selected.length
+        ? ["Kaydedilen ilanlar mevcut pilot filtrelerini karşılamıyor."]
+        : []),
+      ...(missingData
+        ? [`${missingData} eşleşen ilanda karşılaştırma verisi eksik.`]
+        : []),
+      ...(insufficient
+        ? [
+            `${insufficient} eşleşen ilan için en az 5 yeterli emsal bulunamadı.`,
+          ]
+        : []),
+      ...(analysisPending
+        ? [`${analysisPending} eşleşen ilan güncel analiz bekliyor.`]
+        : []),
+      ...(!opportunities.length &&
+      selected.length &&
+      !insufficient &&
+      !analysisPending &&
+      !missingData
+        ? ["Yeterli emsalli ilanlar minimum fırsat puanını karşılamıyor."]
+        : []),
+    ];
     return {
       id: profile.id,
       pilotKey: profile.pilotKey,
       name: profile.name,
       profile,
+      funnel: {
+        ...intake,
+        matchedListings: selected.length,
+        insufficientListings: insufficient,
+        supportedOpportunities: opportunities.length,
+        analysisPending,
+        missingData,
+      },
+      zeroReasons: reasons,
+      unassignedGmail: receipts.filter(
+        (m) =>
+          m.seenViaGmailAt &&
+          !profiles.some((p) => attributedReceipt(m, p, listings)),
+      ).length,
+      recentDrops,
+      recentDropCount: recentDrops.length,
       totalReal: selected.length,
       discoveredToday: selected.filter(
         (l) => l.createdAt >= istanbulDayStart(now) && l.createdAt <= now,

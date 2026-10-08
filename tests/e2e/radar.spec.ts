@@ -163,6 +163,7 @@ test("tüm sayfalar, koyu tema ve mobil görünüm çalışır", async ({ page }
   for (const path of [
     "/",
     "/firsatlar",
+    "/yeni-ilanlar",
     "/fiyat-gecmisi",
     "/takip-listem",
     "/veri-kaynaklari",

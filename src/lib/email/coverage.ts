@@ -38,7 +38,11 @@ export async function emailStatus() {
     totalReviews,
     statusCounts,
   ] = await Promise.all([
-    db.emailMessage.findMany({ orderBy: { createdAt: "desc" }, take: 100 }),
+    db.emailMessage.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 100,
+      include: { corrections: { orderBy: { createdAt: "asc" } } },
+    }),
     db.emailMessage.count(),
     db.emailTemplate.findMany({ orderBy: { confirmedAt: "desc" }, take: 100 }),
     db.listingReview.findMany({
@@ -64,6 +68,10 @@ export async function emailStatus() {
       retryAfter: mailbox.retryAfter,
     },
     messages,
+    pilotProfiles: await db.searchProfile.findMany({
+      where: { pilotKey: { not: null } },
+      select: { id: true, name: true },
+    }),
     templates,
     reviews,
     totalMessages,

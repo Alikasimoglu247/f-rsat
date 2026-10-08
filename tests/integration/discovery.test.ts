@@ -45,14 +45,18 @@ it("09.00 motoru yeterli gerçek emsalleri rapora alır; demo ve yetersiz kanıt
   const raw = (
     await readFile("tests/fixtures/emails/sahibinden-synthetic.eml")
   ).toString();
+  const completeRaw = raw.replace(
+    "Konum: İstanbul / Kadıköy",
+    "Konum: İstanbul / Kadıköy\nMahalle: Caferağa\nİşlem: SATILIK\nNet m²: 100\nBrüt m²: 125",
+  );
   const first = await ingestEml(
-    Buffer.from(raw.replace("4.250.000,50 TL", "3.000.000 TL")),
+    Buffer.from(completeRaw.replace("4.250.000,50 TL", "3.000.000 TL")),
   );
   await approveMessage(first.message.id);
   for (let i = 1; i < 9; i++)
     await ingestEml(
       Buffer.from(
-        raw
+        completeRaw
           .replace("1234567890", String(1234567890 + i))
           .replace(
             "Sentetik test Kadıköy dairesi",

@@ -44,7 +44,7 @@ run("npx", ["prisma", "migrate", "deploy"]);
 const testDb = new pg.Pool({ connectionString: configured });
 try {
   await testDb.query(
-    'TRUNCATE TABLE "Listing", "ListingSource", "ImportJob", "AnalysisRun", "AppSettings", "SearchProfile", "EmailMessage", "EmailTemplate", "MailboxConnection", "OAuthAttempt" CASCADE',
+    'TRUNCATE TABLE "Listing", "ListingSource", "ImportJob", "AnalysisRun", "AppSettings", "SearchProfile", "EmailMessage", "EmailTemplate", "MailboxConnection", "OAuthAttempt", "SchedulerHealth" CASCADE',
   );
 } finally {
   await testDb.end();
