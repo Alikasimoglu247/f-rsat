@@ -15,6 +15,7 @@ import { liveReadiness } from "@/lib/readiness";
 import { verifyBodyType, bodyReviewSchema } from "@/lib/vehicle-review";
 import { emailGet, emailPost } from "@/lib/email/api";
 import { sourceCoverage } from "@/lib/email/coverage";
+import { investmentReport } from "@/lib/investment-report";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 type Context = { params: Promise<{ path?: string[] }> };
@@ -27,6 +28,7 @@ export async function GET(request: Request, context: Context) {
       return json({ status: "ok", database: "connected" });
     }
     if (path[0] === "dashboard") return json(await dashboard());
+    if (path.join("/") === "investment") return json(await investmentReport());
     if (path[0] === "readiness") return json(await liveReadiness());
     if (path[0] === "discovery")
       return json(

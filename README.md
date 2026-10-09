@@ -30,7 +30,25 @@ Seed dört kategoride dokuzar, toplam **36 açıkça DEMO etiketli kayıt** olu�
 - İşlemsel mükerrer önleme, Decimal fiyatlar, kaynak/harici kimlik/alım zamanı ve veri kökeni.
 - Veritabanında takip listesi, saklanan fiyat geçmişi, kullanılan emsaller ve doğrulanmamış risk uyarıları.
 - Kayıtlı arama profilleri, puan eşikleri, günlük analiz ve bildirim/iş/kaynak hata günlükleri.
-- Sekiz ana ekran, açık/koyu tema, mobil görünüm, loading/empty/error durumları.
+- Yatırım analizi dahil ana ekranlar, açık/koyu tema, mobil görünüm, loading/empty/error durumları.
+
+## Kaynaklara dayalı Silivri yatırım pilotu
+
+Menüde **Yatırım Analizi** (`/yatirim-analizi`), resmî ekonomik verileri, mahalle kapsamını ve gerçek kaynak adaylarının gerekçeli değerlendirmesini birlikte gösterir. TCMB, Silivri Belediyesi, UAB ve AFAD kanıtlarında dönem/kapsam; ilanlarda kaynak, yayın tarihi ve gözlem zamanı ayrıdır. Haber üzerinden aktarılan Endeksa ilçe istatistiği bağımsız doğrulanmış mahalle veya tekil taşınmaz değeri değildir.
+
+9 Ekim 2026 araştırmasında **5 kaynak adayı** bulundu. Genç City'nin üç ve Akgün Gayrimenkul'ün bir fiyatlı arazi ilanı mevcut PostgreSQL'e aktarıldı; fiyatı/alanı açıklanmayan Selimpaşa villa projesi araştırma adayı olarak kaldı. İlanların hâlâ satışa açık olduğu, hukuki beyanları ve yeterli emsalleri doğrulanmadı. **4 gerçek fiyat kaydı, 5 gerekçeli değerlendirme, 0 yeterli emsal puanı, 0 incelemeye değer sonucu.** Demo kayıtlar ayrıdır.
+
+Tekrarlanabilir, ağ veya dış mesaj göndermeyen içe aktarım:
+
+```sh
+npx tsx scripts/import-research.ts
+```
+
+Bu komut tarihli araştırma gözlemlerini mevcut kimlik/fiyat geçmişi motoruyla kaydeder ve mevcut analizi çalıştırır. Aynı gözlemi tekrar çalıştırmak yeni ilan veya fiyat olayı yaratmaz. Kaynak gözlemi yaş sınırını aştığında yeni import yapılmaz. Fiyatı olmayan projeye sıfır fiyat atanmaz. Kaynaklar sürekli bağlı feed olarak gösterilmez; toplu veri veya ticari yeniden kullanım lisansı varsayılmaz.
+
+Ajan gerekçeleri, destekleyen kaynakları, eksik bilgileri ve alternatifin neden karşılaştırılamadığını gösterir. Sonuçlar **İncelemeye değer / Riskli / Yetersiz veri**; istenen TL/m² hesabı değerleme veya fırsat puanı değildir. Aynı karar şeması Marmara SUV profilindeki gerçek, kaynak kanıtıyla gövde tipi onaylı kayıtlara uygulanır; bu araştırmada gerçek SUV ilanı bulunmadı. Ücretli model çağrısı veya sürekli site taraması eklenmedi.
+
+Kaynak gözlemleri ve sınırlamalar: [Silivri araştırma verisi](src/data/silivri-research.json). Hesaplama/karar kuralları: [yatırım motoru](src/lib/investment.ts). Eski dashboard, import, Gmail ve emsal motoru korunmuştur.
 
 ## Analiz sınırları
 
@@ -78,7 +96,7 @@ Günlük iş önce onaylı Gmail/izinli feed kayıtlarını alır, kimlik ve tar
 
 **Yetkili API / lisanslı feed:** kullanım hakkınız olan sabit HTTPS JSON endpoint için `AUTHORIZED_FEED_URL`, `AUTHORIZED_FEED_HOST` ve gerekirse `AUTHORIZED_FEED_TOKEN`. Aynı import sözleşmesini kullanır. Başarılı senkronizasyondan önce bağlı gösterilmez. Sahibinden, Arabam, Hepsiemlak, Emlakjet **planlanmış ve bağlı değildir**. API varlığı varsayılmaz; CAPTCHA/oturum/hız sınırı veya erişim kısıtı aşılmaz. Bulut ağ ayarlarında seçtiğiniz hizmetin alan adı izni ayrıca gerekebilir.
 
-**9 Ekim 2026 kaynak denetimi, ağ sonrası kontrol:** Emlakjet/Arabam/Hepsiemlak ve açık veri portalları artık yanıt veriyor; bazı yeni API adaylarında CONNECT 403 sürüyor. 80 tekil URL'nin 82 kayıtlı sonucu incelendi. Birincil platform koşulları otomatik aktarımı kısıtlıyor; erişilen API'ler anahtar/paket istiyor veya Türkiye kapsamı yok. Açık veriler toplu, eski veya sentetik; iki pilot için gerçek ilan ve analiz sayısı 0. Bu turda 72 birim + 41 PostgreSQL testi geçti. [Güncel sonuç ve somut engeller](docs/REAL_SOURCE_RECHECK_20261009.md) · [Kanıtlar](docs/research/20261009-network-recheck-evidence.json) · [Önceki araştırma](docs/REAL_SOURCE_RESEARCH_20261009.md).
+**Önceki API araştırmasının tarihsel kaydı — 9 Ekim 2026:** Emlakjet/Arabam/Hepsiemlak ve açık veri portalları artık yanıt veriyor; bazı yeni API adaylarında CONNECT 403 sürüyor. 80 tekil URL'nin 82 kayıtlı sonucu incelendi. Birincil platform koşulları otomatik aktarımı kısıtlıyor; erişilen API'ler anahtar/paket istiyor veya Türkiye kapsamı yok. Açık veriler toplu, eski veya sentetik; bu önceki API araştırmasında iki pilot için gerçek ilan ve analiz sayısı 0 idi; yukarıdaki yatırım pilotunda artık 4 fiyat kaydı ve 5 gerekçeli değerlendirme var. O turda 72 birim + 41 PostgreSQL testi geçti. [Güncel sonuç ve somut engeller](docs/REAL_SOURCE_RECHECK_20261009.md) · [Kanıtlar](docs/research/20261009-network-recheck-evidence.json) · [Önceki araştırma](docs/REAL_SOURCE_RESEARCH_20261009.md).
 
 **İsteğe bağlı AI:** `AI_ENABLED=true`, `AI_API_KEY`, `AI_MODEL`, OpenAI uyumlu `AI_BASE_URL`. AI yalnızca mevcut Türkçe kanıt cümlelerinin kimliklerini seçer; serbest fiyat/hasar/tapu iddiası üretemez. Sayılar ve puanlar deterministik motorda kalır. Kapalıyken kanıt açıklaması çalışır. Canlı sağlayıcı ayrıca doğrulanmalıdır.
 

@@ -399,6 +399,16 @@ function DashboardPage() {
         ))}
       </div>
       <PilotCards pilots={data.pilots} />
+      <div className="panel investment-entry">
+        <div>
+          <h2>Silivri yatırım analizi</h2>
+          <p>
+            Ekonomik koşulları, bölgesel gelişmeleri ve gerçek ilan adaylarını
+            kaynaklarıyla birlikte değerlendir.
+          </p>
+        </div>
+        <Link href="/yatirim-analizi">Gerekçeli değerlendirmeleri aç →</Link>
+      </div>
       <div className="dashboard-insights">
         <div className="panel radar-callout">
           <div className="callout-icon">
