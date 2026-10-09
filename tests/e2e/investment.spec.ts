@@ -1,6 +1,18 @@
 import { test, expect } from "@playwright/test";
 import { resetE2eFixtures } from "./reset";
-test.beforeAll(resetE2eFixtures);
+import pg from "pg";
+test.beforeAll(async () => {
+  await resetE2eFixtures();
+  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+  try {
+    await pool.query('TRUNCATE TABLE "ResearchRun", "ResearchResource"');
+    await pool.query('DELETE FROM "SchedulerHealth" WHERE id = $1', [
+      "investment-research",
+    ]);
+  } finally {
+    await pool.end();
+  }
+});
 
 test("yatırım ajanı gerçek tarihli kaynakları, fiyat hesabını ve eksik kanıtı gösterir", async ({
   page,
@@ -11,6 +23,12 @@ test("yatırım ajanı gerçek tarihli kaynakları, fiyat hesabını ve eksik ka
     .click();
   await expect(
     page.getByRole("heading", { name: "Yatırım analizi", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Araştırma döngüsü", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("araştırma döngüsü henüz çalıştırılmadı", { exact: false }),
   ).toBeVisible();
   const response = await page.request.get("/api/investment");
   const result = await response.json();
@@ -32,22 +50,18 @@ test("yatırım ajanı gerçek tarihli kaynakları, fiyat hesabını ve eksik ka
       0,
     );
   await expect(page.getByRole("article")).toHaveCount(5);
-  const villa = page
-    .getByRole("article")
-    .filter({
-      has: page.getByRole("heading", { name: "Kılıç Ceylan Country" }),
-    });
+  const villa = page.getByRole("article").filter({
+    has: page.getByRole("heading", { name: "Kılıç Ceylan Country" }),
+  });
   await expect(villa).toContainText("Fiyat açıklanmamış");
   await expect(villa).toContainText("Yetersiz veri");
   await expect(villa).toContainText("Neden fırsat olabilir?");
   await expect(villa).toContainText("Daha iyi alternatif var mı?");
-  const farm = page
-    .getByRole("article")
-    .filter({
-      has: page.getByRole("heading", {
-        name: "250 m² Değirmenköy hisseli tarla",
-      }),
-    });
+  const farm = page.getByRole("article").filter({
+    has: page.getByRole("heading", {
+      name: "250 m² Değirmenköy hisseli tarla",
+    }),
+  });
   const farmFresh = result.sources.find(
     (source: { id: string }) => source.id === "genc-farm250",
   ).fresh;

@@ -1,25 +1,25 @@
 import type { SearchProfile } from "@prisma/client";
 import { Prisma } from "@prisma/client";
-import { research, sourceFresh } from "./investment";
+import {
+  research,
+  researchCandidateFresh,
+  verifiedResearchField,
+  type ResearchCandidate,
+  type ResearchSnapshot,
+} from "./investment";
 import { listingSchema } from "./validation";
 
-export type ResearchCandidate = (typeof research.candidates)[number];
+export type { ResearchCandidate } from "./investment";
 export function researchListingInput(
   candidate: ResearchCandidate,
   now = new Date(),
+  data: ResearchSnapshot = research,
 ) {
-  const source = research.sources.find(
-    (item) => item.id === candidate.sourceId,
-  );
-  if (
-    !source ||
-    source.url !== candidate.sourceUrl ||
-    source.retrievedAt !== candidate.observedAt ||
-    !sourceFresh(source, now) ||
-    candidate.price == null
-  )
+  if (!researchCandidateFresh(candidate, now, data) || candidate.price == null)
     return null;
-  return listingSchema.parse({
+  const verified = (field: Parameters<typeof verifiedResearchField>[1]) =>
+    verifiedResearchField(candidate, field, now, data);
+  const parsed = listingSchema.safeParse({
     title: candidate.title,
     category: candidate.category,
     province: candidate.province,
@@ -30,16 +30,38 @@ export function researchListingInput(
     sourceUrl: candidate.sourceUrl,
     // Conflicting reference numbers are not a strong external identity.
     externalId:
-      candidate.id === "akgun-3653" ? undefined : candidate.externalId,
+      candidate.externalReferenceConflict || candidate.id === "akgun-3653"
+        ? undefined
+        : candidate.externalId,
     isDemo: false,
     sizeM2: candidate.sizeM2,
-    classification: candidate.classification,
-    zoning: candidate.zoning,
-    roadAccess: candidate.roadAccess,
+    netM2: candidate.netM2,
+    grossM2: candidate.grossM2,
+    propertyType: candidate.propertyType,
+    rooms: candidate.rooms,
+    buildingAge: candidate.buildingAge,
+    condition: candidate.condition,
+    legalStatus: verified("legalStatus") ? candidate.legalStatus : undefined,
+    earthquakeInfo: verified("earthquakeInfo")
+      ? candidate.earthquakeInfo
+      : undefined,
+    classification: verified("classification")
+      ? candidate.classification
+      : undefined,
+    zoning: verified("zoning") ? candidate.zoning : undefined,
+    roadAccess: verified("roadAccess") ? candidate.roadAccess : undefined,
     parcelNumber: candidate.parcelNumber,
-    sharedOwnership: candidate.sharedOwnership,
-    agriculturalRestrictions: candidate.agriculturalRestrictions,
+    sharedOwnership:
+      verified("sharedOwnership") ||
+      candidate.sharedOwnership?.toLocaleLowerCase("tr-TR").includes("hisseli")
+        ? candidate.sharedOwnership
+        : undefined,
+    agriculturalRestrictions: verified("agriculturalRestrictions")
+      ? candidate.agriculturalRestrictions
+      : undefined,
+    ...candidate.vehicle,
   });
+  return parsed.success ? parsed.data : null;
 }
 export function researchInProfile(
   candidate: ResearchCandidate,

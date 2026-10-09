@@ -452,14 +452,30 @@ export async function importRecords(
     throw error;
   }
 }
-export async function analyzeAll(tx: Prisma.TransactionClient) {
+export async function analyzeAll(
+  tx: Prisma.TransactionClient,
+  options: { eligibleResearchIds?: Set<string>; now?: Date } = {},
+) {
   const listings = await tx.listing.findMany({
     where: { identityStatus: "ACTIVE" },
     include: listingInclude,
   });
-  const inputs = listings.map(evidence);
-  for (const listing of inputs) {
-    const result = assess(listing, inputs);
+  const eligible = (listing: StoredListing) =>
+    listing.source.method !== "PUBLIC_RESEARCH" ||
+    !!options.eligibleResearchIds?.has(listing.id);
+  const inputs = listings.filter(eligible).map(evidence);
+  for (const stored of listings) {
+    const listing = evidence(stored);
+    const result = assess(listing, inputs, options.now);
+    if (!eligible(stored)) {
+      result.score = null;
+      result.confidence = "INSUFFICIENT";
+      result.riskFlags.push({
+        code: "RESEARCH_EVIDENCE",
+        label: "Güncel kaynak ve taşınmaza özgü resmî hukuki kanıt eksik; araştırma beyanı fiyat emsali sayılmadı.",
+        verified: false,
+      });
+    }
     const { comparables, riskFlags, ...fields } = result;
     const data = {
       ...fields,

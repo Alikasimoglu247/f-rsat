@@ -362,3 +362,38 @@ model DailyReport {
   listingIds String[]
   createdAt  DateTime    @default(now())
 }
+
+// Bounded public research audit. No e-mail bodies, secrets or full copied pages.
+model ResearchRun {
+  id          String   @id @default(cuid())
+  trigger     String
+  segment     String
+  status      String
+  previousId  String?
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  summary     Json
+  snapshot    Json
+  decisions   Json
+  changes     Json
+  checks      Json
+  discoveries Json
+
+  @@index([startedAt])
+}
+
+model ResearchResource {
+  url             String   @id
+  host            String
+  kind            String
+  policyStatus    String
+  state           String   @default("DISCOVERED")
+  discoveredFrom  String?
+  discoveredAt    DateTime @default(now())
+  lastCheckedAt   DateTime?
+  lastSuccessAt   DateTime?
+  sha256          String?
+  lastReason      String?
+
+  @@index([state, policyStatus])
+}

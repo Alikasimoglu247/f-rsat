@@ -4,7 +4,7 @@ Türkçe, kişisel emlak ve ikinci el araç fırsat keşif uygulaması. Next.js 
 
 ## Başlatma
 
-Node.js 24, npm, Docker ve Docker Compose gerekir.
+Node.js 24.19 veya üstü, npm, Docker ve Docker Compose gerekir. Docker imajı TCMB PDF'leri için Poppler içerir; Docker dışında araştırma çalıştırırken `pdftotext` kurulu olmalıdır.
 
 ```sh
 cd /workspace/f-rsat
@@ -38,15 +38,18 @@ Menüde **Yatırım Analizi** (`/yatirim-analizi`), resmî ekonomik verileri, ma
 
 9 Ekim 2026 araştırmasında **5 kaynak adayı** bulundu. Genç City'nin üç ve Akgün Gayrimenkul'ün bir fiyatlı arazi ilanı mevcut PostgreSQL'e aktarıldı; fiyatı/alanı açıklanmayan Selimpaşa villa projesi araştırma adayı olarak kaldı. İlanların hâlâ satışa açık olduğu, hukuki beyanları ve yeterli emsalleri doğrulanmadı. **4 gerçek fiyat kaydı, 5 gerekçeli değerlendirme, 0 yeterli emsal puanı, 0 incelemeye değer sonucu.** Demo kayıtlar ayrıdır.
 
-Tekrarlanabilir, ağ veya dış mesaj göndermeyen içe aktarım:
+Bu ilk pilot tarihsel başlangıç envanteridir. Güncel araştırma artık JSON dosyasını yeniden tarihlemez; izinli kamu kaynaklarını yeniden okur ve sonuçları PostgreSQL'de saklar:
 
 ```sh
-npx tsx scripts/import-research.ts
+npm run research
+npm run research # yeni çalışma: yeniden ağ kontrolü ve değişiklik karşılaştırması
 ```
 
-Bu komut tarihli araştırma gözlemlerini mevcut kimlik/fiyat geçmişi motoruyla kaydeder ve mevcut analizi çalıştırır. Aynı gözlemi tekrar çalıştırmak yeni ilan veya fiyat olayı yaratmaz. Kaynak gözlemi yaş sınırını aştığında yeni import yapılmaz. Fiyatı olmayan projeye sıfır fiyat atanmaz. Kaynaklar sürekli bağlı feed olarak gösterilmez; toplu veri veya ticari yeniden kullanım lisansı varsayılmaz.
+Her çalışma önceki kaynakları yeniden kontrol eder, katalog ve resmî duyurulardan yeni URL'ler keşfeder, sınırlı sayıda yeni Değirmenköy adayı ayrıştırır ve değişiklik gerekçelerini kaydeder. Fiyatı olmayan kayda sıfır atanmaz; aynı fiyat yeni fiyat olayı oluşturmaz. Yeni belge bulunmadıkça imar/tapu/yol beyanları resmî bilgi değildir. Erişim engeli veya kullanım kısıtı olan kaynakta işlem durur; eskimiş/başarısız kanıtlar emsal ve karar desteğinden çıkarılır. Bilinmeyen alan adları inceleme kuyruğunda tutulur, otomatik ziyaret edilmez. `scripts/import-research.ts` yalnızca eski tarihli envanterin çevrimdışı içe aktarımı için korunmuştur.
 
-Ajan gerekçeleri, destekleyen kaynakları, eksik bilgileri ve alternatifin neden karşılaştırılamadığını gösterir. Sonuçlar **İncelemeye değer / Riskli / Yetersiz veri**; istenen TL/m² hesabı değerleme veya fırsat puanı değildir. Aynı karar şeması Marmara SUV profilindeki gerçek, kaynak kanıtıyla gövde tipi onaylı kayıtlara uygulanır; bu araştırmada gerçek SUV ilanı bulunmadı. Ücretli model çağrısı veya sürekli site taraması eklenmedi.
+Ajan gerekçeleri, destekleyen kaynakları, eksik bilgileri ve alternatifin neden karşılaştırılamadığını gösterir. Sonuçlar **İncelemeye değer / Riskli / Yetersiz veri**; istenen TL/m² hesabı değerleme veya fırsat puanı değildir. Aynı karar şeması Marmara SUV profilindeki gerçek, kaynak kanıtıyla gövde tipi onaylı kayıtlara uygulanır; gerçek araç olmadan fırsat üretilmez. Ücretli model çağrısı veya posta alımı araştırma döngüsünde bulunmaz.
+
+`npm run research:scheduler` açık makinede her gün **09.00 Europe/Istanbul** araştırır. `npm run research:probe` gerçek cron tetiklenmesiyle bir kez araştırır ve kapanır. Prob 09.00 çalışmasının veya kesintisiz barındırmanın kanıtı değildir. Mevcut Yatırım Analizi ekranında çalışma geçmişi, değişiklik nedenleri ve heartbeat görünür. Çalışma ortamının sınırları: [Araştırma zamanlayıcısı](docs/RESEARCH_SCHEDULER.md). İmaj kaynağı/digest doğrulaması: [CI imaj kökeni](docs/CI_IMAGE_PROVENANCE.md).
 
 Kaynak gözlemleri ve sınırlamalar: [Silivri araştırma verisi](src/data/silivri-research.json). Hesaplama/karar kuralları: [yatırım motoru](src/lib/investment.ts). Eski dashboard, import, Gmail ve emsal motoru korunmuştur.
 

@@ -2,8 +2,94 @@ import { Prisma } from "@prisma/client";
 import snapshot from "@/data/silivri-research.json";
 import { assess, type Assessment, type Evidence } from "./analysis";
 
-export type ResearchSource = (typeof snapshot.sources)[number];
-export type ResearchFact = (typeof snapshot.facts)[number];
+export type ResearchEvidenceField =
+  | "classification"
+  | "zoning"
+  | "sharedOwnership"
+  | "roadAccess"
+  | "parcelNumber"
+  | "agriculturalRestrictions"
+  | "legalStatus"
+  | "earthquakeInfo"
+  | "availability"
+  | "demand"
+  | "liquidity"
+  | "opportunityCost";
+export type ResearchSource = {
+  id: string;
+  name: string;
+  url: string;
+  retrievedAt: string;
+  kind: string;
+  validForDays: number;
+  sha256: string;
+  usageNote: string;
+  // A failed current check invalidates an earlier successful observation.
+  checkStatus?: string;
+};
+export type ResearchFact = {
+  id: string;
+  sourceId: string;
+  label: string;
+  value: number | null;
+  unit: string | null;
+  period: string | null;
+  scope: string;
+  subjectId?: string;
+  field?: ResearchEvidenceField;
+  text?: string;
+  validUntil?: string;
+  superseded?: boolean;
+};
+export type ResearchCandidate = {
+  id: string;
+  sourceId: string;
+  externalId: string | null;
+  sourceUrl: string;
+  publishedAt: string | null;
+  observedAt: string;
+  title: string;
+  category: string;
+  province: string;
+  district: string;
+  neighborhood: string;
+  transactionType: string;
+  price: string | null;
+  netM2: string | null;
+  grossM2: string | null;
+  propertyType: string | null;
+  rooms: string | null;
+  buildingAge: number | null;
+  condition: string | null;
+  legalStatus: string | null;
+  earthquakeInfo: string | null;
+  mortgageEligible: boolean | null;
+  factIds: string[];
+  features: string[];
+  limitations: string[];
+  sizeM2: string | null;
+  classification: string | null;
+  zoning: string | null;
+  roadAccess: string | null;
+  parcelNumber: string | null;
+  sharedOwnership: string | null;
+  agriculturalRestrictions: string | null;
+  riskSignals: string[];
+  areaBasis: string | null;
+  externalReferenceConflict?: boolean;
+  identityReviewRequired?: boolean;
+  reviewReasons?: string[];
+  evidence?: Partial<Record<ResearchEvidenceField, string[]>>;
+  vehicle?: Evidence["vehicle"];
+};
+export type ResearchSnapshot = Omit<
+  typeof snapshot,
+  "sources" | "facts" | "candidates"
+> & {
+  sources: ResearchSource[];
+  facts: ResearchFact[];
+  candidates: ResearchCandidate[];
+};
 export type Verdict = "İncelemeye değer" | "Riskli" | "Yetersiz veri";
 export type Reason = {
   text: string;
@@ -29,9 +115,10 @@ export type Decision = {
   origin: "RESEARCH" | "DATABASE";
   unitPrice: string | null;
   publishedAt: string | null;
+  priceCurrent?: boolean;
 };
 
-export const research = snapshot;
+export const research: ResearchSnapshot = snapshot;
 const day = 86_400_000;
 export function observedUnitPrice(price: string | null, area: string | null) {
   if (
@@ -63,16 +150,33 @@ export function sourceFresh(source: ResearchSource, now = new Date()) {
   const age = now.getTime() - new Date(source.retrievedAt).getTime();
   return (
     researchUrlAllowed(source.url) &&
+    (!source.checkStatus ||
+      ["VALID", "UNCHANGED"].includes(source.checkStatus)) &&
     /^[a-f0-9]{64}$/.test(source.sha256) &&
+    Number.isFinite(source.validForDays) &&
+    source.validForDays > 0 &&
     Number.isFinite(age) &&
     age >= -60_000 &&
     age <= source.validForDays * day
   );
 }
-export function supportedFact(id: string, now = new Date(), data = research) {
+export function supportedFact(
+  id: string,
+  now = new Date(),
+  data: ResearchSnapshot = research,
+) {
   const fact = data.facts.find((item) => item.id === id);
   const source = data.sources.find((item) => item.id === fact?.sourceId);
-  return fact && source && sourceFresh(source, now) ? fact : null;
+  const validUntil = fact?.validUntil
+    ? new Date(fact.validUntil).getTime()
+    : Infinity;
+  return fact &&
+    !fact.superseded &&
+    source &&
+    sourceFresh(source, now) &&
+    validUntil >= now.getTime()
+    ? fact
+    : null;
 }
 // Compare identical observation periods; September CPI cannot deflate August housing.
 export function realAnnualChange(
@@ -102,58 +206,300 @@ export function realAnnualChange(
     .toFixed(2);
 }
 
-export function researchDecision(
-  candidate: (typeof research.candidates)[number],
+const unknownValues = new Set([
+  "bilgi yok",
+  "bilinmiyor",
+  "unknown",
+  "doğrulanmadı",
+  "yok",
+  "nan",
+]);
+const normalized = (value: string) =>
+  value.normalize("NFC").trim().toLocaleLowerCase("tr-TR");
+const known = (value: string | null | undefined) =>
+  !!value?.trim() && !unknownValues.has(normalized(value));
+
+export function researchCandidateFresh(
+  candidate: ResearchCandidate,
   now = new Date(),
-  assessment: Assessment | null = null,
-): Decision {
-  const source = research.sources.find(
-    (item) => item.id === candidate.sourceId,
-  );
-  const bound =
+  data: ResearchSnapshot = research,
+) {
+  const source = data.sources.find((item) => item.id === candidate.sourceId);
+  return (
     !!source &&
     source.url === candidate.sourceUrl &&
-    source.retrievedAt === candidate.observedAt;
-  const missing =
+    source.retrievedAt === candidate.observedAt &&
+    sourceFresh(source, now)
+  );
+}
+
+// A district-wide official report does not verify the legal status of a parcel.
+// Each verification must name this candidate and field, and match its stated value.
+export function verifiedResearchField(
+  candidate: ResearchCandidate,
+  field: ResearchEvidenceField,
+  now = new Date(),
+  data: ResearchSnapshot = research,
+) {
+  return (candidate.evidence?.[field] ?? []).some((id) => {
+    const fact = supportedFact(id, now, data);
+    if (
+      !fact ||
+      fact.subjectId !== candidate.id ||
+      fact.field !== field ||
+      !known(fact.text)
+    )
+      return false;
+    const source = data.sources.find((item) => item.id === fact.sourceId);
+    if (field === "availability")
+      return (
+        !!source &&
+        ["OFFICIAL", "PUBLISHER"].includes(source.kind) &&
+        ["active", "satılık", "satilik", "mevcut"].includes(
+          normalized(fact.text!),
+        )
+      );
+    if (source?.kind !== "OFFICIAL") return false;
+    if (["demand", "liquidity", "opportunityCost"].includes(field)) return true;
+    const value = candidate[field as keyof ResearchCandidate];
+    return (
+      typeof value === "string" &&
+      known(value) &&
+      normalized(value) === normalized(fact.text!)
+    );
+  });
+}
+
+export function candidateLegalVerified(
+  candidate: ResearchCandidate,
+  now = new Date(),
+  data: ResearchSnapshot = research,
+) {
+  if (
+    candidate.identityReviewRequired ||
+    !researchCandidateFresh(candidate, now, data)
+  )
+    return false;
+  if (candidate.category === "ARABA")
+    return (
+      !!candidate.vehicle?.bodyTypeVerified &&
+      known(candidate.vehicle.bodyTypeEvidence)
+    );
+  const fields: ResearchEvidenceField[] =
     candidate.category === "EV"
-      ? [
-          "Ayrı net/brüt m²",
-          "Oda sayısı ve bağımsız bölüm",
-          "Tapu, iskân ve teslim durumu",
-          "Bina/zemin dayanımı",
-          "Gerçek kira, aidat ve boşluk süresi",
-        ]
+      ? ["legalStatus", "earthquakeInfo"]
       : [
-          "Güncel resmî imar ve arazi sınıfı",
-          "Tapu/pay ve takyidat belgeleri",
-          "Belgeli yasal yol erişimi",
-          ...(candidate.parcelNumber ? [] : ["Sayısal ada/parsel kimliği"]),
-          ...(candidate.category === "TARLA"
-            ? ["Tarımsal kullanım kısıtları ve gelir/gider"]
-            : []),
+          "classification",
+          "zoning",
+          "sharedOwnership",
+          "roadAccess",
+          "parcelNumber",
         ];
-  missing.push("Güncel satış mevcudiyeti ve fiyat teyidi");
-  if (candidate.price == null) missing.unshift("Güncel TL satış fiyatı");
-  if (!assessment || assessment.score == null)
-    missing.push("En az 5 güncel, aynı nitelikte gerçek emsal");
-  const factIds = bound
-    ? candidate.factIds.filter((id) => supportedFact(id, now))
+  return fields.every((field) =>
+    verifiedResearchField(candidate, field, now, data),
+  );
+}
+
+function currentAlternativeResearch(
+  candidate: ResearchCandidate,
+  now: Date,
+  data: ResearchSnapshot,
+) {
+  const area = candidate.category === "EV" ? candidate.netM2 : candidate.sizeM2;
+  if (!observedUnitPrice("1", area)) return [];
+  return data.candidates
+    .filter((other) => {
+      const otherArea = other.category === "EV" ? other.netM2 : other.sizeM2;
+      if (
+        other.sourceUrl === candidate.sourceUrl ||
+        other.identityReviewRequired ||
+        other.category !== candidate.category ||
+        normalized(other.province) !== normalized(candidate.province) ||
+        normalized(other.district) !== normalized(candidate.district) ||
+        normalized(other.neighborhood) !== normalized(candidate.neighborhood) ||
+        !researchCandidateFresh(other, now, data) ||
+        !observedUnitPrice(other.price, otherArea)
+      )
+        return false;
+      const relative = new Prisma.Decimal(otherArea!).div(area!);
+      return relative.gte("0.7") && relative.lte("1.3");
+    })
+    .sort((a, b) => a.id.localeCompare(b.id));
+}
+
+export function researchDecision(
+  candidate: ResearchCandidate,
+  now = new Date(),
+  assessment: Assessment | null = null,
+  data: ResearchSnapshot = research,
+): Decision {
+  const current = researchCandidateFresh(candidate, now, data);
+  const alternativeResearch = current
+    ? currentAlternativeResearch(candidate, now, data)
     : [];
-  const policy = supportedFact("policy-rate", now);
-  const rail = supportedFact("rail-stage", now);
-  const economicReason: Reason[] = policy
-    ? [
-        {
-          text: `TCMB politika faizi %${policy.value}. Bu, kredi veya mevduat teklifi değildir; finansman maliyeti ve sermayenin alternatif kullanım getirisi gerçek banka koşullarıyla karşılaştırılmadan yatırım kazancı hesaplanamaz.`,
-          evidenceIds: [policy.id],
-          kind: "INFERENCE",
-        },
-      ]
-    : [];
-  if (!bound || !source || !sourceFresh(source, now))
-    missing.unshift(
+  const alternativeNote =
+    current && ["ARSA", "TARLA", "EV"].includes(candidate.category)
+      ? ` Güncel araştırma grubunda aynı mahalle/tür ve yaklaşık alan aralığında ${alternativeResearch.length} başka fiyatlı aday bulundu.${
+          alternativeResearch.length
+            ? ` Araştırılan örnekler: ${alternativeResearch
+                .slice(0, 3)
+                .map(
+                  (item) =>
+                    `${item.title} (${item.price} TL, ${item.sizeM2 ?? item.netM2} m²)`,
+                )
+                .join("; ")}.`
+            : ""
+        } Hukuki nitelikler ve satış mevcudiyeti doğrulanmadığı için bu adaylar emsal veya daha iyi yatırım diye sıralanmadı.`
+      : "";
+  const verified = (field: ResearchEvidenceField) =>
+    current && verifiedResearchField(candidate, field, now, data);
+  const price =
+    current && observedUnitPrice(candidate.price, "1") ? candidate.price : null;
+  const candidateArea =
+    candidate.category === "EV" ? candidate.netM2 : candidate.sizeM2;
+  const area =
+    current && observedUnitPrice("1", candidateArea) ? candidateArea : null;
+  const missing: string[] = [];
+  if (candidate.identityReviewRequired)
+    missing.push(
+      "İlan kimliği/fiyat çelişkisi için inceleme ve veritabanı uzlaştırması",
+    );
+  if (!current)
+    missing.push(
       "Güncel kaynak kontrolü: araştırma gözlemi eskidi veya geçersiz",
     );
+  if (!price) missing.push("Güncel TL satış fiyatı");
+  if (!known(candidate.neighborhood))
+    missing.push("Karşılaştırma için doğrulanabilir mahalle");
+  if (candidate.category === "EV") {
+    if (
+      !observedUnitPrice("1", candidate.netM2) ||
+      !observedUnitPrice("1", candidate.grossM2) ||
+      (candidate.netM2 &&
+        candidate.grossM2 &&
+        new Prisma.Decimal(candidate.grossM2).lt(candidate.netM2))
+    )
+      missing.push("Ayrı net/brüt m²");
+    if (!known(candidate.rooms) || !known(candidate.propertyType))
+      missing.push("Oda sayısı ve bağımsız bölüm");
+    if (candidate.buildingAge == null || !known(candidate.condition))
+      missing.push("Bina yaşı ve kullanım durumu");
+    if (!verified("legalStatus")) missing.push("Tapu, iskân ve teslim durumu");
+    if (!verified("earthquakeInfo")) missing.push("Bina/zemin dayanımı");
+    missing.push("Gerçek kira, aidat ve boşluk süresi");
+  } else if (candidate.category === "ARABA") {
+    if (
+      !candidate.vehicle?.bodyTypeVerified ||
+      !known(candidate.vehicle.bodyTypeEvidence)
+    )
+      missing.push("Kaynak kanıtıyla doğrulanmış gövde tipi");
+    if (
+      !candidate.vehicle?.make ||
+      !candidate.vehicle.model ||
+      !candidate.vehicle.trim ||
+      candidate.vehicle.modelYear == null ||
+      candidate.vehicle.mileage == null ||
+      !candidate.vehicle.fuel ||
+      !candidate.vehicle.transmission ||
+      !candidate.vehicle.damageHistory
+    )
+      missing.push(
+        "Marka/model/donanım, yıl/km, yakıt/şanzıman ve hasar geçmişi",
+      );
+  } else {
+    if (!area) missing.push("Geçerli parsel alanı (m²)");
+    if (!verified("zoning") || !verified("classification"))
+      missing.push("Güncel resmî imar ve arazi sınıfı");
+    if (!verified("sharedOwnership") || !verified("legalStatus"))
+      missing.push("Tapu/pay ve takyidat belgeleri");
+    if (!verified("roadAccess")) missing.push("Belgeli yasal yol erişimi");
+    if (!known(candidate.parcelNumber))
+      missing.push("Sayısal ada/parsel kimliği");
+    else if (!verified("parcelNumber"))
+      missing.push("Parsel kimliği ile konumun belge eşleşmesi");
+    if (candidate.category === "TARLA" && !verified("agriculturalRestrictions"))
+      missing.push("Tarımsal kullanım kısıtları ve gelir/gider");
+  }
+  if (!verified("availability"))
+    missing.push("Güncel satış mevcudiyeti ve fiyat teyidi");
+  if (!verified("demand"))
+    missing.push("Aynı segment için belgeli talep göstergesi");
+  if (!verified("liquidity")) missing.push("Satış süresi ve likidite kanıtı");
+  if (!verified("opportunityCost"))
+    missing.push("Net alternatif yatırım ve finansman maliyeti");
+  const currentAssessment = current ? assessment : null;
+  if (
+    !currentAssessment ||
+    currentAssessment.score == null ||
+    currentAssessment.sampleCount < 5
+  )
+    missing.push("En az 5 güncel, aynı nitelikte gerçek emsal");
+  for (const flag of currentAssessment?.riskFlags ?? [])
+    if (!missing.includes(flag.label)) missing.push(flag.label);
+  const factIds = current
+    ? candidate.factIds.filter((id) => supportedFact(id, now, data))
+    : [];
+  const officialFact = (id: string) => {
+    const fact = supportedFact(id, now, data);
+    return fact &&
+      data.sources.some(
+        (source) => source.id === fact.sourceId && source.kind === "OFFICIAL",
+      )
+      ? fact
+      : null;
+  };
+  const policy = officialFact("policy-rate");
+  const rail =
+    candidate.category === "ARABA" ? null : officialFact("rail-stage");
+  const housing =
+    candidate.category === "ARABA" ? null : officialFact("housing-istanbul");
+  const inflation =
+    housing &&
+    data.facts.find(
+      (fact) =>
+        fact.id.startsWith("cpi-") &&
+        fact.period === housing.period &&
+        fact.unit === "%" &&
+        fact.scope === "Türkiye" &&
+        officialFact(fact.id),
+    );
+  const realHousing = realAnnualChange(housing, inflation ?? null);
+  const economicReason: Reason[] =
+    policy && policy.value != null && Number.isFinite(policy.value)
+      ? [
+          {
+            text: `TCMB politika faizi %${policy.value} (${policy.period ?? "dönem belirtilmedi"}). Bu, kredi veya mevduat teklifi değildir; finansman maliyeti ve sermayenin alternatif kullanım getirisi gerçek banka koşullarıyla karşılaştırılmadan yatırım kazancı hesaplanamaz.`,
+            evidenceIds: [policy.id],
+            kind: "INFERENCE",
+          },
+        ]
+      : [];
+  if (realHousing && new Prisma.Decimal(realHousing).lt(0))
+    economicReason.push({
+      text: `İstanbul konut endeksinin ${housing!.period} döneminde aynı dönem TÜFE ile hesaplanan reel yıllık değişimi %${realHousing}. Bu ilçe/mahalle veya arsa değerlemesi değildir; nominal fiyat artışı tek başına reel kazanç göstermez.`,
+      evidenceIds: [housing!.id, inflation!.id],
+      kind: "INFERENCE",
+    });
+  const risks = current ? [...candidate.riskSignals] : [];
+  if (
+    current &&
+    normalized(candidate.sharedOwnership ?? "").includes("hisseli") &&
+    !risks.length
+  )
+    risks.push(
+      "Hisseli tapu beyanı: pay ve kullanım hakkı resmî belge olmadan bağımsız mülkiyet sayılmaz.",
+    );
+  const enough =
+    current && missing.length === 0 && currentAssessment?.score != null;
+  const verdict: Verdict = candidate.identityReviewRequired
+    ? "Yetersiz veri"
+    : risks.length
+      ? "Riskli"
+      : !enough
+        ? "Yetersiz veri"
+        : currentAssessment!.score! >= 70
+          ? "İncelemeye değer"
+          : "Riskli";
   return {
     id: candidate.id,
     title: candidate.title,
@@ -164,34 +510,29 @@ export function researchDecision(
       : null,
     observedAt: candidate.observedAt,
     publishedAt: candidate.publishedAt,
-    price: candidate.price,
-    unitPrice:
-      bound && source && sourceFresh(source, now)
-        ? observedUnitPrice(candidate.price, candidate.sizeM2)
-        : null,
-    verdict:
-      bound &&
-      source &&
-      sourceFresh(source, now) &&
-      candidate.riskSignals.length
-        ? "Riskli"
-        : "Yetersiz veri",
+    // Keep the dated observation visible; it cannot support current valuation.
+    price: observedUnitPrice(candidate.price, "1") ? candidate.price : null,
+    priceCurrent: !!price,
+    unitPrice: observedUnitPrice(price, area),
+    verdict,
     origin: "RESEARCH",
     whyCould:
-      bound && factIds.length
+      current && factIds.length
         ? [
             {
               text:
                 candidate.category === "EV"
-                  ? "Yayıncının villa/bahçe/havuz sunumu özel kullanım ihtiyacına uyabilir. Yatırım avantajı için aynı mahallede benzer villaların fiyat ve kira kanıtı gerekir."
-                  : "Fiyat ve alan beyanı ilk bütçe/kullanım elemesine olanak veriyor. Mevcut kullanım hakkı, mülkiyet ve erişim belgelenirse kendi arazi sınıfındaki emsallerle yatırım tezi araştırılabilir; düşük toplam bedel tek başına fırsat değil.",
+                  ? "Yayıncının konut özellikleri kullanım ihtiyacına uyabilir. Aynı mahallede aynı tür/net-brüt alan, oda ve yaştaki konutların fiyatı ve gerçek kira kanıtı tamamlanmadan yatırım avantajı bilinmez."
+                  : candidate.category === "ARABA"
+                    ? "Doğrulanmış gövde tipi ile aynı marka/model/donanım, benzer yıl/km ve hasar durumundaki araçlar araştırılabilir; farklı segment SUV'lar doğrudan emsal değildir."
+                    : `Güncel kaynak beyanı ${price ?? "bilinmeyen"} TL / ${area ?? "bilinmeyen"} m²: ilk bütçe/kullanım elemesine olanak veriyor. Mahalle, imar, hisse ve yasal yol eşleşmesi doğrulanmadan düşük bedel tek başına fırsat değildir.`,
               evidenceIds: [factIds[0]],
               kind: "INFERENCE",
             },
             ...(rail
               ? [
                   {
-                    text: "Trakya demiryolu yatırımı bölgesel erişim ve talep açısından araştırma gerekçesi olabilir. Halkalı bağlantısı hâlâ yapımda; bu adayın istasyona erişimi veya değer artışı doğrulanmadı.",
+                    text: `${rail.label}. Bölgesel ulaşım araştırma gerekçesidir; bu adayın istasyona erişimi, tamamlanmış hizmet veya değer artışı ayrıca doğrulanmalıdır.`,
                     evidenceIds: [rail.id],
                     kind: "INFERENCE" as const,
                   },
@@ -202,45 +543,72 @@ export function researchDecision(
     whyNot: [
       {
         text:
-          candidate.price == null
-            ? "Fiyat ve geçerli alan yok; ucuzluk, m² değeri, kira getirisi ve fırsat puanı hesaplanamaz."
-            : "TL/m² yalnızca yayıncının fiyat/alan beyanının bölümüdür; imar, hisse ve konum eşleşmeden başka adayın TL/m² değeri emsal veya iskontolu değer kanıtı sayılmaz.",
+          candidate.category === "ARABA"
+            ? "İstenen araç fiyatı gerçekleşmiş satış değildir. Marka/model/donanım, yıl/km ve hasar eşleşmesi ile kaynak kanıtları olmadan ucuzluk veya yeniden satış avantajı hesaplanamaz."
+            : !price || !area
+              ? "Güncel fiyat veya geçerli alan yok; ucuzluk, m² değeri ve kira getirisi hesaplanamaz."
+              : "TL/m² yalnızca yayıncının fiyat/alan beyanının bölümüdür; imar, hisse ve konum eşleşmeden başka adayın TL/m² değeri emsal veya iskontolu değer kanıtı sayılmaz.",
         evidenceIds: factIds.slice(0, 1),
         kind: "INFERENCE",
       },
-      ...(factIds.includes("villa-finance")
+      ...(current && candidate.mortgageEligible === false
         ? [
             {
               text: "Yayıncı krediye uygun olmadığını beyan ediyor. Banka/tapu doğrulaması olmadan nedeni bilinmez; doğrulanırsa finansman ve yeniden satış seçeneklerini daraltabilir.",
-              evidenceIds: ["villa-finance"],
+              evidenceIds: factIds.includes("villa-finance")
+                ? ["villa-finance"]
+                : factIds.slice(0, 1),
               kind: "PUBLISHER" as const,
             },
           ]
         : []),
-      ...candidate.riskSignals.map((text) => ({
+      ...risks.map((text) => ({
         text,
         evidenceIds: factIds.slice(-1),
         kind: "PUBLISHER" as const,
       })),
-      ...candidate.limitations.map((text) => ({
+      ...(current ? candidate.limitations : []).map((text) => ({
+        text,
+        evidenceIds: factIds.slice(0, 1),
+        kind: "INFERENCE" as const,
+      })),
+      ...(current ? (candidate.reviewReasons ?? []) : []).map((text) => ({
         text,
         evidenceIds: factIds.slice(0, 1),
         kind: "INFERENCE" as const,
       })),
       ...economicReason,
+      {
+        text: "Güncel ilan sayısı piyasanın talep veya satış hızı değildir. Gerçek satış/kira işlemi, pazarlama süresi ve masraflar olmadan likidite ya da net getiri tahmin edilmedi.",
+        evidenceIds: [],
+        kind: "INFERENCE",
+      },
     ],
     missing,
     factIds: [
-      ...factIds,
-      ...(policy ? [policy.id] : []),
-      ...(rail ? [rail.id] : []),
+      ...new Set([
+        ...factIds,
+        ...alternativeResearch
+          .slice(0, 3)
+          .flatMap((item) =>
+            item.factIds.filter((id) => !!supportedFact(id, now, data)),
+          ),
+        ...Object.values(candidate.evidence ?? {})
+          .flat()
+          .filter((id) => current && supportedFact(id, now, data)),
+        ...economicReason.flatMap((reason) => reason.evidenceIds),
+        ...(rail ? [rail.id] : []),
+      ]),
     ],
-    assessment,
-    features: candidate.features,
+    assessment: currentAssessment,
+    features: current ? candidate.features : [],
     alternatives:
-      candidate.category === "EV"
-        ? "Fiyatı, net/brüt alanı, iskânı ve kira örneği açıklanmış aynı mahalle/türdeki bir bağımsız bölüm daha değerlendirilebilir olur. Bu pilotta böyle bir alternatif doğrulanmadığı için daha ucuz veya daha iyi diye sıralanmadı."
-        : "Bu pilotun diğer Değirmenköy adayları fiyat/alan tablosunda görülebilir; arsa ile tarla ve hisseli ile müstakil beyanlı yerler doğrudan emsal yapılmaz. Resmî imar/tapu/yol kanıtı olan aynı sınıfta bir alternatif yatırım açısından daha değerlendirilebilir; böyle bir üstünlük henüz doğrulanmadı.",
+      (candidate.category === "EV"
+        ? "Aynı mahalle/tür, ayrı net-brüt alan, oda/yaş, iskân ve gerçek kira bilgisi açıklanmış bağımsız bölümler karşılaştırılabilir. Bu kanıtları olmayan bir konut daha ucuz veya daha iyi diye sıralanmadı."
+        : candidate.category === "ARABA"
+          ? "Aynı marka/model/donanım ve doğrulanmış gövde tipindeki benzer yıl/km/hasar araçlar araştırılmalı; farklı segmentleri düşük fiyatları nedeniyle alternatif sayma."
+          : "Diğer Değirmenköy adayları fiyat/alan tablosunda görülebilir; arsa ile tarla ve hisseli ile müstakil beyanlı yerler doğrudan emsal yapılmaz. Resmî imar/tapu/yol kanıtı olan aynı sınıftaki alternatif daha değerlendirilebilir; böyle bir üstünlük belge olmadan varsayılmadı.") +
+      alternativeNote,
   };
 }
 

@@ -8,6 +8,41 @@ import type { InvestmentReport } from "@/lib/investment-report";
 import type { Decision, Reason } from "@/lib/investment";
 
 const EvidenceLabels = createContext<Record<string, string>>({});
+const runLabels: Record<string, string> = {
+  COMPLETED: "Tamamlandı",
+  SUCCEEDED: "Tamamlandı",
+  PARTIAL: "Kısmen tamamlandı",
+  FAILED: "Başarısız",
+  RUNNING: "Devam ediyor",
+};
+const checkLabels: Record<string, string> = {
+  PARSED: "Alanları ayrıştırıldı",
+  ACCESS_BLOCKED: "Kaynak erişimi engelledi",
+  FAILED: "Kontrol başarısız",
+  POLICY_REVIEW: "Kullanım izni incelenmeli",
+  ROBOTS_DENIED: "Otomatik erişime izin yok",
+  UNSUPPORTED: "Kaynak yapısı doğrulanamadı",
+  BUDGET_DEFERRED: "Bu çalışmanın istek sınırı nedeniyle ertelendi",
+};
+function changedEvidence(value: string | null) {
+  if (!value) return "Kanıt yok";
+  try {
+    const item = JSON.parse(value) as {
+      value?: number | null;
+      period?: string | null;
+      unit?: string | null;
+      text?: string | null;
+    };
+    if (!item || typeof item !== "object") return value.slice(0, 240);
+    const observed =
+      typeof item.value === "number"
+        ? `${item.value}${item.unit ?? ""}`
+        : (item.text?.slice(0, 240) ?? "Açıklanmamış");
+    return `${observed}${item.period ? ` (${item.period})` : ""}`;
+  } catch {
+    return value.slice(0, 240);
+  }
+}
 function EvidenceLinks({ ids }: { ids: string[] }) {
   const labels = useContext(EvidenceLabels);
   return ids.length ? (
@@ -32,7 +67,11 @@ function Reasons({ items }: { items: Reason[] }) {
     </ul>
   );
 }
-function Candidate({ decision }: { decision: Decision }) {
+function Candidate({
+  decision,
+}: {
+  decision: Decision & { priceCurrent?: boolean };
+}) {
   return (
     <article className="panel investment-candidate">
       <div className="investment-candidate-heading">
@@ -56,6 +95,13 @@ function Candidate({ decision }: { decision: Decision }) {
         </strong>{" "}
         · Kaynak gözlemi: {dateTime(decision.observedAt)}
       </p>
+      {decision.priceCurrent === false && (
+        <p role="status">
+          Geçmiş veya uzlaştırılmamış fiyat/özellik gözlemi. Güncel kaydı
+          destekleyen kaynak ve kimlik doğrulaması tamamlanmadı; fiyat
+          karşılaştırmasında kullanılmıyor.
+        </p>
+      )}
       {decision.publishedAt && (
         <p>
           Kaynak ilan tarihi: {decision.publishedAt}. Bugün sayfada bulunması,
@@ -103,7 +149,7 @@ function Candidate({ decision }: { decision: Decision }) {
           ? `${decision.assessment.sampleCount} eşleşen gerçek emsal. ${decision.assessment.score == null ? "Fırsat puanı üretilemedi." : `Mevcut fiyat motorunun puanı: ${decision.assessment.score}; yatırım getirisi tahmini değildir.`}`
           : "Fiyat/alan eksik; emsal fiyat analizi ve fırsat puanı üretilemedi."}
       </p>
-      {decision.assessment && (
+      {decision.origin === "DATABASE" && (
         <Link href={`/ilan/${decision.id}`}>
           Fiyat geçmişini ve eşleşen emsalleri incele →
         </Link>
@@ -123,11 +169,36 @@ export function InvestmentPage() {
   const labels = Object.fromEntries(
     data.facts.map((fact) => [
       fact.id,
-      data.sources.find((source) => source.id === fact.sourceId)!.name,
+      data.sources.find((source) => source.id === fact.sourceId)?.name ??
+        "Kaynak kaydı eksik",
     ]),
   );
   const nominal = data.facts.find((fact) => fact.id === "housing-istanbul");
-  const inflation = data.facts.find((fact) => fact.id === "cpi-august");
+  const inflation = data.facts.find(
+    (fact) =>
+      fact.id.startsWith("cpi-") &&
+      fact.period === nominal?.period &&
+      fact.current,
+  );
+  const latestRun = data.researchLoop.history[0];
+  const changeOrder = [
+    "DECISION_REVISED",
+    "PRICE_CHANGED",
+    "SOURCE_INVALIDATED",
+    "FACT_CHANGED",
+    "NEW_CANDIDATE",
+    "CANDIDATE_CHANGED",
+  ];
+  const displayedChanges = [...(latestRun?.changes ?? [])]
+    .sort((a, b) => changeOrder.indexOf(a.kind) - changeOrder.indexOf(b.kind))
+    .slice(0, 12);
+  const schedulerStatus =
+    {
+      RUNNING: "Çalışıyor; güncel süreç sinyali var",
+      NOT_STARTED: "Başlatılmamış",
+      STOPPED: "Durdurulmuş",
+      STALE: "Süreç sinyali eskimiş; çalıştığı doğrulanamıyor",
+    }[data.researchLoop.scheduler.status] ?? data.researchLoop.scheduler.status;
   return (
     <EvidenceLabels.Provider value={labels}>
       <div className="investment-page">
@@ -161,10 +232,194 @@ export function InvestmentPage() {
         </div>
         <p className="investment-context">
           Araştırma: {dateTime(data.researchedAt)} · Değerlendirme:{" "}
-          {dateTime(data.evaluatedAt)}. Bu, tarihli bir araştırma gözlemidir;
-          sürekli canlı ilan taraması değildir. Yeniden değerlendirme
-          veritabanındaki gerçek kayıtları ve kaynak yaşını kontrol eder.
+          {dateTime(data.evaluatedAt)}.{" "}
+          {data.researchLoop.mode === "LEGACY_SNAPSHOT"
+            ? "Önceki tarihli pilot gözlemi gösteriliyor; araştırma döngüsü henüz çalıştırılmadı."
+            : "Kaydedilmiş araştırma çalışmasının kanıtları gösteriliyor. Sayfayı açmak yeni internet araştırması başlatmaz; geçersiz veya eskimiş kanıtlar kararı desteklemez."}
         </p>
+        <section className="panel" aria-label="Araştırma döngüsü">
+          <h2>Araştırma döngüsü</h2>
+          <p>
+            Dar segment: Silivri / Değirmenköy küçük satılık arazi adayları.
+            Arsa ile tarla, hisseli ile müstakil tapu ve farklı imar hakları
+            ortak emsal yapılmaz.
+          </p>
+          <p>
+            Zamanlayıcı: <strong>{schedulerStatus}</strong> · Saat dilimi:{" "}
+            {data.researchLoop.scheduler.timezone} · Program:{" "}
+            {data.researchLoop.scheduler.schedule === "0 9 * * *"
+              ? "Her sabah 09.00"
+              : data.researchLoop.scheduler.schedule === "* * * * * *"
+                ? "Kısa süreli zamanlayıcı denemesi"
+                : "Özel zamanlama"}
+          </p>
+          <p>
+            Son süreç sinyali:{" "}
+            {dateTime(data.researchLoop.scheduler.lastHeartbeatAt)}
+            {data.researchLoop.scheduler.nextPlannedRunAt && (
+              <>
+                {" "}
+                · Planlanan sonraki tetik:{" "}
+                {dateTime(data.researchLoop.scheduler.nextPlannedRunAt)}
+              </>
+            )}
+            . Plan veya süreç sinyali, 09.00 araştırmasının gerçekleştiğini
+            kanıtlamaz.
+          </p>
+          {data.researchLoop.dailyRunCount === 0 && (
+            <p role="status">
+              Kayıtlı son çalışmalarda günlük programla tamamlanan araştırma
+              yok. Elle çalıştırma ve zamanlayıcı denemesi günlük çalışma olarak
+              sayılmaz.
+            </p>
+          )}
+          {!latestRun ? (
+            <p>Kaydedilmiş araştırma çalışması yok.</p>
+          ) : (
+            <>
+              <p>
+                Son çalışma: {dateTime(latestRun.startedAt)} ·{" "}
+                {runLabels[latestRun.status] ?? latestRun.status} ·{" "}
+                {latestRun.trigger === "MANUAL"
+                  ? "Elle çalıştırıldı"
+                  : latestRun.trigger === "SCHEDULED_PROBE"
+                    ? "Gerçek zamanlayıcı denemesi"
+                    : "Günlük program tetikledi"}
+              </p>
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Çalışma / tetik</th>
+                      <th>Kontrol / alınan yanıt</th>
+                      <th>Yeni kaynak / aday</th>
+                      <th>Fiyat / kanıt değişimi</th>
+                      <th>Karar değişimi / geçersiz kaynak</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.researchLoop.history.map((run) => (
+                      <tr key={run.id}>
+                        <td>
+                          {dateTime(run.startedAt)}
+                          <br />
+                          {run.trigger === "MANUAL"
+                            ? "Elle"
+                            : run.trigger === "SCHEDULED_PROBE"
+                              ? "Zamanlayıcı denemesi"
+                              : "Günlük"}
+                          {" · "}
+                          {runLabels[run.status] ?? run.status}
+                          <br />
+                          <small>Çalışma {run.id}</small>
+                        </td>
+                        <td>
+                          {run.checkedUrls} / {run.fetchedChecks}
+                        </td>
+                        <td>
+                          {run.newSourceUrls} / {run.newCandidates}
+                        </td>
+                        <td>
+                          {run.priceChanges} / {run.factChanges}
+                        </td>
+                        <td>
+                          {run.decisionRevisions} / {run.invalidatedSources}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p>
+                Son çalışmada {latestRun.inserted} yeni gerçek ilan kaydedildi;{" "}
+                {latestRun.updated} kayıt güncellendi.{" "}
+                {latestRun.unchangedCandidates} adayın fiyat/özellik beyanı
+                değişmedi. Aynı fiyat gözlemi yeni fiyat indirimi olarak
+                sayılmaz.
+              </p>
+              <details>
+                <summary>
+                  Son çalışmada kararlar neden yeniden değerlendirildi?
+                </summary>
+                {latestRun.changes.length ? (
+                  <ul>
+                    {displayedChanges.map((change, i) => (
+                      <li key={`${change.kind}-${change.key}-${i}`}>
+                        <strong>
+                          {data.pilots
+                            .flatMap((item) => item.decisions)
+                            .find(
+                              (item) =>
+                                item.sourceUrl === change.key ||
+                                item.id === change.key,
+                            )?.title ??
+                            data.facts.find((item) => item.id === change.key)
+                              ?.label ??
+                            "Kaynak kontrolü"}
+                          :{" "}
+                        </strong>
+                        {change.reason}
+                        {change.kind === "PRICE_CHANGED" && (
+                          <>
+                            {" "}
+                            Önceki fiyat:{" "}
+                            {change.before
+                              ? money(change.before)
+                              : "Bilinmiyor"}
+                            ; yeni fiyat:{" "}
+                            {change.after
+                              ? money(change.after)
+                              : "Açıklanmamış"}
+                            .
+                          </>
+                        )}
+                        {change.kind === "DECISION_REVISED" && (
+                          <>
+                            {" "}
+                            Önceki sonuç: {change.before}; yeni sonuç:{" "}
+                            {change.after}.
+                          </>
+                        )}
+                        {change.kind === "FACT_CHANGED" && (
+                          <>
+                            {" "}
+                            Önceki kanıt: {changedEvidence(change.before)}; yeni
+                            kanıt: {changedEvidence(change.after)}.
+                          </>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>
+                    Yeni geçerli kanıt veya fiyat değişimi bulunmadı; önceki
+                    karar korunuyor.
+                  </p>
+                )}
+              </details>
+              <details>
+                <summary>Son kaynak kontrolleri ve engeller</summary>
+                <ul>
+                  {latestRun.checks.map((check, i) => (
+                    <li key={`${check.url}-${i}`}>
+                      <a href={check.url} target="_blank" rel="noreferrer">
+                        {data.sources.find((source) => source.url === check.url)
+                          ?.name ?? new URL(check.url).hostname}
+                      </a>
+                      : {checkLabels[check.status] ?? check.status}
+                      {check.reason && <> · {check.reason}</>}
+                    </li>
+                  ))}
+                </ul>
+                <p>
+                  {data.researchLoop.blockedResourceCount} kaynak erişim veya
+                  kullanım incelemesi nedeniyle bekliyor. Erişim engelleri
+                  aşılmaz.
+                </p>
+              </details>
+            </>
+          )}
+        </section>
         <div className="stats-grid investment-stats">
           {[
             ["Kaynakta bulunan aday", pilot.researchCount],
@@ -216,7 +471,7 @@ export function InvestmentPage() {
                     değildir.
                   </>
                 )}
-                <EvidenceLinks ids={["housing-istanbul", "cpi-august"]} />
+                <EvidenceLinks ids={data.realChangeFactIds} />
               </p>
               <p>
                 Politika faizi, konut kredisi veya net mevduat getirisi yerine
@@ -226,10 +481,11 @@ export function InvestmentPage() {
               </p>
               <EvidenceLinks ids={["policy-rate", "rent-istanbul"]} />
               <p>
-                Temmuz 2026 için haberde aktarılan Silivri daire istatistiği
-                ayrı bir bağlam verisidir. Örneklemi/modeli bağımsız
-                doğrulanmadı; Selimpaşa villası, arsa veya tarla değerlemesine
-                ve mahalle ortalamasına aktarılmaz.
+                {data.facts.find(
+                  (fact) => fact.id === "silivri-july-asking-context",
+                )?.current
+                  ? "Haberde aktarılan Silivri daire istatistiği ayrı bir bağlam verisidir. Örneklemi/modeli bağımsız doğrulanmadı; villa, arsa, tarla ve mahalle değerlemesine aktarılmaz."
+                  : "Silivri daire istatistiği için güncel geçerli kaynak kanıtı yok; önceki haber aktarımı değerlemeye kullanılmıyor."}
               </p>
               <EvidenceLinks ids={["silivri-july-asking-context"]} />
             </section>
@@ -293,7 +549,9 @@ export function InvestmentPage() {
                         <td>Doğrulanamadı</td>
                         <td>Doğrulanamadı</td>
                         <td>
-                          {item.finding}
+                          {item.current
+                            ? item.finding
+                            : "Güncel mahalle fiyatı, kira veya bölgesel gelişme kanıtı doğrulanamadı."}
                           <EvidenceLinks ids={item.evidenceIds} />
                         </td>
                       </tr>
@@ -312,15 +570,24 @@ export function InvestmentPage() {
                 {data.strategies.map((item) => (
                   <section key={item.category}>
                     <h3>{item.name}</h3>
-                    <p>
-                      <strong>Potansiyel:</strong> {item.upside}
-                    </p>
-                    <p>
-                      <strong>Risk:</strong> {item.downside}
-                    </p>
-                    <p>
-                      <strong>Likidite:</strong> {item.liquidity}
-                    </p>
+                    {item.current ? (
+                      <>
+                        <p>
+                          <strong>Potansiyel:</strong> {item.upside}
+                        </p>
+                        <p>
+                          <strong>Risk:</strong> {item.downside}
+                        </p>
+                        <p>
+                          <strong>Likidite:</strong> {item.liquidity}
+                        </p>
+                      </>
+                    ) : (
+                      <p>
+                        Güncel kanıtlar tamamlanmadan bu yatırım tezi yeniden
+                        doğrulanamadı.
+                      </p>
+                    )}
                     <p>
                       <strong>Eksik:</strong> {item.missing.join(" · ")}
                     </p>
@@ -377,6 +644,12 @@ export function InvestmentPage() {
                         {item.price == null
                           ? "Açıklanmamış"
                           : money(item.price)}
+                        {item.priceCurrent === false && (
+                          <>
+                            <br />
+                            <small>Geçmiş gözlem; güncel değil</small>
+                          </>
+                        )}
                       </td>
                       <td>
                         {item.unitPrice == null
@@ -425,7 +698,8 @@ export function InvestmentPage() {
               {data.facts.map((fact) => {
                 const source = data.sources.find(
                   (item) => item.id === fact.sourceId,
-                )!;
+                );
+                if (!source) return null;
                 return (
                   <div
                     key={fact.id}
@@ -448,7 +722,7 @@ export function InvestmentPage() {
                       Alınma: {dateTime(source.retrievedAt)} ·{" "}
                       {source.fresh
                         ? "Araştırma yaş sınırı içinde"
-                        : "Eskimiş kaynak; yeniden doğrulama gerekli"}
+                        : "Geçersiz veya eskimiş kaynak; kararı desteklemiyor"}
                     </p>
                     <small>{source.usageNote}</small>
                   </div>

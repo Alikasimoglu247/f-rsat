@@ -15,7 +15,9 @@ jobs:
     timeout-minutes: 20
     services:
       postgres:
-        image: postgres:17.9
+        # Official Docker distribution in ECR Public; same reviewed image digest,
+        # without Docker Hub's shared unauthenticated runner quota.
+        image: public.ecr.aws/docker/library/postgres:17.9@sha256:2a0d0fe14825b0939f78a8cad5cd4e6aa68bf94d0e5dd96e24b6d23af4315545
         env:
           POSTGRES_USER: radar
           POSTGRES_PASSWORD: ci_local_only

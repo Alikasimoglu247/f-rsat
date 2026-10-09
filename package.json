@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=24.19.0"
   },
   "scripts": {
     "dev": "next dev --hostname 127.0.0.1 --port 3000",
@@ -20,6 +20,9 @@
     "db:seed": "tsx prisma/seed.ts",
     "job:daily": "tsx scripts/daily.ts",
     "scheduler": "tsx scripts/scheduler.ts",
+    "research": "tsx scripts/research.ts",
+    "research:scheduler": "tsx scripts/research-scheduler.ts",
+    "research:probe": "tsx scripts/research-scheduler.ts --probe",
     "db:test": "tsx scripts/test-db.ts",
     "test:runtime": "node scripts/runtime-smoke.mjs"
   },
