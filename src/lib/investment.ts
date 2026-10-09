@@ -428,6 +428,69 @@ export function researchDecision(
   if (!verified("opportunityCost"))
     missing.push("Net alternatif yatırım ve finansman maliyeti");
   const currentAssessment = current ? assessment : null;
+  const parcelReasons: Reason[] = [];
+  if (current && ["ARSA", "TARLA"].includes(candidate.category)) {
+    const offerIds = candidate.factIds.filter((id) =>
+      supportedFact(id, now, data),
+    );
+    const unit = observedUnitPrice(price, area);
+    const identity = candidate.parcelNumber
+      ? `${candidate.parcelNumber} ada/parsel`
+      : "Ada/parseli açıklanmayan taşınmaz";
+    const comparableReady =
+      candidateLegalVerified(candidate, now, data) &&
+      currentAssessment?.score != null &&
+      currentAssessment.sampleCount >= 5;
+    if (price && area && unit)
+      parcelReasons.push({
+        text: `${identity}: ${price} TL / ${area} m² = ${unit} TL/m² isteniyor. ${comparableReady ? `Mevcut fiyat motoru ${currentAssessment!.sampleCount} eşleşen kaydı değerlendirdi; yatırım sonucu finansman, likidite ve diğer eksik kanıtlarla birlikte okunmalıdır.` : "Bu taşınmazın fiyat avantajı hesaplanamadı: en az 5 güncel, bağımsız ve aynı hukuki sınıftaki emsal doğrulanmadı."} İstenen fiyat, gerçekleşmiş satış bedeli değildir.`,
+        evidenceIds: offerIds.slice(0, 1),
+        kind: "INFERENCE",
+      });
+    if (
+      known(candidate.sharedOwnership) &&
+      normalized(candidate.sharedOwnership!).includes("hisseli")
+    )
+      parcelReasons.push({
+        text: `${identity} için yayıncı tapuyu hisseli olarak belirtiyor. ${area ?? "Açıklanmayan"} m²'nin tapudaki paya mı, ana parsel alanına mı, kullanım bölümüne mi karşılık geldiği doğrulanmadı. ${price ?? "Açıklanmayan"} TL bedelin satın aldığı pay/payda ve takyidat bilinmeden bağımsız parsel veya yeniden satış avantajı kabul edilemez.`,
+        evidenceIds: offerIds.slice(0, 1),
+        kind: "INFERENCE",
+      });
+    if (
+      /asfalta yakın|imara yakın|yerleşim yerinin yanında/u.test(
+        normalized(candidate.title),
+      )
+    )
+      parcelReasons.push({
+        text: `“${candidate.title}” başlığındaki yakınlık beyanı; imar hakkı, onaylı plan veya belgeli yasal yol cephesi sağlamaz. Bu özellikler doğrulanmadan fiyatın haklı bir prim mi yoksa risk karşılığı mı olduğu bilinmez.`,
+        evidenceIds: offerIds.slice(0, 1),
+        kind: "INFERENCE",
+      });
+    if (
+      candidate.publishedAt &&
+      /^\d{4}-\d{2}-\d{2}$/.test(candidate.publishedAt)
+    ) {
+      const localDate = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Europe/Istanbul",
+      }).format(now);
+      const days = Math.floor(
+        (Date.parse(localDate) - Date.parse(candidate.publishedAt)) / day,
+      );
+      if (Number.isFinite(days) && days > 90)
+        parcelReasons.push({
+          text: `Kaynak ilan tarihi ${candidate.publishedAt}; değerlendirme tarihinden ${days} gün önce. Bu, kesintisiz satışta kalma süresi değildir. Bugün sayfada aynı fiyatın okunması yeni ilan veya satılmamış güncel stok kanıtı sayılmaz; likidite çıkarımı yapılamadı.`,
+          evidenceIds: offerIds.slice(0, 1),
+          kind: "INFERENCE",
+        });
+    }
+    const division = supportedFact("genc-private-division", now, data);
+    if (division && candidate.sourceId.startsWith("genc-"))
+      parcelReasons.push({
+        text: "Aynı yayıncının Değirmenköy duyurusunda özel parselasyon ve hisseli arsalar anlatılıyor. Duyuru bu ada/parselin tapu belgesi değildir; “tamamı” ifadesinden ayrı ve müstakil tapu sonucu çıkarılamaz. Duyuru tarihsiz olduğu için kampanya fiyatı değerlendirmeye alınmadı.",
+        evidenceIds: [division.id, ...offerIds.slice(0, 1)],
+        kind: "INFERENCE",
+      });
+  }
   if (
     !currentAssessment ||
     currentAssessment.score == null ||
@@ -541,6 +604,7 @@ export function researchDecision(
           ]
         : [],
     whyNot: [
+      ...parcelReasons,
       {
         text:
           candidate.category === "ARABA"
@@ -597,6 +661,7 @@ export function researchDecision(
           .flat()
           .filter((id) => current && supportedFact(id, now, data)),
         ...economicReason.flatMap((reason) => reason.evidenceIds),
+        ...parcelReasons.flatMap((reason) => reason.evidenceIds),
         ...(rail ? [rail.id] : []),
       ]),
     ],

@@ -35,3 +35,17 @@ araştırma döngüsünü `SCHEDULED_PROBE` olarak çalıştırır ve kapanır. 
 09.00 çalışmasının gerçekleştiği veya yarın makinenin açık olacağı iddiası
 değildir. PostgreSQL testlerindeki prob gerçek saati kullanır fakat araştırma
 işini yerel sentetik bir işle değiştirir; dış kaynaklara erişmez.
+
+## En basit kalıcı çalışma seçeneği
+
+Yeni bir hizmet satın almadan, kullanıcının sürekli açık kendi bilgisayarında
+kalıcı PostgreSQL ve **tek bir araştırma worker'ı** yeterlidir. Worker mevcut
+`npm run research:scheduler` komutunu çalıştırır; işletim sisteminin hizmet
+yöneticisi açılışta başlatıp süreç çökerse yeniden başlatır. Web arayüzü yalnızca
+yerelden açılabilir; internetten erişim veya Gmail bağlantısı gerekmez.
+
+Windows bilgisayarda uyku/kapalı durum günlük görevi durdurur. Bilgisayar sürekli
+açık tutulamayacaksa daha sonra kullanıcıya ait sürekli açık bir makine gerekir.
+Bu mimari seçildi; Windows'a hizmet kurulmadı ve kesintisiz çalışma doğrulanmadı.
+Depodaki `compose.runtime.yaml` dosyasının `scheduler` servisi posta içindir;
+araştırma worker'ı olarak olduğu gibi kullanılmamalıdır.

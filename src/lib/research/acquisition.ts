@@ -110,6 +110,33 @@ const originalIds: Record<string, string> = {
   "1099": "genc-farm250",
   "1090": "genc-zoned250",
 };
+/** An undated project announcement is context, never a priced listing or parcel deed. */
+export function parseDivisionContext(
+  page: ResearchFetchResult,
+): ResearchFact[] {
+  const $ = cheerio.load(page.body);
+  const paragraphs = clean($("p").text()).toLocaleLowerCase("tr-TR");
+  const heading = clean($("title,h4.classic-title").text()).toLocaleLowerCase(
+    "tr-TR",
+  );
+  if (
+    !/değirmenköy/u.test(heading) ||
+    !/özel parselasyon/u.test(heading) ||
+    !/hisseli\s+arsalar/u.test(paragraphs)
+  )
+    return [];
+  return [
+    fact(
+      "genc-private-division",
+      "division-context",
+      "Yayıncının Değirmenköy duyurusu özel parselasyon ve hisseli arsalar içeriyor. Duyurunun yayın tarihi ve güncel ilan parselleriyle bağı doğrulanmadı; duyurudaki kampanya fiyatı güncel fiyat veya emsal alınmadı.",
+      null,
+      "",
+      "",
+      "Genç City Değirmenköy duyurusu; tekil parsel bağlantısı yok",
+    ),
+  ];
+}
 export function parseLandPage(page: ResearchFetchResult): {
   source: ResearchSource;
   facts: ResearchFact[];
@@ -686,7 +713,7 @@ export async function collectResearch(
   function discovered(
     page: ResearchFetchResult,
     filter: RegExp,
-    kind: "LISTING" | "OFFICIAL_RELEASE",
+    kind: "LISTING" | "OFFICIAL_RELEASE" | "CONTEXT",
   ) {
     const $ = cheerio.load(page.body),
       urls: string[] = [];
@@ -850,6 +877,27 @@ export async function collectResearch(
   const catalog = await permitted("https://www.genccity.com/");
   let listingUrls: string[] = [];
   if (catalog?.status === 200 && (await inspectTerms(catalog))) {
+    const contextUrl = discovered(
+      catalog,
+      /istanbul-silivri-degirmenkoyde-ozel-parselasyonlu-arsalar/i,
+      "CONTEXT",
+    )[0];
+    if (contextUrl) {
+      const context = await permitted(contextUrl);
+      if (context?.status === 200)
+        acceptFacts(
+          context,
+          source(
+            context,
+            "division-context",
+            "Genç City — özel parselasyon duyurusu",
+            "PUBLISHER",
+            1,
+          ),
+          parseDivisionContext(context),
+          "Duyuru kapsamı doğrulanamadı; eski kampanya fiyatı alınmadı.",
+        );
+    }
     const frontier = discovered(
       catalog,
       /\/satilik-(?:arsa|tarla)\/[^\s]*degirmenkoy/i,

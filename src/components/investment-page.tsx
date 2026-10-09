@@ -147,7 +147,7 @@ function Candidate({
       <p>
         {decision.assessment
           ? `${decision.assessment.sampleCount} eşleşen gerçek emsal. ${decision.assessment.score == null ? "Fırsat puanı üretilemedi." : `Mevcut fiyat motorunun puanı: ${decision.assessment.score}; yatırım getirisi tahmini değildir.`}`
-          : "Fiyat/alan eksik; emsal fiyat analizi ve fırsat puanı üretilemedi."}
+          : "Güncel ve aynı nitelikte yeterli emsal doğrulanamadı; fırsat puanı üretilemedi."}
       </p>
       {decision.origin === "DATABASE" && (
         <Link href={`/ilan/${decision.id}`}>

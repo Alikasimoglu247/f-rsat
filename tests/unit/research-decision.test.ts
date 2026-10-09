@@ -18,6 +18,79 @@ const data = () => structuredClone(research);
 const candidateById = (snapshot: ResearchSnapshot, id = "genc-300") =>
   snapshot.candidates.find((candidate) => candidate.id === id)!;
 
+it("evaluates the actual stated share price without turning road proximity or low price into an opportunity", () => {
+  const snapshot = data();
+  const candidate = candidateById(snapshot, "genc-farm250");
+  candidate.title = "DEĞİRMENKÖY ASFALTA YAKIN 250 m²";
+  const result = researchDecision(candidate, now, null, snapshot);
+  const reasons = result.whyNot.map((r) => r.text).join(" ");
+  expect(result.verdict).toBe("Riskli");
+  expect(result.assessment).toBeNull();
+  expect(reasons).toContain("1700.00 TL/m²");
+  expect(reasons).toContain("425000 TL bedelin satın aldığı pay/payda");
+  expect(reasons).toContain("belgeli yasal yol cephesi sağlamaz");
+  expect(reasons).toContain(
+    "en az 5 güncel, bağımsız ve aynı hukuki sınıftaki emsal doğrulanmadı",
+  );
+});
+
+it("does not treat an old publisher campaign as evidence that this parcel has shared ownership", () => {
+  const snapshot = data();
+  const candidate = candidateById(snapshot);
+  snapshot.sources.push({
+    ...snapshot.sources.find((s) => s.id === candidate.sourceId)!,
+    id: "division-context",
+    url: "https://www.genccity.com/project",
+    checkStatus: "VALID",
+  });
+  snapshot.facts.push({
+    id: "genc-private-division",
+    sourceId: "division-context",
+    label: "Undated shared plot campaign",
+    value: null,
+    unit: null,
+    period: null,
+    scope: "Publisher only",
+  });
+  const result = researchDecision(candidate, now, null, snapshot);
+  expect(result.verdict).toBe("Yetersiz veri");
+  expect(candidate.sharedOwnership).toBeNull();
+  expect(result.factIds).toContain("genc-private-division");
+  expect(
+    result.whyNot.some((r) =>
+      r.text.includes("bu ada/parselin tapu belgesi değildir"),
+    ),
+  ).toBe(true);
+  snapshot.sources.find((s) => s.id === "division-context")!.checkStatus =
+    "FAILED";
+  expect(
+    researchDecision(candidate, now, null, snapshot).whyNot.some((r) =>
+      r.evidenceIds.includes("genc-private-division"),
+    ),
+  ).toBe(false);
+});
+
+it("reports age in Istanbul calendar days without claiming time on market or reviving stale details", () => {
+  const snapshot = data();
+  const candidate = candidateById(snapshot);
+  const evaluation = new Date("2026-10-09T22:00:00Z");
+  const result = researchDecision(candidate, evaluation, null, snapshot);
+  expect(
+    result.whyNot.some(
+      (r) =>
+        r.text.includes("261 gün önce") &&
+        r.text.includes("kesintisiz satışta kalma süresi değildir"),
+    ),
+  ).toBe(true);
+  snapshot.sources.find((s) => s.id === candidate.sourceId)!.checkStatus =
+    "FAILED";
+  expect(
+    researchDecision(candidate, evaluation, null, snapshot).whyNot.some((r) =>
+      r.text.includes("261 gün önce"),
+    ),
+  ).toBe(false);
+});
+
 it("yeni aynı segment adayı alternatif gerekçesini değiştirir; belge eksikliği fırsata dönüşmez", () => {
   const snapshot = data();
   const subject = candidateById(snapshot);

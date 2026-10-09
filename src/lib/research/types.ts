@@ -28,7 +28,7 @@ export type SourceCheck = {
 };
 export type Discovery = {
   url: string;
-  kind: "LISTING" | "OFFICIAL_RELEASE" | "POLICY";
+  kind: "LISTING" | "OFFICIAL_RELEASE" | "CONTEXT" | "POLICY";
   discoveredFrom: string;
   status: "ALLOWED" | "REVIEW_REQUIRED";
 };

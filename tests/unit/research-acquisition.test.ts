@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   collectResearch,
+  parseDivisionContext,
   parseHousingText,
   parseInflation,
   parseLandPage,
@@ -45,6 +46,25 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe("bounded live research acquisition", () => {
+  it("keeps an undated shared-plot campaign as context without importing its historic price or deed status", () => {
+    const context = page(
+      '<title></title><h4 class="classic-title">İSTANBUL SİLİVRİ DEĞİRMENKÖYDE ÖZEL PARSELASYONLU ARSALAR</h4><p>400 METRE KARE HİSSELİ ARSALAR 28 BİN TLYE SATIŞA SUNULDU</p>',
+    );
+    const facts = parseDivisionContext(context);
+    expect(facts).toHaveLength(1);
+    expect(facts[0]).toMatchObject({
+      value: null,
+      period: "",
+      scope: expect.stringContaining("tekil parsel bağlantısı yok"),
+    });
+    expect(facts[0].label).not.toContain("28");
+    expect(facts[0].field).toBeUndefined();
+    expect(
+      parseDivisionContext(
+        page("<title>Başka yer</title><p>Hisseli arsalar</p>"),
+      ),
+    ).toEqual([]);
+  });
   it("parses the selected TL price and keeps absent legal fields unknown inside an ASP.NET form", () => {
     const candidate = parseLandPage(page(listing()))!.candidate;
     expect(candidate).toMatchObject({
