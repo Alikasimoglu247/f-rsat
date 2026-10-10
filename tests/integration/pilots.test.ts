@@ -152,6 +152,24 @@ it("SUV başlığından sınıflandırmaz; kaynak kanıtı onayı sonrası dahil
     }),
   ).toBe(1);
 });
+it("yayıncının Elektrik yakıt adı varsayılan elektrikli SUV pilotunda kaybolmaz", async () => {
+  await importRecords(
+    [
+      vehicle("electric", {
+        fuel: "Elektrik",
+        bodyType: "SUV",
+        bodyTypeVerified: true,
+        bodyTypeEvidence: "Sentetik kaynakta açık Kasa Tipi: SUV",
+      }),
+    ],
+    "csv",
+    "CSV",
+  );
+  expect(
+    (await pilotSummaries(db)).find((p) => p.pilotKey === "MARMARA_SUV")
+      ?.totalReal,
+  ).toBe(1);
+});
 it("SUV/Crossover gövde tipi ve yakıt kapsamını uygular; kanıtsız verified girdisini reddeder", async () => {
   await expect(
     importRecords(

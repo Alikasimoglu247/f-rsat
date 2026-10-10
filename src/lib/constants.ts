@@ -30,6 +30,14 @@ export const bodyTypes = [
   "VAN",
 ] as const;
 export const pilotFuels = ["Elektrikli", "Hibrit", "Benzin", "Dizel"] as const;
+export function normalizeFuel(value?: string | null) {
+  const norm = value?.normalize("NFC").trim().toLocaleLowerCase("tr-TR");
+  if (["elektrik", "elektrikli", "electric"].includes(norm ?? ""))
+    return "elektrik";
+  if (["hibrit", "hybrid"].includes(norm ?? "")) return "hibrit";
+  if (norm === "benzinli") return "benzin";
+  return norm;
+}
 export const normalizeBodyType = (value?: string | null) => {
   const text = value?.trim().toLocaleUpperCase("en-US");
   return text && bodyTypes.includes(text as (typeof bodyTypes)[number])

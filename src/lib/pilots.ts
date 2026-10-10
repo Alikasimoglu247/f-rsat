@@ -1,6 +1,11 @@
 import { Prisma } from "@prisma/client";
 import type { PrismaClient, SearchProfile } from "@prisma/client";
-import { provinces, pilotFuels, normalizeBodyType } from "./constants";
+import {
+  provinces,
+  pilotFuels,
+  normalizeBodyType,
+  normalizeFuel,
+} from "./constants";
 import { listingInclude } from "./listings";
 import type { StoredListing } from "./listings";
 import { recentPriceDrops } from "./price-drops";
@@ -50,14 +55,7 @@ export async function ensurePilotProfiles(
 }
 const norm = (v?: string | null) =>
   v?.normalize("NFC").trim().toLocaleLowerCase("tr-TR");
-const fuel = (v?: string | null) => {
-  const n = norm(v);
-  return n === "benzinli"
-    ? "benzin"
-    : n === "hibrit" || n === "hybrid"
-      ? "hibrit"
-      : n;
-};
+const fuel = normalizeFuel;
 export function matchesProfile(listing: StoredListing, profile: SearchProfile) {
   const cats = profile.categories.length
     ? profile.categories

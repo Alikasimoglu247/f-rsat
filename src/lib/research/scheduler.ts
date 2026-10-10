@@ -1,6 +1,7 @@
 import cron from "node-cron";
 import { randomUUID } from "node:crypto";
 import { db } from "../db";
+import { claimResearchWorker } from "./worker-lock";
 
 export const RESEARCH_SCHEDULER_ID = "investment-research";
 export const RESEARCH_TIMEZONE = "Europe/Istanbul";
@@ -79,28 +80,34 @@ export async function startResearchScheduler(options: {
     : (options.schedule ?? configuredSchedule());
   if (!cron.validate(schedule))
     throw new Error("INVESTMENT_RESEARCH_CRON geçersiz.");
+  const workerLock = await claimResearchWorker();
   const instanceId = randomUUID();
   const trigger = probe ? "SCHEDULED_PROBE" : "SCHEDULED";
   const emit = (event: Omit<SchedulerEvent, "instanceId">) =>
     options.onEvent?.({ ...event, instanceId });
-  await db.schedulerHealth.upsert({
-    where: { id: RESEARCH_SCHEDULER_ID },
-    create: {
-      id: RESEARCH_SCHEDULER_ID,
-      instanceId,
-      status: "RUNNING",
-      lastHeartbeatAt: new Date(),
-      schedule,
-      timezone: RESEARCH_TIMEZONE,
-    },
-    update: {
-      instanceId,
-      status: "RUNNING",
-      lastHeartbeatAt: new Date(),
-      schedule,
-      timezone: RESEARCH_TIMEZONE,
-    },
-  });
+  try {
+    await db.schedulerHealth.upsert({
+      where: { id: RESEARCH_SCHEDULER_ID },
+      create: {
+        id: RESEARCH_SCHEDULER_ID,
+        instanceId,
+        status: "RUNNING",
+        lastHeartbeatAt: new Date(),
+        schedule,
+        timezone: RESEARCH_TIMEZONE,
+      },
+      update: {
+        instanceId,
+        status: "RUNNING",
+        lastHeartbeatAt: new Date(),
+        schedule,
+        timezone: RESEARCH_TIMEZONE,
+      },
+    });
+  } catch (error) {
+    await workerLock.close();
+    throw error;
+  }
   let resolveCompletion!: (tick: ResearchTick | null) => void;
   const completion = new Promise<ResearchTick | null>((resolve) => {
     resolveCompletion = resolve;
@@ -127,6 +134,7 @@ export async function startResearchScheduler(options: {
       })
       .catch(() => emit({ event: "research.scheduler.stop.failed" }));
     await task.destroy();
+    await workerLock.close();
     resolveCompletion(tick);
     emit({ event: "research.scheduler.stopped" });
   };
@@ -135,6 +143,7 @@ export async function startResearchScheduler(options: {
     schedule,
     async (context) => {
       if (stopped || (probe && fired)) return;
+      if (inFlight) return;
       fired = true;
       const tick: ResearchTick = {
         trigger,
@@ -174,13 +183,19 @@ export async function startResearchScheduler(options: {
     },
     { timezone: RESEARCH_TIMEZONE, noOverlap: true },
   );
+  workerLock.onLost(() => {
+    emit({ event: "research.scheduler.lock.lost" });
+    void controls
+      .stop()
+      .catch(() => emit({ event: "research.scheduler.stop.failed" }));
+  });
   emit({
     event: "research.scheduler.started",
     schedule,
     timezone: RESEARCH_TIMEZONE,
     nextRunAt: task.getNextRun()?.toISOString() ?? null,
   });
-  return {
+  const controls = {
     instanceId,
     completion,
     nextRun: () => task.getNextRun(),
@@ -196,4 +211,5 @@ export async function startResearchScheduler(options: {
       return stopPromise;
     },
   };
+  return controls;
 }

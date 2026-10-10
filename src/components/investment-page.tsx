@@ -240,10 +240,13 @@ export function InvestmentPage() {
         <section className="panel" aria-label="Araştırma döngüsü">
           <h2>Araştırma döngüsü</h2>
           <p>
-            Dar segment: Silivri / Değirmenköy küçük satılık arazi adayları.
-            Arsa ile tarla, hisseli ile müstakil tapu ve farklı imar hakları
-            ortak emsal yapılmaz.
+            Araştırılan segment: {latestRun?.segment ?? "Henüz seçilmedi"}. Arsa
+            ile tarla, hisseli ile müstakil tapu ve farklı imar hakları ortak
+            emsal yapılmaz.
           </p>
+          {latestRun?.strategy && (
+            <p>Segment seçiminin gerekçesi: {latestRun.strategy.reason}</p>
+          )}
           <p>
             Zamanlayıcı: <strong>{schedulerStatus}</strong> · Saat dilimi:{" "}
             {data.researchLoop.scheduler.timezone} · Program:{" "}
@@ -311,7 +314,9 @@ export function InvestmentPage() {
                           {" · "}
                           {runLabels[run.status] ?? run.status}
                           <br />
-                          <small>Çalışma {run.id}</small>
+                          <small>
+                            Çalışma {run.id} · {run.segment}
+                          </small>
                         </td>
                         <td>
                           {run.checkedUrls} / {run.fetchedChecks}
@@ -617,6 +622,33 @@ export function InvestmentPage() {
               eklenmedi. Aynı gerekçe/eksik veri/alternatif karar şeması, mevcut
               gerçek SUV kayıtlarına uygulanır.
             </p>
+            {data.facts.filter(
+              (fact) => fact.current && fact.id.startsWith("togg-t10x-"),
+            ).length > 0 && (
+              <>
+                <h3>Yeni araç finansmanı: alternatif alım koşulları</h3>
+                <p>
+                  Togg’un yayımladığı T10X kredi koşulları ikinci el ilan fiyatı
+                  veya gerçekleşmiş satış değildir. Farklı model fiyatlarına
+                  doğrudan emsal yapılmaz; nakit fiyat, uygunluk ve bütün
+                  masraflar doğrulanmadan toplam maliyet avantajı çıkarılmaz.
+                </p>
+                <ul>
+                  {data.facts
+                    .filter(
+                      (fact) =>
+                        fact.current && fact.id.startsWith("togg-t10x-"),
+                    )
+                    .slice(0, 4)
+                    .map((fact) => (
+                      <li key={fact.id}>
+                        {fact.label}
+                        <EvidenceLinks ids={[fact.id]} />
+                      </li>
+                    ))}
+                </ul>
+              </>
+            )}
           </section>
         )}
         {pilotKey === "SILIVRI" && (

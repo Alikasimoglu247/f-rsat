@@ -22,6 +22,13 @@ import { collectResearch } from "./acquisition";
 import { potentialParcelGroups } from "./parcel-review";
 import { mergeResearch, researchChanges, stableJson } from "./store";
 import type { AcquisitionResult, ResearchTrigger } from "./types";
+import {
+  finishStrategy,
+  selectStrategy,
+  researchSegments,
+  type StrategyRecord,
+  type SegmentId,
+} from "./strategy";
 
 export const RESEARCH_SEGMENT =
   "İstanbul / Silivri / Değirmenköy · 200–400 m² satılık arsa ve tarla; hukuki sınıflar ayrı";
@@ -40,6 +47,7 @@ const meaningfulDecision = (decision: Decision) =>
     sampleCount: decision.assessment?.sampleCount ?? 0,
   });
 export type ResearchSummary = {
+  strategy?: StrategyRecord;
   checkedUrls: number;
   parsedSources: number;
   newSourceUrls: number;
@@ -66,6 +74,7 @@ export async function runResearch(
     pageBudget?: number;
     acquire?: typeof collectResearch;
     now?: Date;
+    segmentId?: SegmentId;
   } = {},
 ) {
   const now = options.now ?? new Date();
@@ -92,14 +101,31 @@ export async function runResearch(
       where: { status: { not: "RUNNING" } },
       orderBy: { startedAt: "desc" },
     });
+    const history = await tx.researchRun.findMany({
+      orderBy: { startedAt: "desc" },
+      take: 30,
+      select: { summary: true, status: true },
+    });
+    const strategy = selectStrategy(
+      history,
+      (previous?.snapshot ?? research) as unknown as ResearchSnapshot,
+      now,
+      options.segmentId,
+    );
+    if (strategy.deferredUntil)
+      return {
+        run: { id: previous?.id ?? "research-deferred", status: "DEFERRED" },
+        claimed: false,
+      };
     const run = await tx.researchRun.create({
       data: {
         trigger: options.trigger ?? "MANUAL",
-        segment: RESEARCH_SEGMENT,
+        segment: researchSegments.find((s) => s.id === strategy.segmentId)!
+          .label,
         status: "RUNNING",
         previousId: previous?.id,
         startedAt: now,
-        summary: {},
+        summary: json({ strategy }),
         snapshot: json(previous?.snapshot ?? research),
         decisions: [],
         changes: [],
@@ -107,11 +133,11 @@ export async function runResearch(
         discoveries: [],
       },
     });
-    return { run, claimed: true, previous };
+    return { run, claimed: true, previous, strategy };
   });
   if (!claimed.claimed)
-    return { id: claimed.run.id, status: "RUNNING", summary: null };
-  const { run, previous } = claimed;
+    return { id: claimed.run.id, status: claimed.run.status, summary: null };
+  const { run, previous, strategy } = claimed;
   const priorSnapshot = previous
     ? (previous.snapshot as unknown as ResearchSnapshot)
     : null;
@@ -145,6 +171,29 @@ export async function runResearch(
       knownUrls,
       blockedUrls: blockedResources.map((item) => item.url),
       pageBudget: options.pageBudget,
+      segmentId: strategy!.segmentId,
+      refreshEconomy: !priorSnapshot?.sources.some(
+        (s) =>
+          s.id === "policy" &&
+          sourceFresh(s, now) &&
+          now.getTime() - Date.parse(s.retrievedAt) < 3600_000,
+      ),
+      deferredUrls: resources
+        .filter(
+          (item) =>
+            !(
+              item.host === "www.togg.com.tr" &&
+              item.state === "UNSUPPORTED" &&
+              item.lastReason?.startsWith("Sayfa kontrol edildi;")
+            ) &&
+            (["FAILED", "UNSUPPORTED"].includes(item.state) ||
+              /bu katalog sayfasında bulundu|açık kategori listesi incelendi/.test(
+                item.lastReason ?? "",
+              )) &&
+            item.lastCheckedAt &&
+            now.getTime() - item.lastCheckedAt.getTime() < 6 * 3600_000,
+        )
+        .map((item) => item.url),
       now,
     });
     const completedAt = options.now ?? new Date();
@@ -225,7 +274,7 @@ export async function runResearch(
           method: "PUBLIC_RESEARCH",
           accessStatus: "AVAILABLE",
           categories: [input.category],
-          regions: ["İstanbul / Silivri"],
+          regions: [`${input.province} / ${input.district}`],
           authorization: source.usageNote,
         },
         update: { authorization: source.usageNote },
@@ -361,12 +410,6 @@ export async function runResearch(
         assessment,
         snapshot,
       );
-      if (candidate.identityReviewRequired) {
-        decision.verdict = "Yetersiz veri";
-        decision.missing.push(
-          "İlan kimliği/fiyat çelişkisi için inceleme ve veritabanı uzlaştırması",
-        );
-      }
       return decision;
     });
     const priorDecisions = (previous?.decisions ?? []) as unknown as Decision[];
@@ -424,6 +467,17 @@ export async function runResearch(
       return !!source && sourceFresh(source, completedAt);
     });
     const summary: ResearchSummary = {
+      strategy: finishStrategy(
+        strategy!,
+        snapshot,
+        completedAt,
+        acquired.candidates.filter(
+          (c) =>
+            !priorSnapshot?.candidates.some(
+              (old) => old.sourceUrl === c.sourceUrl,
+            ),
+        ).length,
+      ),
       checkedUrls: acquired.checks.filter(
         (item) => item.status !== "BUDGET_DEFERRED",
       ).length,
@@ -466,11 +520,28 @@ export async function runResearch(
       (check) =>
         !["PARSED", "BUDGET_DEFERRED", "POLICY_REVIEW"].includes(check.status),
     );
+    const catalogRead = acquired.checks.some(
+      (c) =>
+        c.status === "PARSED" &&
+        c.httpStatus === 200 &&
+        !!c.sha256 &&
+        !c.url.endsWith("/robots.txt"),
+    );
     const status = !acquired.sources.length
-      ? "FAILED"
+      ? catalogRead
+        ? "PARTIAL"
+        : "FAILED"
       : failed
         ? "PARTIAL"
         : "COMPLETED";
+    if (status === "FAILED")
+      summary.strategy = finishStrategy(
+        strategy!,
+        snapshot,
+        completedAt,
+        0,
+        true,
+      );
     await db.researchRun.update({
       where: { id: run.id },
       data: {
@@ -501,6 +572,7 @@ export async function runResearch(
         snapshot: json(invalid),
         checks: json(acquired.checks),
         summary: {
+          strategy: finishStrategy(strategy!, invalid, new Date(), 0, true),
           reason:
             "Araştırma çalışması başarısız; önceki kanıtlar yeni kontrol yapılmış gibi sunulmadı.",
         },

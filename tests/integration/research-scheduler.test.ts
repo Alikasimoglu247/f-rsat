@@ -14,6 +14,28 @@ beforeEach(async () => {
 });
 afterAll(() => db.$disconnect());
 
+it("ikinci worker'ı reddeder, heartbeat sahibini korur ve durduktan sonra kilidi serbest bırakır", async () => {
+  const run = async () => ({ id: "synthetic-lock", status: "COMPLETED" });
+  const first = await startResearchScheduler({ run });
+  try {
+    await expect(startResearchScheduler({ run })).rejects.toThrow(
+      "Başka bir araştırma worker",
+    );
+    expect(
+      (
+        await db.schedulerHealth.findUnique({
+          where: { id: RESEARCH_SCHEDULER_ID },
+        })
+      )?.instanceId,
+    ).toBe(first.instanceId);
+  } finally {
+    await first.stop();
+  }
+  const restarted = await startResearchScheduler({ run });
+  expect(restarted.instanceId).not.toBe(first.instanceId);
+  await restarted.stop();
+});
+
 it("gerçek cron saati bir probu bir kez tetikler ve ayrı araştırma heartbeat'ini durdurur", async () => {
   const run = vi.fn(async () => ({
     id: "synthetic-probe",

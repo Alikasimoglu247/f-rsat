@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import snapshot from "@/data/silivri-research.json";
 import { assess, type Assessment, type Evidence } from "./analysis";
+import { normalizeFuel, money } from "./constants";
 
 export type ResearchEvidenceField =
   | "classification"
@@ -14,7 +15,11 @@ export type ResearchEvidenceField =
   | "availability"
   | "demand"
   | "liquidity"
-  | "opportunityCost";
+  | "opportunityCost"
+  | "vehicleCondition"
+  | "batteryHealth"
+  | "warranty"
+  | "operatingCosts";
 export type ResearchSource = {
   id: string;
   name: string;
@@ -260,7 +265,18 @@ export function verifiedResearchField(
         )
       );
     if (source?.kind !== "OFFICIAL") return false;
-    if (["demand", "liquidity", "opportunityCost"].includes(field)) return true;
+    if (
+      [
+        "demand",
+        "liquidity",
+        "opportunityCost",
+        "vehicleCondition",
+        "batteryHealth",
+        "warranty",
+        "operatingCosts",
+      ].includes(field)
+    )
+      return true;
     const value = candidate[field as keyof ResearchCandidate];
     return (
       typeof value === "string" &&
@@ -393,19 +409,30 @@ export function researchDecision(
       !known(candidate.vehicle.bodyTypeEvidence)
     )
       missing.push("Kaynak kanıtıyla doğrulanmış gövde tipi");
+    for (const [label, value] of [
+      ["Marka", candidate.vehicle?.make],
+      ["Model", candidate.vehicle?.model],
+      ["Donanım", candidate.vehicle?.trim],
+      ["Yakıt", candidate.vehicle?.fuel],
+      ["Şanzıman", candidate.vehicle?.transmission],
+      ["Doğrulanmış hasar geçmişi", candidate.vehicle?.damageHistory],
+    ] as const)
+      if (!known(value)) missing.push(label);
+    if (candidate.vehicle?.modelYear == null) missing.push("Model yılı");
+    if (candidate.vehicle?.mileage == null) missing.push("Kilometre");
+    if (!verified("vehicleCondition"))
+      missing.push("Bağımsız ekspertiz ve kondisyon teyidi");
+    if (!verified("warranty"))
+      missing.push("Geçerli garanti kapsamı ve süresi");
+    if (!verified("operatingCosts"))
+      missing.push("Bakım, sigorta, vergi ve kullanım maliyetleri");
     if (
-      !candidate.vehicle?.make ||
-      !candidate.vehicle.model ||
-      !candidate.vehicle.trim ||
-      candidate.vehicle.modelYear == null ||
-      candidate.vehicle.mileage == null ||
-      !candidate.vehicle.fuel ||
-      !candidate.vehicle.transmission ||
-      !candidate.vehicle.damageHistory
+      ["elektrik", "hibrit"].includes(
+        normalizeFuel(candidate.vehicle?.fuel) ?? "",
+      ) &&
+      !verified("batteryHealth")
     )
-      missing.push(
-        "Marka/model/donanım, yıl/km, yakıt/şanzıman ve hasar geçmişi",
-      );
+      missing.push("Batarya sağlık raporu ve batarya garanti kapsamı");
   } else {
     if (!area) missing.push("Geçerli parsel alanı (m²)");
     if (!verified("zoning") || !verified("classification"))
@@ -605,6 +632,29 @@ export function researchDecision(
         : [],
     whyNot: [
       ...parcelReasons,
+      ...(current &&
+      candidate.category === "ARABA" &&
+      candidate.vehicle &&
+      price
+        ? [
+            {
+              text: `${candidate.vehicle.make} ${candidate.vehicle.model} ${candidate.vehicle.trim ?? ""}: yayıncı ${candidate.vehicle.modelYear} model, ${candidate.vehicle.mileage?.toLocaleString("tr-TR")} km ve ${money(price)} istiyor. ${currentAssessment?.score != null && currentAssessment.sampleCount >= 5 ? `Karşılaştırma ${currentAssessment.sampleCount} aynı segmentte fiyat beyanına dayanır; gerçekleşmiş satış veya net yatırım getirisi değildir.` : "Aynı model/donanım, yakın yıl/km ve doğrulanmış hasar durumunda en az 5 bağımsız emsal bulunmadığı sürece fiyat avantajı hesaplanmaz."}`,
+              evidenceIds: factIds.slice(0, 1),
+              kind: "INFERENCE" as const,
+            },
+            ...(["elektrik", "hibrit"].includes(
+              normalizeFuel(candidate.vehicle.fuel) ?? "",
+            ) && !verified("batteryHealth")
+              ? [
+                  {
+                    text: "Batarya sağlığı ve garanti bilinmiyor. Olası yenileme maliyeti ile yeniden satış etkisi hesaplanmadı; düşük kilometre batarya sağlık kanıtı değildir.",
+                    evidenceIds: factIds.slice(0, 1),
+                    kind: "INFERENCE" as const,
+                  },
+                ]
+              : []),
+          ]
+        : []),
       {
         text:
           candidate.category === "ARABA"

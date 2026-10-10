@@ -23,6 +23,7 @@
     "research": "tsx scripts/research.ts",
     "research:scheduler": "tsx scripts/research-scheduler.ts",
     "research:probe": "tsx scripts/research-scheduler.ts --probe",
+    "research:worker": "node scripts/research-worker.mjs",
     "db:test": "tsx scripts/test-db.ts",
     "test:runtime": "node scripts/runtime-smoke.mjs"
   },

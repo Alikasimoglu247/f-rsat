@@ -23,6 +23,7 @@ import { researchInProfile } from "./research-import";
 import { loadResearchState } from "./research/store";
 import { researchSchedulerStatus } from "./research/scheduler";
 import type { ResearchChange, SourceCheck } from "./research/types";
+import { readStrategy } from "./research/strategy";
 
 function jsonRecord(value: unknown): Record<string, unknown> {
   return value != null && typeof value === "object" && !Array.isArray(value)
@@ -181,28 +182,27 @@ export async function investmentReport(now = new Date()) {
           ]
         : [{ ...decision, priceCurrent: true }];
     });
-    const researched =
-      pilotKey === "SILIVRI" && profile
-        ? research.candidates
-            .filter((item) => researchInProfile(item, profile))
-            .map((item) => {
-              const decision = researchDecision(item, now, null, research);
-              return {
-                ...decision,
-                priceCurrent:
-                  !item.identityReviewRequired &&
-                  candidateCurrent(item, research, now),
-                ...(item.identityReviewRequired
-                  ? {
-                      missing: [
-                        "İlan kimliği/fiyat çelişkisi için inceleme ve veritabanı uzlaştırması gerekli.",
-                        ...decision.missing,
-                      ],
-                    }
-                  : {}),
-              };
-            })
-        : [];
+    const researched = profile
+      ? research.candidates
+          .filter((item) => researchInProfile(item, profile))
+          .map((item) => {
+            const decision = researchDecision(item, now, null, research);
+            return {
+              ...decision,
+              priceCurrent:
+                !item.identityReviewRequired &&
+                candidateCurrent(item, research, now),
+              ...(item.identityReviewRequired
+                ? {
+                    missing: [
+                      "İlan kimliği/fiyat çelişkisi için inceleme ve veritabanı uzlaştırması gerekli.",
+                      ...decision.missing,
+                    ],
+                  }
+                : {}),
+            };
+          })
+      : [];
     // A research page is not a priced database listing. Do not merge/count it twice.
     const unique = researched.filter(
       (candidate) =>
@@ -257,6 +257,7 @@ export async function investmentReport(now = new Date()) {
       status: run.status,
       trigger: run.trigger,
       segment: run.segment,
+      strategy: readStrategy(summary),
       startedAt: run.startedAt.toISOString(),
       completedAt: run.completedAt?.toISOString() ?? null,
       checkedUrls: count(summary, "checkedUrls"),

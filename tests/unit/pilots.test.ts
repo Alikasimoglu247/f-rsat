@@ -128,6 +128,21 @@ it("kanıtlı SUV emsallerini Marmara'nın farklı il ve ilçelerinde eşleştir
     comparablePrice(suv, { ...suv, id: "other", province: "Ankara" }, now),
   ).toBeNull();
 });
+it("elektrik yakıt adlarını eşleştirir; elektrikli ve hibrit araçları emsal yapmaz", () => {
+  const electric = { ...suv, vehicle: { ...suv.vehicle, fuel: "Elektrik" } };
+  expect(
+    comparablePrice(
+      electric,
+      {
+        ...electric,
+        id: "other",
+        vehicle: { ...electric.vehicle, fuel: "Elektrikli" },
+      },
+      now,
+    )?.toString(),
+  ).toBe("100");
+  expect(comparablePrice(electric, { ...suv, id: "hybrid" }, now)).toBeNull();
+});
 it("belirsiz veya farklı gövde tipi ve kanıtsız onayı SUV emsali yapmaz", () => {
   for (const v of [
     { ...suv.vehicle, bodyType: "SEDAN" },

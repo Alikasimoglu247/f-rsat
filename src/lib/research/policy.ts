@@ -8,6 +8,9 @@ export const researchHosts = new Set([
   "www.silivri.bel.tr",
   "www.uab.gov.tr",
   "www.afad.gov.tr",
+  "www.turyap.com.tr",
+  "www.togg.com.tr",
+  "www.otomol.com",
 ]);
 const prohibited = [
   "sahibinden.com",
@@ -92,6 +95,9 @@ export function robotsAllows(
 export function termsRestrictAutomation(text: string) {
   const normalized = text.replace(/\s+/g, " ").toLocaleLowerCase("tr-TR");
   return (
+    /(?:yazılı (?:izin|onay)|yazılı izni|yazılı onayı).{0,550}(?:işlenemez|kopyalanamaz|depolanması|veri (?:çekilmesi|toplama)|yasaktır)/u.test(
+      normalized,
+    ) ||
     /(?:otomatik|robot|veri madenciliği|toplu veri|kazıma).{0,100}(?:yasak|izin verilmez|yapılamaz|izin olmadan|izinsiz)/u.test(
       normalized,
     ) ||
@@ -105,6 +111,17 @@ export function termsRestrictAutomation(text: string) {
       normalized,
     )
   );
+}
+
+/** Publishers can reserve AI grounding independently of ordinary crawl rules. */
+export function contentSignalAllows(body: string) {
+  return !body.split(/\r?\n/).some((raw) => {
+    const line = raw.replace(/#.*$/, "").trim();
+    return (
+      /^content-signal\s*:/i.test(line) &&
+      /(?:^|[,\s:])ai-input\s*=\s*no(?:$|[,\s])/i.test(line)
+    );
+  });
 }
 export function accessChallenge(body: string) {
   // Embedded enquiry forms on otherwise public pages are not a page access challenge.

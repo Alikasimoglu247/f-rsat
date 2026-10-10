@@ -8,9 +8,11 @@ import {
   parseLandPage,
   parsePolicy,
   parseTurkishAmount,
+  parseToggFinance,
 } from "@/lib/research/acquisition";
 import {
   accessChallenge,
+  contentSignalAllows,
   robotsAllows,
   safeResearchUrl,
   termsRestrictAutomation,
@@ -46,6 +48,100 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe("bounded live research acquisition", () => {
+  it("yeniden okumada ilgili araçlar bilinen ilanların fiyat kontrolü bütçesini tüketmez", async () => {
+    const address = (id: number) =>
+      `https://www.otomol.com/volvo-ex40-2026-ikinci-el-araba-${id}`;
+    const car = (id: number) =>
+      `<h1>VOLVO EX40 Ultra</h1><span class="text-2xl">₺3.300.000</span><div><span>İlan No</span><span>${id}</span></div><div><span>Kasa Tipi</span><span>SUV</span></div><div><span>Model Yılı</span><span>2026</span></div><div><span>Kilometre</span><span>8.841</span></div><div><span>Yakıt Türü</span><span>Elektrik</span></div><div><span>Vites Tipi</span><span>Otomatik</span></div><div><span>Şube</span><h3>Merter</h3><p>Osmaniye Mah. Bakırköy/İstanbul</p></div><script>self.__next_f.push([1,${JSON.stringify("15:" + JSON.stringify({ props: { marka: "VOLVO", model: "EX40", altModel: "Ultra", ilanNo: id, fiyat: "3.300.000", modelYili: 2026, km: 8841 } }) + "\n")}])</script><a href="${address(99)}">İlgili araç</a>`;
+    const calls: string[] = [];
+    const acquired = await collectResearch({
+      segmentId: "MARMARA_SUV",
+      refreshEconomy: false,
+      pageBudget: 2,
+      knownUrls: [address(1), address(2)],
+      fetcher: async (u) => {
+        calls.push(u);
+        return page(
+          u.endsWith("/robots.txt")
+            ? "User-agent: *\nAllow: /"
+            : u === address(1)
+              ? car(1)
+              : u === address(2)
+                ? car(2)
+                : "<p>Genel bilgi</p>",
+          u,
+        );
+      },
+    });
+    expect(acquired.candidates.map((c) => c.externalId)).toEqual(["1", "2"]);
+    expect(calls).not.toContain(address(99));
+    const expanded = await collectResearch({
+      segmentId: "MARMARA_SUV",
+      refreshEconomy: false,
+      pageBudget: 3,
+      knownUrls: [1, 2, 3, 4].map(address),
+      fetcher: async (u) =>
+        page(
+          u.endsWith("/robots.txt")
+            ? "User-agent: *\nAllow: /"
+            : u === "https://www.otomol.com/"
+              ? `<a href="${address(99)}">Yeni araç</a>`
+              : /-ikinci-el-araba-\d+$/.test(u)
+                ? car(Number(u.split("-").at(-1)))
+                : "<p>Genel bilgi</p>",
+          u,
+        ),
+    });
+    expect(expanded.candidates.map((c) => c.externalId)).toEqual([
+      "1",
+      "2",
+      "99",
+    ]);
+  });
+  it("AI grounding reservation is honored separately from ordinary robots and training", () => {
+    expect(
+      contentSignalAllows(
+        "User-agent: *\nAllow: /\nContent-Signal: search=yes,ai-input=no,ai-train=no",
+      ),
+    ).toBe(false);
+    expect(
+      contentSignalAllows(
+        "# Content-Signal: ai-input=no\nUser-agent: *\nAllow: /\nContent-Signal: ai-train=no",
+      ),
+    ).toBe(true);
+  });
+  it("written-permission storage restrictions and Turkish user terms cannot be missed", () => {
+    expect(
+      termsRestrictAutomation(
+        "Yes Oto'nun yazılı onayı olmadan Site'nin içeriği kopyalanamaz, işlenemez.",
+      ),
+    ).toBe(true);
+    expect(
+      termsRestrictAutomation(
+        "Yazılı izni olmaksızın içerik kopya edilmesi, depolanması ve işlenmesi yasaktır.",
+      ),
+    ).toBe(true);
+  });
+  it("verified T10X campaign markup preserves credit terms, not a car price or T10F SUV listing", () => {
+    const row = (version: string, rate: string) =>
+      `<div class="od-table-content-row"><div>${version}</div><div>800.000 TL</div><div class="term-wrapper">6 ay</div><div class="interest-rate-wrapper">${rate} %</div><div class="monthly-payment-wrapper">133.333 TL</div></div>`;
+    const facts = parseToggFinance(
+      page(
+        row("T10X V2", "0,00") +
+          row("T10X V2", "0,00") +
+          row("T10F V2", "0,00"),
+        "https://www.togg.com.tr/sales-and-finance",
+      ),
+    );
+    expect(facts).toHaveLength(1);
+    expect(facts[0]).toMatchObject({
+      value: 0,
+      unit: "% / ay",
+      sourceId: "togg-finance",
+    });
+    expect(facts[0].label).toContain("araç satış fiyatı değildir");
+    expect(parseToggFinance(page(row("T10X V2", "bilinmiyor")))).toEqual([]);
+  });
   it("keeps an undated shared-plot campaign as context without importing its historic price or deed status", () => {
     const context = page(
       '<title></title><h4 class="classic-title">İSTANBUL SİLİVRİ DEĞİRMENKÖYDE ÖZEL PARSELASYONLU ARSALAR</h4><p>400 METRE KARE HİSSELİ ARSALAR 28 BİN TLYE SATIŞA SUNULDU</p>',

@@ -3,6 +3,7 @@ import { spawn } from "node:child_process";
 import * as cheerio from "cheerio";
 import {
   accessChallenge,
+  contentSignalAllows,
   robotsAllows,
   safeResearchUrl,
   termsRestrictAutomation,
@@ -17,6 +18,8 @@ import type {
   ResearchSource,
   SourceCheck,
 } from "./types";
+import { researchSegments, type SegmentId } from "./strategy";
+import { parseOtomolVehicle } from "./otomol";
 
 const tcmb = "https://www.tcmb.gov.tr/";
 const cpiUrl =
@@ -71,6 +74,43 @@ export function parseTurkishAmount(value: string) {
   return Number(normalized) > 0 && Number.isFinite(Number(normalized))
     ? normalized
     : null;
+}
+/** A manufacturer financing quote is context, never an individual used-car price. */
+export function parseToggFinance(page: ResearchFetchResult): ResearchFact[] {
+  const $ = cheerio.load(page.body),
+    facts: ResearchFact[] = [];
+  $(".od-table-content-row").each((_, e) => {
+    const row = $(e),
+      version = clean(row.children().first().text());
+    if (!/^T10X (?:V2|4More)$/.test(version)) return;
+    const amount = parseTurkishAmount(
+      clean(row.children().eq(1).text()).replaceAll("*", ""),
+    );
+    const term = clean(row.find(".term-wrapper").text()).match(
+      /^(\d{1,2})\s*ay$/,
+    )?.[1];
+    const rateText = clean(row.find(".interest-rate-wrapper").text());
+    const match = rateText.match(/^(\d{1,2}(?:,\d{1,2})?)\s*%$/);
+    const rate = match ? Number(match[1].replace(",", ".")) : null;
+    const payment = parseTurkishAmount(
+      row.find(".monthly-payment-wrapper").text(),
+    );
+    if (!amount || !term || rate == null || !payment) return;
+    const id = `togg-t10x-${version.replaceAll(" ", "-")}-${amount}-${term}-${rate}`;
+    if (facts.some((f) => f.id === id)) return;
+    facts.push(
+      fact(
+        id,
+        "togg-finance",
+        `${version}: ${amount} TL kredi, ${term} ay, aylık %${rate} faiz, ${payment} TL taksit. Kredi tutarı araç satış fiyatı değildir. Bireysel/filo uygunluğu ve nihai maliyet kaynak koşullarına bağlı; banka onayı ve sigorta/kasko ayrıca gerekir.`,
+        rate,
+        "% / ay",
+        "2026",
+        "Togg yeni T10X finansmanı; ikinci el SUV emsali değildir. Kampanya bitişi ve stok mevcudiyeti doğrulanmadı.",
+      ),
+    );
+  });
+  return facts;
 }
 function source(
   page: ResearchFetchResult,
@@ -518,6 +558,9 @@ export async function collectResearch(
     pageBudget?: number;
     fetcher?: ResearchFetcher;
     now?: Date;
+    segmentId?: SegmentId;
+    deferredUrls?: string[];
+    refreshEconomy?: boolean;
   } = {},
 ): Promise<AcquisitionResult> {
   const fetcher = options.fetcher ?? fetchResearchPage,
@@ -541,6 +584,11 @@ export async function collectResearch(
     );
   const pages = new Map<string, ResearchFetchResult>(),
     policies = new Map<string, string | null>();
+  const segment =
+    researchSegments.find((s) => s.id === options.segmentId) ??
+    researchSegments[0];
+  const deferred = new Set(options.deferredUrls ?? []);
+  const deadline = Date.now() + 180_000;
   let requestCount = 0;
   const record = (
     url: string,
@@ -567,6 +615,14 @@ export async function collectResearch(
       return null;
     }
     const host = new URL(url).hostname;
+    if (deferred.has(url)) {
+      record(
+        url,
+        "BUDGET_DEFERRED",
+        "Önceki sonuçsuz kontrol sonrası bekleme aralığı; istek gönderilmedi.",
+      );
+      return null;
+    }
     if (blocked.has(host)) {
       record(
         url,
@@ -576,11 +632,11 @@ export async function collectResearch(
       return null;
     }
     if (pages.has(url)) return pages.get(url)!;
-    if (requestCount >= 50) {
+    if (requestCount >= 50 || Date.now() >= deadline) {
       record(
         url,
         "BUDGET_DEFERRED",
-        "Çalışma başına 50 istek sınırı; sonraki çalışmaya bırakıldı.",
+        "Çalışma başına 50 istek / 3 dakika sınırı; sonraki çalışmaya bırakıldı.",
       );
       return null;
     }
@@ -588,7 +644,7 @@ export async function collectResearch(
     try {
       const page = await fetcher(url, {
         maxBytes: 1_500_000,
-        timeoutMs: 18_000,
+        timeoutMs: Math.max(1, Math.min(18_000, deadline - Date.now())),
       });
       if ([401, 403, 429].includes(page.status) || accessChallenge(page.body)) {
         blocked.add(host);
@@ -626,6 +682,17 @@ export async function collectResearch(
         return null;
       }
       policies.set(origin, robots.status === 200 ? robots.body : "");
+      if (robots.status === 200 && !contentSignalAllows(robots.body)) {
+        policies.set(origin, null);
+        blocked.add(new URL(origin).hostname);
+        record(
+          url,
+          "POLICY_REVIEW",
+          "Yayıncı ai-input=no ile AI araştırması kullanımını kısıtlıyor; içerik alınmadı.",
+          robots,
+        );
+        return null;
+      }
       record(
         `${origin}/robots.txt`,
         "PARSED",
@@ -658,7 +725,7 @@ export async function collectResearch(
     const $ = cheerio.load(page.body),
       links = $("a")
         .filter((_, e) =>
-          /kullanım\s+(?:şartları|koşulları)|\bterms(?: of (?:use|service))?\b|yasal uyarı/iu.test(
+          /kullan(?:ım|ıcı)\s+(?:şartları|koşulları)|\bterms(?: of (?:use|service))?\b|yasal uyarı/iu.test(
             clean($(e).text()),
           ),
         )
@@ -763,7 +830,8 @@ export async function collectResearch(
     if (facts.length) accept(page, parsedSource, facts);
     else record(page.url, "UNSUPPORTED", reason, page);
   }
-  const central = await permitted(tcmb);
+  const central =
+    options.refreshEconomy === false ? null : await permitted(tcmb);
   if (central?.status === 200 && (await inspectTerms(central))) {
     const links = discovered(
       central,
@@ -825,7 +893,10 @@ export async function collectResearch(
       }
     }
   }
-  const municipality = await permitted("https://www.silivri.bel.tr/");
+  const municipality =
+    options.refreshEconomy === false
+      ? null
+      : await permitted("https://www.silivri.bel.tr/");
   if (municipality?.status === 200 && (await inspectTerms(municipality))) {
     discovered(
       municipality,
@@ -846,7 +917,10 @@ export async function collectResearch(
       "Güncel askı ilanları ayrıştırılamadı; önceki kanıt yenilenmedi.",
     );
   }
-  const uab = await permitted("https://www.uab.gov.tr/");
+  const uab =
+    options.refreshEconomy === false
+      ? null
+      : await permitted("https://www.uab.gov.tr/");
   const railUrls =
     uab?.status === 200 && (await inspectTerms(uab))
       ? discovered(
@@ -858,6 +932,7 @@ export async function collectResearch(
   const oldRail = [...known].filter(
     (url) =>
       url.includes("uab.gov.tr/haberler/") &&
+      options.refreshEconomy !== false &&
       /kapikule|cerkezkoy|halkali/.test(url),
   );
   for (const url of [
@@ -874,14 +949,26 @@ export async function collectResearch(
       );
     }
   }
-  const catalog = await permitted("https://www.genccity.com/");
+  const catalog =
+    segment.id !== "MARMARA_SUV"
+      ? await permitted("https://www.genccity.com/")
+      : null;
   let listingUrls: string[] = [];
   if (catalog?.status === 200 && (await inspectTerms(catalog))) {
-    const contextUrl = discovered(
+    record(
+      catalog.url,
+      "PARSED",
+      "Açık yayıncı katalog bağlantıları kontrol edildi; katalog erişimi fiyat, stok veya hukuki kanıt değildir.",
       catalog,
-      /istanbul-silivri-degirmenkoyde-ozel-parselasyonlu-arsalar/i,
-      "CONTEXT",
-    )[0];
+    );
+    const contextUrl =
+      segment.id === "DEGIRMENKOY_LAND"
+        ? discovered(
+            catalog,
+            /istanbul-silivri-degirmenkoyde-ozel-parselasyonlu-arsalar/i,
+            "CONTEXT",
+          )[0]
+        : null;
     if (contextUrl) {
       const context = await permitted(contextUrl);
       if (context?.status === 200)
@@ -898,17 +985,68 @@ export async function collectResearch(
           "Duyuru kapsamı doğrulanamadı; eski kampanya fiyatı alınmadı.",
         );
     }
-    const frontier = discovered(
+    let frontier = discovered(
       catalog,
-      /\/satilik-(?:arsa|tarla)\/[^\s]*degirmenkoy/i,
+      /(?<!altkategori)\/satilik-(?:arsa|tarla|daire|villa)\//i,
       "LISTING",
     );
+    if (segment.id !== "DEGIRMENKOY_LAND") {
+      const categoryUrl = discovered(
+        catalog,
+        segment.categories.includes("EV" as never)
+          ? /\/altkategori\/satilik-daire\//
+          : /\/altkategori\/satilik-arsa\//,
+        "CONTEXT",
+      )[0];
+      if (categoryUrl) {
+        const category = await permitted(categoryUrl);
+        if (category?.status === 200 && (await inspectTerms(category))) {
+          frontier = [
+            ...new Set([
+              ...frontier,
+              ...discovered(
+                category,
+                /(?<!altkategori)\/satilik-(?:arsa|tarla|daire|villa)\//i,
+                "LISTING",
+              ),
+            ]),
+          ];
+          record(
+            category.url,
+            "PARSED",
+            "Yayıncının açık kategori listesi incelendi; sayfanın boş olması ilçe piyasasında ilan olmadığı anlamına gelmez.",
+            category,
+          );
+        }
+      }
+      frontier = frontier.filter((u) =>
+        segment.neighborhoods.some(
+          (n) =>
+            decodeURI(u)
+              .toLocaleLowerCase("tr-TR")
+              .includes(n.toLocaleLowerCase("tr-TR")) ||
+            decodeURI(u)
+              .toLowerCase()
+              .includes(
+                n
+                  .toLocaleLowerCase("tr-TR")
+                  .replaceAll("ş", "s")
+                  .replaceAll("ğ", "g")
+                  .replaceAll("ü", "u")
+                  .replaceAll("ö", "o")
+                  .replaceAll("ç", "c")
+                  .replaceAll("ı", "i"),
+              ),
+        ),
+      );
+    }
     const previous = [...known]
       .filter(
         (url) =>
           safeResearchUrl(url) &&
           new URL(url).hostname === "www.genccity.com" &&
-          /\/satilik-(?:arsa|tarla)\//.test(url),
+          /\/satilik-(?:arsa|tarla)\//.test(url) &&
+          segment.id === "DEGIRMENKOY_LAND",
       )
       .slice(0, 20);
     const budget = Math.min(8, Math.max(1, options.pageBudget ?? 2));
@@ -941,12 +1079,148 @@ export async function collectResearch(
         );
     }
   }
+  // Reviewed public catalogs are discovery sources. Unmatched templates are never fabricated.
+  if (segment.id !== "DEGIRMENKOY_LAND" && segment.id !== "MARMARA_SUV") {
+    const catalogUrl =
+      "https://www.turyap.com.tr/Portfoyler.aspx?KATEGORI_ID=2";
+    const catalog = await permitted(catalogUrl);
+    if (catalog?.status === 200 && (await inspectTerms(catalog))) {
+      const links = discovered(
+        catalog,
+        /Silivri|Selimpaşa|Değirmenköy|Gümüşyaka|Çanta|Ortaköy/iu,
+        "LISTING",
+      );
+      record(
+        catalog.url,
+        "PARSED",
+        `${links.length} Silivri bağlantısı bu katalog sayfasında bulundu. Kapsam tüm portföy değildir; konum, fiyat ve şablon ayrıca doğrulanmadan ilan ithal edilmez.`,
+        catalog,
+      );
+      for (const url of links.slice(0, Math.min(8, options.pageBudget ?? 2))) {
+        const page = await permitted(url);
+        if (page)
+          record(
+            url,
+            "UNSUPPORTED",
+            "Gerçek örneğin alan şablonu henüz doğrulanmadı; ilan veya fiyat uydurulmadı.",
+            page,
+          );
+      }
+    }
+  }
+  if (segment.id === "MARMARA_SUV") {
+    const catalog = await permitted("https://www.otomol.com/");
+    if (catalog?.status === 200 && (await inspectTerms(catalog))) {
+      const policy = await permitted(
+        "https://www.otomol.com/kisisel-verilerin-korunmasi",
+      );
+      if (
+        policy?.status === 200 &&
+        !termsRestrictAutomation(bodyText(policy.body))
+      ) {
+        record(
+          policy.url,
+          "PARSED",
+          "Bağlantılı yayıncı politikası incelendi; hesap veya kişisel veri toplanmıyor. Yeniden kullanım lisansı iddia edilmez.",
+          policy,
+        );
+        const urls = discovered(
+          catalog,
+          /-ikinci-el-araba-\d+(?:\s|$)/,
+          "LISTING",
+        );
+        const budget = Math.min(8, Math.max(1, options.pageBudget ?? 5));
+        const existing = [...known].filter(
+          (u) =>
+            new URL(u).hostname === "www.otomol.com" &&
+            /-ikinci-el-araba-\d+$/.test(u) &&
+            !deferred.has(u),
+        );
+        const refreshSlots = Math.ceil(budget / 2);
+        // Keep discovery alive when the known inventory already exceeds the budget.
+        // Merge order puts the oldest unrefreshed sources first on the next run.
+        const queue = [
+          ...new Set([
+            ...existing.slice(0, refreshSlots),
+            ...urls.filter((u) => !known.has(u) && !deferred.has(u)),
+            ...existing.slice(refreshSlots),
+          ]),
+        ];
+        const visited = new Set<string>();
+        while (queue.length && visited.size < budget) {
+          const url = queue.shift()!;
+          if (visited.has(url)) continue;
+          visited.add(url);
+          const page = await permitted(url);
+          if (!page) continue;
+          const parsed = page.status === 200 ? parseOtomolVehicle(page) : null;
+          if (parsed) {
+            accept(page, parsed.source, parsed.facts, parsed.candidate);
+            const related = discovered(
+              page,
+              /-ikinci-el-araba-\d+(?:\s|$)/,
+              "LISTING",
+            );
+            // Refresh the known stock before spending the page budget on related cars.
+            queue.push(...related.filter((u) => !visited.has(u)));
+          } else
+            record(
+              url,
+              "UNSUPPORTED",
+              "Doğrulanmış Marmara SUV alanları yok veya başka segment/il; model adına göre sınıflandırma yapılmadı.",
+              page,
+            );
+        }
+      } else if (policy)
+        record(
+          policy.url,
+          "POLICY_REVIEW",
+          "Yayıncı politikası doğrulanamadı; ilan alınmadı.",
+          policy,
+        );
+    }
+    const legal = await permitted("https://www.togg.com.tr/privacy-and-legal");
+    if (
+      legal?.status === 200 &&
+      !termsRestrictAutomation(bodyText(legal.body))
+    ) {
+      record(
+        legal.url,
+        "PARSED",
+        "Resmî üretici yasal metni incelendi; sadece sınırlı finansman bağlamı, stok veya ikinci el ilan lisansı değildir.",
+        legal,
+      );
+      const page = await permitted("https://www.togg.com.tr/sales-and-finance");
+      if (page?.status === 200) {
+        const facts = parseToggFinance(page);
+        acceptFacts(
+          page,
+          source(
+            page,
+            "togg-finance",
+            "Togg — resmî T10X finansman koşulları",
+            "PUBLISHER",
+            1,
+          ),
+          facts,
+          "T10X kampanya alanları doğrulanamadı; tahmini kredi koşulu üretilmedi.",
+        );
+      }
+    } else if (legal)
+      record(
+        legal.url,
+        "POLICY_REVIEW",
+        "Üretici kullanım koşulları uygunluğu doğrulanmadı.",
+        legal,
+      );
+  }
   // Preserve known first-party observations outside the current small-land frontier.
   for (const url of [...known]
     .filter(
       (url) =>
         safeResearchUrl(url) &&
-        new URL(url).hostname === "www.gayrimenkulakgun.com",
+        new URL(url).hostname === "www.gayrimenkulakgun.com" &&
+        segment.id === "DEGIRMENKOY_LAND",
     )
     .slice(0, 2)) {
     const home = await permitted(new URL(url).origin + "/");
@@ -965,6 +1239,61 @@ export async function collectResearch(
   }
   // Recheck every known URL or explicitly mark it outside this adapter's supported scope.
   for (const url of known) {
+    if (
+      new URL(url).hostname === "www.otomol.com" &&
+      !result.checks.some((c) => c.url === url)
+    ) {
+      record(
+        url,
+        "BUDGET_DEFERRED",
+        "Bu turdaki SUV bütçesi/segmenti dışında; önceki gözlem yeniden alınmış sayılmaz.",
+      );
+      continue;
+    }
+    if (
+      (new URL(url).hostname === "www.togg.com.tr" &&
+        segment.id !== "MARMARA_SUV") ||
+      (new URL(url).hostname === "www.turyap.com.tr" &&
+        ["MARMARA_SUV", "DEGIRMENKOY_LAND"].includes(segment.id))
+    ) {
+      record(
+        url,
+        "BUDGET_DEFERRED",
+        "Kaynak bu turun segmenti dışında; son gerçek kontrol tarihi korunur.",
+      );
+      continue;
+    }
+    if (
+      options.refreshEconomy === false &&
+      [
+        "www.tcmb.gov.tr",
+        "tcmb.gov.tr",
+        "www.silivri.bel.tr",
+        "www.uab.gov.tr",
+        "www.afad.gov.tr",
+      ].includes(new URL(url).hostname)
+    ) {
+      record(
+        url,
+        "BUDGET_DEFERRED",
+        "Resmî gösterge bu saatte zaten kontrol edildi; eski gözlem tarihi korunur, yeni veri alınmış sayılmaz.",
+      );
+      continue;
+    }
+    if (
+      /genccity|gayrimenkulakgun|interestingrealestate/.test(
+        new URL(url).hostname,
+      ) &&
+      segment.id !== "DEGIRMENKOY_LAND"
+    ) {
+      if (!result.checks.some((c) => c.url === url))
+        record(
+          url,
+          "BUDGET_DEFERRED",
+          "Bu tur farklı segmentte yeni kanıt arıyor; önceki ilan aynı gözlem tarihiyle korunur, yeniden alınmış sayılmaz.",
+        );
+      continue;
+    }
     if (
       result.checks.some((check) => check.url === url) ||
       result.sources.some((s) => s.url === url)

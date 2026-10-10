@@ -8,6 +8,7 @@ import {
   type ResearchSnapshot,
 } from "./investment";
 import { listingSchema } from "./validation";
+import { normalizeBodyType, normalizeFuel } from "./constants";
 
 export type { ResearchCandidate } from "./investment";
 export function researchListingInput(
@@ -93,7 +94,17 @@ export function researchInProfile(
     (!profile.maxPrice ||
       (candidate.price != null &&
         new Prisma.Decimal(candidate.price).lte(profile.maxPrice))) &&
-    profile.bodyTypes.length === 0 &&
-    profile.fuels.length === 0
+    (!profile.bodyTypes.length ||
+      (candidate.vehicle?.bodyTypeVerified === true &&
+        !!candidate.vehicle.bodyTypeEvidence &&
+        !!normalizeBodyType(candidate.vehicle.bodyType) &&
+        profile.bodyTypes.includes(
+          normalizeBodyType(candidate.vehicle.bodyType)!,
+        ))) &&
+    (!profile.fuels.length ||
+      (!!candidate.vehicle?.fuel &&
+        profile.fuels.some(
+          (f) => normalizeFuel(f) === normalizeFuel(candidate.vehicle!.fuel!),
+        )))
   );
 }

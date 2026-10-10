@@ -105,6 +105,78 @@ afterEach(async () => {
 });
 afterAll(() => db.$disconnect());
 
+it("segment gerekçesi ve bekleme hafızası PostgreSQL'den sonraki tura taşınır", async () => {
+  const acquire = async () => fixture();
+  const first = await runResearch({ acquire, now: clock });
+  const stored = await db.researchRun.findUniqueOrThrow({
+    where: { id: first.id },
+  });
+  const firstStrategy = (
+    stored.summary as { strategy: { segmentId: string; memory: object } }
+  ).strategy;
+  expect(firstStrategy.memory).not.toEqual({});
+  const second = await runResearch({
+    acquire,
+    now: new Date(clock.getTime() + 1000),
+  });
+  const next = await db.researchRun.findUniqueOrThrow({
+    where: { id: second.id },
+  });
+  const nextStrategy = (
+    next.summary as {
+      strategy: { segmentId: string; changedFrom: string; reason: string };
+    }
+  ).strategy;
+  expect(nextStrategy.segmentId).not.toBe(firstStrategy.segmentId);
+  expect(nextStrategy.changedFrom).toBe(firstStrategy.segmentId);
+  expect(nextStrategy.reason).toContain("kanıt");
+  expect(await db.listingPriceHistory.count()).toBe(1);
+});
+
+it("erişilebilir katalogda segment ilanı yoksa tur kısmi kalır; fiyatlı ilan veya fırsat üretmez", async () => {
+  const data = fixture();
+  data.sources = [];
+  data.facts = [];
+  data.candidates = [];
+  data.discoveries = [];
+  data.checks = [
+    {
+      url: "https://www.genccity.com/",
+      status: "PARSED",
+      checkedAt: clock.toISOString(),
+      sha256: "a".repeat(64),
+      httpStatus: 200,
+    },
+  ];
+  const result = await runResearch({ acquire: async () => data, now: clock });
+  expect(result.status).toBe("PARTIAL");
+  expect(result.summary).toMatchObject({
+    inserted: 0,
+    newCandidates: 0,
+    reviewCount: 0,
+  });
+  expect(await db.listing.count()).toBe(0);
+});
+
+it("altı segment beklemeye girince yeni ağ çalışması veya fiyat olayı başlatmaz", async () => {
+  let calls = 0;
+  const acquire = async () => {
+    calls++;
+    return fixture();
+  };
+  for (let i = 0; i < 6; i++)
+    await runResearch({ acquire, now: new Date(clock.getTime() + i * 1000) });
+  const count = await db.researchRun.count();
+  const result = await runResearch({
+    acquire,
+    now: new Date(clock.getTime() + 6000),
+  });
+  expect(result.status).toBe("DEFERRED");
+  expect(calls).toBe(6);
+  expect(await db.researchRun.count()).toBe(count);
+  expect(await db.listingPriceHistory.count()).toBe(1);
+});
+
 it("aynı ada/parsel beyanlı farklı kaynak URL'lerini birleştirmez; belirsiz fiziksel mükerreri incelemeye alır", async () => {
   const acquired = fixture("440000", false);
   const secondUrl =
@@ -153,6 +225,16 @@ it("aynı ada/parsel beyanlı farklı kaynak URL'lerini birleştirmez; belirsiz 
         (item) => item.assessment == null && item.verdict === "Yetersiz veri",
       ),
   ).toBe(true);
+  const repeated = await runResearch({
+    now: new Date(clock.getTime() + 60_000),
+    acquire: async () => structuredClone(acquired),
+  });
+  expect(repeated.summary).toMatchObject({
+    inserted: 0,
+    priceChanges: 0,
+    decisionRevisions: 0,
+  });
+  expect(await db.listingPriceHistory.count()).toBe(2);
 });
 
 it("ikinci çalışma kaynağı tekrar okur, fiyatı ve gerekçeyi değiştirir; aynı fiyat tekrarında olay üretmez", async () => {

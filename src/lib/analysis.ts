@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import type { Category } from "./constants";
-import { normalizeBodyType, provinces } from "./constants";
+import { normalizeBodyType, provinces, normalizeFuel } from "./constants";
 type D = Prisma.Decimal;
 const decimal = (value: Prisma.Decimal.Value) => new Prisma.Decimal(value);
 export type Evidence = {
@@ -197,7 +197,9 @@ export function comparablePrice(
       !same(a.make, b.make) ||
       !same(a.model, b.model) ||
       !same(a.trim, b.trim) ||
-      !same(a.fuel, b.fuel) ||
+      !a.fuel ||
+      !b.fuel ||
+      normalizeFuel(a.fuel) !== normalizeFuel(b.fuel) ||
       !same(a.transmission, b.transmission) ||
       !known(a.damageHistory) ||
       !same(a.damageHistory, b.damageHistory) ||
