@@ -266,18 +266,39 @@ export async function runResearch(
           : host === "www.gayrimenkulakgun.com"
             ? "research-akgun"
             : `research-${host.replace(/^www\./, "").replace(/[^a-z0-9-]/g, "-")}`;
+      const existingSource = await db.listingSource.findUnique({
+        where: { id: sourceId },
+      });
+      const coverage = {
+        categories: [
+          ...new Set([...(existingSource?.categories ?? []), input.category]),
+        ],
+        regions: [
+          ...new Set([
+            ...(existingSource?.regions ?? []),
+            `${input.province} / ${input.district}`,
+          ]),
+        ],
+      };
+      const sourceName =
+        host === "www.otomol.com"
+          ? "Otomol — açık ilan araştırması"
+          : source.name;
       await db.listingSource.upsert({
         where: { id: sourceId },
         create: {
           id: sourceId,
-          name: source.name,
+          name: sourceName,
           method: "PUBLIC_RESEARCH",
           accessStatus: "AVAILABLE",
-          categories: [input.category],
-          regions: [`${input.province} / ${input.district}`],
+          ...coverage,
           authorization: source.usageNote,
         },
-        update: { authorization: source.usageNote },
+        update: {
+          ...coverage,
+          authorization: source.usageNote,
+          ...(host === "www.otomol.com" ? { name: sourceName } : {}),
+        },
       });
       const result = await importRecords([input], sourceId, "PUBLIC_RESEARCH", {
         observedAt: new Date(candidate.observedAt),

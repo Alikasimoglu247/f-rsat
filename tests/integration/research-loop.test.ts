@@ -104,6 +104,34 @@ afterEach(async () => {
   await db.researchResource.deleteMany();
 });
 afterAll(() => db.$disconnect());
+it("aynı yayıncının yeni ilçesi/kategorisi önceki kaynak kapsamını silmez", async () => {
+  await runResearch({ now: clock, acquire: async () => fixture() });
+  const next = fixture("450000", false, 37, new Date(clock.getTime() + 60_000));
+  const address =
+    "https://www.genccity.com/satilik-tarla/synthetic-other-region/099099099098";
+  next.sources[0].url = address;
+  Object.assign(next.candidates[0], {
+    id: "synthetic-other-region",
+    externalId: "synthetic-other-region",
+    sourceUrl: address,
+    category: "TARLA",
+    district: "Çatalca",
+    parcelNumber: "999/999",
+  });
+  await runResearch({
+    now: new Date(clock.getTime() + 60_000),
+    acquire: async () => next,
+  });
+  const publisher = await db.listingSource.findUniqueOrThrow({
+    where: { id: "research-genccity" },
+  });
+  expect(publisher.categories.sort()).toEqual(["ARSA", "TARLA"]);
+  expect(publisher.regions.sort()).toEqual([
+    "İstanbul / Silivri",
+    "İstanbul / Çatalca",
+  ]);
+  expect(await db.listing.count({ where: { isDemo: false } })).toBe(2);
+});
 
 it("segment gerekçesi ve bekleme hafızası PostgreSQL'den sonraki tura taşınır", async () => {
   const acquire = async () => fixture();

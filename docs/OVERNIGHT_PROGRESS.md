@@ -148,11 +148,12 @@ robots/erişim engelleri kaldırılmadı. Sonraki normal çağrı DEFERRED oldu.
 
 ## 12. Testler, CI ve kullanılabilir önizleme
 
-**128 birim + 60 PostgreSQL + 23 tarayıcı = 211 test geçti**.
+**128 birim + 61 PostgreSQL + 23 tarayıcı = 212 test geçti**.
 Build, lint, TypeScript başarılı. Ayrı `_test`/`_e2e` kullanıldı; gerçek DB
 sıfırlanmadı. Yeni regresyonlar hafıza/bekleme/no-network, worker kilidi, kaynak
 izni, JSON'un çalıştırılmaması, fiyat/ID/konum çelişkisi, yenileme-keşif dengesi,
-elektrik yakıt adları, yalnızca eksik alanları gösterme ve değişmeyen kararları kapsar.
+elektrik yakıt adları, yalnızca eksik alanları gösterme, yayıncının farklı
+ilçe/kategori kapsamını koruma ve değişmeyen kararları kapsar.
 
 Docker Hub kotasına karşı önceki resmî ECR imajları/aynı sabit digestler
 korundu. Yeni çözüm diye sayılmadı; CI test/build/token kalıcılık kontrolleri
