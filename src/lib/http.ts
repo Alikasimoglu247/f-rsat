@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { ImportValidationError, ImportFormatError } from "./imports";
-export async function readJson(request: Request) {
+export async function readJson(request: Request, maxBytes = 2_100_000) {
   const origin = request.headers.get("origin");
   const expectedOrigin = new URL(process.env.APP_BASE_URL ?? request.url)
     .origin;
@@ -17,9 +17,9 @@ export async function readJson(request: Request) {
     const { done, value } = await reader.read();
     if (done) break;
     bytes += value.byteLength;
-    if (bytes > 2_100_000) {
+    if (bytes > maxBytes) {
       await reader.cancel();
-      throw new HttpError(413, "İstek 2 MB sınırını aşıyor.");
+      throw new HttpError(413, "İstek boyut sınırını aşıyor.");
     }
     chunks.push(value);
   }

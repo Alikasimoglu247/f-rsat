@@ -4,6 +4,9 @@ import { db } from "./db";
 import type { ListingInput } from "./validation";
 import type { Evidence, Assessment } from "./analysis";
 import { assess } from "./analysis";
+import { normalizeBodyType } from "./constants";
+import { queueBodyReview } from "./vehicle-review";
+import { HttpError } from "./http";
 
 export const listingInclude = {
   source: true,
@@ -32,6 +35,7 @@ export function canonicalUrl(value?: string) {
   return url.toString();
 }
 export function identityKey(input: ListingInput) {
+  // Similarity fingerprint only. Never a globally unique listing identity.
   const {
     price: _price,
     sourceUrl: _url,
@@ -54,11 +58,50 @@ export function identityKey(input: ListingInput) {
   );
   return createHash("sha256").update(JSON.stringify(normalized)).digest("hex");
 }
-function detailFields(input: ListingInput) {
+export type ObservationContext = {
+  observedAt?: Date;
+  provenance?: Record<string, string | boolean | null>;
+  allowWeakCreate?: boolean;
+};
+async function identityReview(
+  tx: Prisma.TransactionClient,
+  input: ListingInput,
+  sourceId: string,
+  candidates: string[],
+  kind: string,
+  reason: string,
+) {
+  const dedupKey = createHash("sha256")
+    .update(
+      JSON.stringify({
+        sourceId,
+        input,
+        candidates: [...candidates].sort(),
+        kind,
+      }),
+    )
+    .digest("hex");
+  const review = await tx.listingReview.upsert({
+    where: { dedupKey },
+    create: {
+      sourceId,
+      kind,
+      reason,
+      dedupKey,
+      input: JSON.parse(JSON.stringify(input)),
+      candidateIds: candidates,
+    },
+    update: {},
+  });
+  return { id: "", reviewId: review.id, outcome: "reviewed" as const };
+}
+export function detailFields(input: ListingInput) {
   if (input.category === "EV")
     return {
       property: {
         sizeM2: input.sizeM2,
+        netM2: input.netM2,
+        grossM2: input.grossM2,
         propertyType: input.propertyType,
         rooms: input.rooms,
         buildingAge: input.buildingAge,
@@ -78,6 +121,9 @@ function detailFields(input: ListingInput) {
         fuel: input.fuel,
         transmission: input.transmission,
         damageHistory: input.damageHistory,
+        bodyType: input.bodyType,
+        bodyTypeVerified: input.bodyTypeVerified,
+        bodyTypeEvidence: input.bodyTypeEvidence,
       },
     };
   return {
@@ -97,50 +143,177 @@ export async function saveRecord(
   input: ListingInput,
   sourceId: string,
   importId?: string,
+  context: ObservationContext = {},
 ) {
   const sourceUrl = canonicalUrl(input.sourceUrl),
     key = identityKey(input);
-  const alternatives: Prisma.ListingWhereInput[] = [{ identityKey: key }];
-  if (sourceUrl) alternatives.push({ sourceUrl });
-  if (input.externalId)
-    alternatives.push({ sourceId, externalId: input.externalId });
-  const matches = await tx.listing.findMany({ where: { OR: alternatives } });
-  if (matches.length > 1)
-    throw new Error(
-      "URL/harici kimlik farklı kayıtlara işaret ediyor; elle birleştirme gerekli.",
+  const byId = input.externalId
+    ? await tx.listing.findUnique({
+        include: { vehicle: true },
+        where: {
+          sourceId_externalId: { sourceId, externalId: input.externalId },
+        },
+      })
+    : null;
+  const byUrl = sourceUrl
+    ? await tx.listing.findUnique({
+        include: { vehicle: true },
+        where: { sourceId_sourceUrl: { sourceId, sourceUrl } },
+      })
+    : null;
+  if (
+    byId?.sourceUrl &&
+    sourceUrl &&
+    new URL(byId.sourceUrl).hostname.toLowerCase().replace(/^www\./, "") !==
+      new URL(sourceUrl).hostname.toLowerCase().replace(/^www\./, "")
+  )
+    return identityReview(
+      tx,
+      input,
+      sourceId,
+      [byId.id],
+      "IDENTITY_CONFLICT",
+      "Aynı içe aktarma kaynağındaki harici ID farklı platform alan adlarıyla geldi; kaynak ayrımı incelenmeden birleştirilmedi.",
     );
-  const existing = matches[0];
+  if (
+    (byId && byUrl && byId.id !== byUrl.id) ||
+    (byUrl?.externalId &&
+      input.externalId &&
+      byUrl.externalId !== input.externalId)
+  )
+    return identityReview(
+      tx,
+      input,
+      sourceId,
+      [...new Set([byId?.id, byUrl?.id].filter((id): id is string => !!id))],
+      "IDENTITY_CONFLICT",
+      "Aynı kaynağın ilan ID ve URL bilgileri çelişiyor; otomatik birleşme yapılmadı.",
+    );
+  const existing = byId ?? byUrl;
+  if (
+    !existing &&
+    !sourceUrl &&
+    !input.externalId &&
+    !context.allowWeakCreate
+  ) {
+    const similar = await tx.listing.findMany({
+      where: { sourceId, identityKey: key },
+      select: { id: true },
+    });
+    if (similar.length)
+      return identityReview(
+        tx,
+        input,
+        sourceId,
+        similar.map((item) => item.id),
+        "WEAK_IDENTITY",
+        "Benzer içerik tek başına ilan kimliği değildir. Ayrı ilan olup olmadığını inceleyin.",
+      );
+  }
   if (
     existing &&
     (existing.isDemo !== input.isDemo || existing.category !== input.category)
   )
-    throw new Error(
-      "Aynı kimlik farklı kategori veya demo durumuyla kullanılamaz.",
+    return identityReview(
+      tx,
+      input,
+      sourceId,
+      [existing.id],
+      "IDENTITY_CONFLICT",
+      "Aynı güçlü kimlik farklı kategori veya demo durumuyla geldi; kayıt değiştirilmedi.",
+    );
+  if (existing?.identityStatus === "REVIEW")
+    return identityReview(
+      tx,
+      input,
+      sourceId,
+      [existing.id],
+      "LEGACY_AMBIGUITY",
+      "Eski kaydın kimliği inceleme bekliyor; otomatik güncellenmedi.",
     );
   const now = new Date();
+  const observedAt = context.observedAt ?? now;
+  if (
+    !Number.isFinite(observedAt.getTime()) ||
+    observedAt.getTime() > now.getTime() + 300_000
+  )
+    throw new Error("Geçersiz gözlem zamanı.");
   const provenance = {
     acquisitionSource: sourceId,
     importJobId: importId ?? null,
     method: sourceId,
-    observedAt: now.toISOString(),
+    observedAt: observedAt.toISOString(),
+    collectedAt: now.toISOString(),
     verification: "USER_PROVIDED_UNVERIFIED",
+    originalSourceUrl: input.sourceUrl ?? null,
+    ...context.provenance,
   };
   const details = detailFields(input);
+  if (
+    input.bodyTypeVerified &&
+    (!normalizeBodyType(input.bodyType) ||
+      !input.bodyTypeEvidence ||
+      input.bodyTypeEvidence.trim().length < 8)
+  )
+    throw new HttpError(
+      400,
+      "Gövde tipini doğrulamak için geçerli sınıf ve incelenmiş kanıt açıklaması gerekli.",
+    );
+  if (
+    details.vehicle &&
+    (input.bodyTypeVerified === false ||
+      (input.bodyType &&
+        input.bodyType !== existing?.vehicle?.bodyType &&
+        input.bodyTypeVerified !== true))
+  ) {
+    details.vehicle.bodyTypeVerified = false;
+    details.vehicle.bodyTypeEvidence = undefined;
+  }
   const common = {
     title: input.title,
     category: input.category,
     province: input.province,
     district: input.district,
     neighborhood: input.neighborhood,
+    transactionType: input.transactionType,
     price: new Prisma.Decimal(input.price),
-    lastObservedAt: now,
+    lastObservedAt: observedAt,
   };
   if (existing) {
     const changed = !existing.price.equals(input.price);
+    const current = observedAt.getTime() >= existing.lastObservedAt.getTime();
+    if (!current) {
+      const recorded = await tx.listingPriceHistory.findFirst({
+        where: { listingId: existing.id, price: input.price, observedAt },
+      });
+      if (!recorded)
+        await tx.listingPriceHistory.create({
+          data: {
+            listingId: existing.id,
+            price: input.price,
+            observedAt,
+            provenance,
+          },
+        });
+      if (!recorded)
+        await tx.opportunityAssessment.deleteMany({
+          where: { listingId: existing.id },
+        });
+      return {
+        id: existing.id,
+        outcome: recorded ? ("duplicate" as const) : ("updated" as const),
+      };
+    }
     await tx.listing.update({
       where: { id: existing.id },
       data: {
         ...common,
+        identityKey: key,
+        identityVersion: 2,
+        ...(existing.externalId || !input.externalId
+          ? {}
+          : { externalId: input.externalId }),
+        ...(existing.sourceUrl || !sourceUrl ? {} : { sourceUrl }),
         ...(details.property
           ? {
               property: {
@@ -161,7 +334,7 @@ export async function saveRecord(
         ...(changed
           ? {
               prices: {
-                create: { price: input.price, observedAt: now, provenance },
+                create: { price: input.price, observedAt, provenance },
               },
             }
           : {}),
@@ -176,6 +349,7 @@ export async function saveRecord(
         OR: [{ listingId: existing.id }, { comparableId: existing.id }],
       },
     });
+    await queueBodyReview(tx, existing.id);
     return {
       id: existing.id,
       outcome: changed ? "updated" : ("duplicate" as const),
@@ -193,15 +367,17 @@ export async function saveRecord(
       ...(details.property ? { property: { create: details.property } } : {}),
       ...(details.vehicle ? { vehicle: { create: details.vehicle } } : {}),
       ...(details.land ? { land: { create: details.land } } : {}),
-      prices: { create: { price: input.price, observedAt: now, provenance } },
+      prices: { create: { price: input.price, observedAt, provenance } },
     },
   });
+  await queueBodyReview(tx, listing.id);
   return { id: listing.id, outcome: "inserted" as const };
 }
 export async function importRecords(
   records: ListingInput[],
   sourceId: string,
   format: string,
+  context: ObservationContext = {},
 ) {
   const job = await db.importJob.create({
     data: {
@@ -221,13 +397,15 @@ export async function importRecords(
           inserted: 0,
           updated: 0,
           duplicates: 0,
+          reviewed: 0,
           ids: [] as string[],
         };
         for (const record of records) {
-          const saved = await saveRecord(tx, record, sourceId, job.id);
-          result.ids.push(saved.id);
+          const saved = await saveRecord(tx, record, sourceId, job.id, context);
+          if (saved.id) result.ids.push(saved.id);
           if (saved.outcome === "inserted") result.inserted++;
           else if (saved.outcome === "updated") result.updated++;
+          else if (saved.outcome === "reviewed") result.reviewed++;
           else result.duplicates++;
         }
         const { ids: _ids, ...totals } = result;
@@ -241,12 +419,15 @@ export async function importRecords(
           data: {
             lastSuccessAt: new Date(),
             lastError: null,
+            lastNewCount: result.inserted,
             accessStatus:
               sourceId === "demo"
                 ? "DEMO"
                 : sourceId === "licensed-feed"
                   ? "CONNECTED"
-                  : "AVAILABLE",
+                  : ["sahibinden-email", "arabam-email"].includes(sourceId)
+                    ? "USER_APPROVED"
+                    : "AVAILABLE",
           },
         });
         return result;
@@ -271,11 +452,30 @@ export async function importRecords(
     throw error;
   }
 }
-export async function analyzeAll(tx: Prisma.TransactionClient) {
-  const listings = await tx.listing.findMany({ include: listingInclude });
-  const inputs = listings.map(evidence);
-  for (const listing of inputs) {
-    const result = assess(listing, inputs);
+export async function analyzeAll(
+  tx: Prisma.TransactionClient,
+  options: { eligibleResearchIds?: Set<string>; now?: Date } = {},
+) {
+  const listings = await tx.listing.findMany({
+    where: { identityStatus: "ACTIVE" },
+    include: listingInclude,
+  });
+  const eligible = (listing: StoredListing) =>
+    listing.source.method !== "PUBLIC_RESEARCH" ||
+    !!options.eligibleResearchIds?.has(listing.id);
+  const inputs = listings.filter(eligible).map(evidence);
+  for (const stored of listings) {
+    const listing = evidence(stored);
+    const result = assess(listing, inputs, options.now);
+    if (!eligible(stored)) {
+      result.score = null;
+      result.confidence = "INSUFFICIENT";
+      result.riskFlags.push({
+        code: "RESEARCH_EVIDENCE",
+        label: "Güncel kaynak ve taşınmaza özgü resmî hukuki kanıt eksik; araştırma beyanı fiyat emsali sayılmadı.",
+        verified: false,
+      });
+    }
     const { comparables, riskFlags, ...fields } = result;
     const data = {
       ...fields,

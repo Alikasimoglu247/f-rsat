@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { categoryKeys, provinces } from "./constants";
+import { categoryKeys, provinces, bodyTypes } from "./constants";
 
 const optionalText = z.preprocess(
   (value) => (value === "" || value === null ? undefined : value),
@@ -29,6 +29,7 @@ export const listingSchema = z
     province: z.enum(provinces),
     district: z.string().trim().min(2).max(80),
     neighborhood: optionalText,
+    transactionType: optionalText,
     price: priceSchema,
     sourceUrl: z.preprocess(
       (value) => (value === "" || value == null ? undefined : value),
@@ -58,6 +59,8 @@ export const listingSchema = z
       )
       .default(false),
     sizeM2: optionalDecimal,
+    netM2: optionalDecimal,
+    grossM2: optionalDecimal,
     propertyType: optionalText,
     rooms: optionalText,
     buildingAge: integer(300),
@@ -80,6 +83,13 @@ export const listingSchema = z
     fuel: optionalText,
     transmission: optionalText,
     damageHistory: optionalText,
+    bodyType: optionalText,
+    bodyTypeVerified: z.preprocess(
+      (v) =>
+        v === "true" ? true : v === "false" ? false : v === "" ? undefined : v,
+      z.boolean().optional(),
+    ),
+    bodyTypeEvidence: optionalText,
     classification: optionalText,
     zoning: optionalText,
     roadAccess: optionalText,
@@ -105,8 +115,23 @@ export const profileSchema = z
     district: optionalText,
     minPrice: optionalDecimal,
     maxPrice: optionalDecimal,
+    categories: z.array(z.enum(categoryKeys)).max(4).default([]),
+    provinces: z.array(z.enum(provinces)).max(11).default([]),
+    bodyTypes: z.array(z.enum(bodyTypes)).max(8).default([]),
+    fuels: z.array(z.string().trim().min(2).max(80)).max(10).default([]),
+    transactionType: optionalText,
+    trackPriceDrops: z.boolean().default(false),
+    mailLabelIds: z
+      .array(z.string().regex(/^[A-Za-z0-9_-]{1,100}$/))
+      .max(20)
+      .default([]),
+    mailSenders: z
+      .array(z.email().transform((v) => v.toLowerCase()))
+      .max(20)
+      .default([]),
     minScore: z.number().int().min(0).max(100).default(70),
   })
+  .strict()
   .refine(
     (v) =>
       !v.minPrice || !v.maxPrice || Number(v.minPrice) <= Number(v.maxPrice),

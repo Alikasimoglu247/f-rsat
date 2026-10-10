@@ -19,6 +19,12 @@ import {
 import { Button } from "./ui/button";
 const links = [
   { href: "/", label: "Genel Bakış", icon: LayoutDashboard },
+  {
+    href: "/yatirim-analizi",
+    label: "Yatırım Analizi",
+    icon: ChartNoAxesCombined,
+  },
+  { href: "/yeni-ilanlar", label: "Yeni İlanlar", icon: Database },
   { href: "/firsatlar", label: "Fırsatlar", icon: ScanSearch },
   { href: "/fiyat-gecmisi", label: "Fiyat Geçmişi", icon: ChartNoAxesCombined },
   { href: "/takip-listem", label: "Takip Listem", icon: Bookmark },

@@ -1,6 +1,10 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import { DiscoveryPage } from "./discovery";
+import { LiveReadiness } from "./live-readiness";
+import { PilotCards, ProfileEditor } from "./pilots";
+import type { PilotView, ProfileView } from "./pilots";
 import type { FormEvent } from "react";
 import {
   ArrowUpRight,
@@ -37,6 +41,7 @@ import {
 } from "./shared";
 import { ManualForm, ImportDialog } from "./forms";
 import { PriceChart, CoverageChart } from "./charts";
+import { EmailPanel } from "./email-panel";
 import { api, useApi } from "./use-api";
 import {
   categoryKeys,
@@ -57,11 +62,18 @@ export type PageMode =
   | "sources"
   | "notifications"
   | "settings"
-  | "manual";
+  | "manual"
+  | "discovery";
 const titles: Record<
   PageMode,
   { title: string; description: string; eyebrow: string }
 > = {
+  discovery: {
+    title: "Yeni gerçek ilanlar",
+    description:
+      "Fırsat puanı olmasa da alınan gerçek ilanlar, eksik veriler ve emsal durumu.",
+    eyebrow: "GERÇEK VERİ",
+  },
   dashboard: {
     title: "Fırsatlar, radarında.",
     description:
@@ -125,6 +137,13 @@ interface Source {
   lastError: string | null;
   freshnessHours: number;
   categories: Category[];
+  realCount?: number;
+  demoCount?: number;
+  lastNewCount?: number;
+  actualRegions?: string[];
+  actualCategories?: Category[];
+  pendingMessages?: number;
+  missingFields?: string[];
   _count?: { listings: number };
   logs?: {
     id: string;
@@ -144,6 +163,7 @@ interface Run {
   attempts: number;
 }
 interface Dashboard {
+  pilots: PilotView[];
   total: number;
   real: number;
   demo: number;
@@ -195,7 +215,7 @@ interface SettingsData {
   };
   schedule: string;
   timezone: string;
-  profiles: {
+  profiles: (ProfileView & {
     id: string;
     name: string;
     category: Category | null;
@@ -204,13 +224,18 @@ interface SettingsData {
     minPrice: string | null;
     maxPrice: string | null;
     alerts: { minScore: number; enabled: boolean }[];
-  }[];
+  })[];
 }
 const statusLabels: Record<string, string> = {
   AVAILABLE: "Kullanıma hazır",
   CONNECTED: "Doğrulanmış bağlantı",
   PLANNED: "Planlandı · bağlı değil",
   DISCONNECTED: "Bağlı değil",
+  AUTHORIZED: "Google izni alındı · alım bekliyor",
+  NEEDS_SAMPLE: "Gerçek örnek onayı gerekiyor",
+  USER_APPROVED: "Örnek onaylı · canlı Gmail doğrulanmadı",
+  MISSING_TOKEN: "Güvenli Gmail yetkisi eksik",
+  REVIEW: "İnceleme bekliyor",
   DEMO: "Demo veri",
   ERROR: "Hata",
   COMPLETED: "Tamamlandı",
@@ -296,7 +321,9 @@ export function RadarPage({
           doğrulanmış hukuki bilgi gibi sunulmaz.
         </span>
       </div>
-      {mode === "dashboard" ? (
+      {mode === "discovery" ? (
+        <DiscoveryPage />
+      ) : mode === "dashboard" ? (
         <DashboardPage />
       ) : mode === "listings" || mode === "watch" ? (
         <ListingsPage watch={mode === "watch"} />
@@ -370,6 +397,17 @@ function DashboardPage() {
             <span>{description}</span>
           </div>
         ))}
+      </div>
+      <PilotCards pilots={data.pilots} />
+      <div className="panel investment-entry">
+        <div>
+          <h2>Silivri yatırım analizi</h2>
+          <p>
+            Ekonomik koşulları, bölgesel gelişmeleri ve gerçek ilan adaylarını
+            kaynaklarıyla birlikte değerlendir.
+          </p>
+        </div>
+        <Link href="/yatirim-analizi">Gerekçeli değerlendirmeleri aç →</Link>
       </div>
       <div className="dashboard-insights">
         <div className="panel radar-callout">
@@ -908,6 +946,11 @@ function DetailPage({ id }: { id: string }) {
 const fieldLabels: Record<string, string> = {
   sizeM2: "Alan (m²)",
   propertyType: "Konut tipi",
+  netM2: "Net alan (m²)",
+  grossM2: "Brüt alan (m²)",
+  bodyType: "Gövde tipi",
+  bodyTypeVerified: "Gövde tipi kullanıcı kanıtı onaylı",
+  bodyTypeEvidence: "Gövde tipi kanıt açıklaması",
   rooms: "Oda",
   buildingAge: "Bina yaşı",
   condition: "Genel durum",
@@ -998,6 +1041,12 @@ function HistoryPage() {
 function SourcesPage() {
   const { data, error, loading, refresh } = useApi<{
     sources: Source[];
+    summary: {
+      real: number;
+      demo: number;
+      unprocessed: number;
+      missingListings: number;
+    };
     imports: {
       id: string;
       format: string;
@@ -1006,6 +1055,7 @@ function SourcesPage() {
       inserted: number;
       updated: number;
       duplicates: number;
+      reviewed: number;
       createdAt: string;
       errors: unknown[];
     }[];
@@ -1015,6 +1065,26 @@ function SourcesPage() {
   if (!data) return null;
   return (
     <>
+      <div
+        className="source-summary-stats panel"
+        aria-label="Gerçek kaynak kapsamı"
+      >
+        <p>
+          <strong>{data.summary.real}</strong> gerçek ilan
+        </p>
+        <p>
+          <strong>{data.summary.demo}</strong> demo ilan
+        </p>
+        <p>
+          <strong>{data.summary.unprocessed}</strong> işlenemeyen/kısmi bildirim
+        </p>
+        <p>
+          <strong>{data.summary.missingListings}</strong> emsal bilgisi eksik
+          veya kimliği incelemede gerçek ilan
+        </p>
+      </div>
+      <LiveReadiness />
+      <EmailPanel />
       <div className="source-grid">
         {data.sources.map((source) => {
           const stale = source.lastSuccessAt
@@ -1038,8 +1108,50 @@ function SourcesPage() {
                   <dd>{source.method}</dd>
                 </div>
                 <div>
-                  <dt>Kayıt sayısı</dt>
-                  <dd>{source._count?.listings ?? 0}</dd>
+                  <dt>Gerçek / demo kayıt</dt>
+                  <dd>
+                    {source.realCount ?? 0} / {source.demoCount ?? 0}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Son alımda yeni</dt>
+                  <dd>{source.lastNewCount ?? 0}</dd>
+                </div>
+                <div>
+                  <dt>İşlenemeyen bildirim</dt>
+                  <dd>{source.pendingMessages ?? 0}</dd>
+                </div>
+                <div>
+                  <dt>Gerçek veri bölgeleri</dt>
+                  <dd>
+                    {source.actualRegions?.join(", ") ||
+                      "Henüz gerçek veri yok"}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Gerçek veri kategorileri</dt>
+                  <dd>
+                    {source.actualCategories
+                      ?.map((key) => categoryLabels[key])
+                      .join(", ") || "Henüz gerçek veri yok"}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Bildirimde eksik alanlar</dt>
+                  <dd>
+                    {source.missingFields
+                      ?.map(
+                        (field) =>
+                          ({
+                            title: "Başlık",
+                            category: "Kategori",
+                            province: "İl",
+                            district: "İlçe",
+                            price: "Fiyat",
+                          })[field] ?? field,
+                      )
+                      .join(", ") || "Kayıtlı eksik alan yok"}
+                  </dd>
                 </div>
                 <div>
                   <dt>Son başarı</dt>
@@ -1096,6 +1208,7 @@ function SourcesPage() {
                   <th>Yeni</th>
                   <th>Güncelleme</th>
                   <th>Tekrar</th>
+                  <th>İnceleme</th>
                 </tr>
               </thead>
               <tbody>
@@ -1107,6 +1220,7 @@ function SourcesPage() {
                     <td>{job.inserted}</td>
                     <td>{job.updated}</td>
                     <td>{job.duplicates}</td>
+                    <td>{job.reviewed}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1123,6 +1237,12 @@ function NotificationsPage() {
   const { data, error, loading, refresh } = useApi<{
     notifications: Notification[];
     runs: Run[];
+    reports: {
+      runId: string;
+      body: string;
+      listingIds: string[];
+      createdAt: string;
+    }[];
   }>("notifications");
   const [actionError, setActionError] = useState("");
   if (loading) return <Loading />;
@@ -1139,6 +1259,39 @@ function NotificationsPage() {
   return (
     <>
       {actionError && <ErrorBox message={actionError} />}
+      <div className="panel">
+        <h2>Günlük gerçek fırsat raporları</h2>
+        <p className="helper">
+          Telegram veya e-postaya hazır metin. Demo kayıtlar ve yetersiz kanıtlı
+          ilanlar rapora fırsat olarak alınmaz; bu metin burada kendiliğinden
+          gönderilmez.
+        </p>
+        {!data.reports.length && (
+          <p>Henüz rapor yok; günlük analizi çalıştır.</p>
+        )}
+        {data.reports.map((report) => (
+          <details className="email-receipt" key={report.runId}>
+            <summary>
+              {dateTime(report.createdAt)} · {report.listingIds.length} fırsat
+            </summary>
+            <pre className="daily-report">{report.body}</pre>
+            <Button
+              variant="outline"
+              onClick={() =>
+                void navigator.clipboard
+                  .writeText(report.body)
+                  .catch(() =>
+                    setActionError(
+                      "Rapor panoya kopyalanamadı; metni seçerek kopyalayabilirsin.",
+                    ),
+                  )
+              }
+            >
+              Raporu kopyala
+            </Button>
+          </details>
+        ))}
+      </div>
       <div className="panel">
         <div className="panel-title">
           <h2>Fırsat bildirimleri</h2>
@@ -1514,6 +1667,7 @@ function SettingsForm({
                 <Search size={17} />
                 <div>
                   <strong>{profile.name}</strong>
+                  <ProfileEditor profile={profile} />
                   <p>
                     {profile.category
                       ? categoryLabels[profile.category]

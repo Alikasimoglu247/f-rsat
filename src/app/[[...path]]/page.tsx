@@ -4,6 +4,7 @@ import type { PageMode } from "@/components/radar-page";
 const routes: Record<string, PageMode> = {
   "": "dashboard",
   firsatlar: "listings",
+  "yeni-ilanlar": "discovery",
   "fiyat-gecmisi": "history",
   "takip-listem": "watch",
   "veri-kaynaklari": "sources",

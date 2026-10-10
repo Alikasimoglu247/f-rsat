@@ -21,10 +21,13 @@ model Listing {
   province        String
   district        String
   neighborhood    String?
+  transactionType String?
   price           Decimal                @db.Decimal(18, 2)
-  sourceUrl       String?                @unique
+  sourceUrl       String?
   externalId      String?
-  identityKey     String                 @unique
+  identityKey     String
+  identityVersion Int                    @default(2)
+  identityStatus  String                 @default("ACTIVE")
   sourceId        String
   source          ListingSource          @relation(fields: [sourceId], references: [id])
   isDemo          Boolean                @default(false)
@@ -44,6 +47,8 @@ model Listing {
   notifications   Notification[]
 
   @@unique([sourceId, externalId])
+  @@unique([sourceId, sourceUrl])
+  @@index([identityKey])
   @@index([category, province, district])
 }
 
@@ -60,6 +65,9 @@ model ListingSource {
   listings       Listing[]
   logs           SourceSyncLog[]
   imports        ImportJob[]
+  reviews        ListingReview[]
+  regions        String[]        @default([])
+  lastNewCount   Int             @default(0)
 }
 
 model ListingPriceHistory {
@@ -77,6 +85,8 @@ model PropertyDetails {
   listingId      String   @id
   listing        Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
   sizeM2         Decimal? @db.Decimal(12, 2)
+  netM2          Decimal? @db.Decimal(12, 2)
+  grossM2        Decimal? @db.Decimal(12, 2)
   propertyType   String?
   rooms          String?
   buildingAge    Int?
@@ -86,16 +96,19 @@ model PropertyDetails {
 }
 
 model VehicleDetails {
-  listingId     String  @id
-  listing       Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  make          String?
-  model         String?
-  trim          String?
-  modelYear     Int?
-  mileage       Int?
-  fuel          String?
-  transmission  String?
-  damageHistory String?
+  listingId        String  @id
+  listing          Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  make             String?
+  model            String?
+  trim             String?
+  modelYear        Int?
+  mileage          Int?
+  fuel             String?
+  transmission     String?
+  damageHistory    String?
+  bodyType         String?
+  bodyTypeVerified Boolean @default(false)
+  bodyTypeEvidence String?
 }
 
 model LandDetails {
@@ -111,15 +124,24 @@ model LandDetails {
 }
 
 model SearchProfile {
-  id        String    @id @default(cuid())
-  name      String
-  category  Category?
-  province  String?
-  district  String?
-  minPrice  Decimal?  @db.Decimal(18, 2)
-  maxPrice  Decimal?  @db.Decimal(18, 2)
-  alerts    Alert[]
-  createdAt DateTime  @default(now())
+  id              String     @id @default(cuid())
+  name            String
+  category        Category?
+  province        String?
+  district        String?
+  minPrice        Decimal?   @db.Decimal(18, 2)
+  maxPrice        Decimal?   @db.Decimal(18, 2)
+  pilotKey        String?    @unique
+  categories      Category[] @default([])
+  provinces       String[]   @default([])
+  bodyTypes       String[]   @default([])
+  fuels           String[]   @default([])
+  transactionType String?
+  trackPriceDrops Boolean    @default(false)
+  mailLabelIds    String[]   @default([])
+  mailSenders     String[]   @default([])
+  alerts          Alert[]
+  createdAt       DateTime   @default(now())
 }
 
 model ComparableListing {
@@ -188,6 +210,7 @@ model ImportJob {
   inserted    Int           @default(0)
   updated     Int           @default(0)
   duplicates  Int           @default(0)
+  reviewed    Int           @default(0)
   errors      Json
   createdAt   DateTime      @default(now())
   completedAt DateTime?
@@ -218,11 +241,159 @@ model AppSettings {
 }
 
 model AnalysisRun {
-  id          String    @id
+  id          String       @id
   status      String
-  attempts    Int       @default(1)
-  processed   Int       @default(0)
+  attempts    Int          @default(1)
+  processed   Int          @default(0)
   errors      Json
-  startedAt   DateTime  @default(now())
+  startedAt   DateTime     @default(now())
   completedAt DateTime?
+  report      DailyReport?
+}
+
+model ListingReview {
+  id           String        @id @default(cuid())
+  sourceId     String
+  source       ListingSource @relation(fields: [sourceId], references: [id])
+  kind         String
+  status       String        @default("PENDING")
+  reason       String
+  dedupKey     String        @unique
+  input        Json
+  candidateIds Json
+  createdAt    DateTime      @default(now())
+  resolvedAt   DateTime?
+}
+
+model MailboxConnection {
+  id            String    @id @default("personal")
+  status        String    @default("DISCONNECTED")
+  accountHash   String?
+  labelIds      String[]  @default([])
+  senders       String[]  @default([])
+  lookbackDays  Int       @default(7)
+  lastSuccessAt DateTime?
+  lastError     String?
+  retryAfter    DateTime?
+  scanAfter     DateTime?
+  scanBefore    DateTime?
+  pageToken     String?
+  lastFetched   Int       @default(0)
+  lastImported  Int       @default(0)
+  updatedAt     DateTime  @updatedAt
+}
+
+model EmailMessage {
+  id             String                 @id @default(cuid())
+  contentHash    String                 @unique
+  deliveryKey    String?                @unique
+  transport      String
+  sender         String
+  subject        String
+  receivedAt     DateTime?
+  providerId     String?
+  status         String
+  proposals      Json
+  errors         Json
+  templateIds    String[]               @default([])
+  inserted       Int                    @default(0)
+  updated        Int                    @default(0)
+  duplicates     Int                    @default(0)
+  reviewed       Int                    @default(0)
+  createdAt      DateTime               @default(now())
+  processedAt    DateTime?
+  seenViaGmailAt DateTime?
+  deliveries     EmailDelivery[]
+  gmailLabelIds  String[]               @default([])
+  pilotIds       String[]               @default([])
+  corrections    EmailFieldCorrection[]
+}
+
+model EmailFieldCorrection {
+  id            String       @id @default(cuid())
+  messageId     String
+  message       EmailMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  proposalIndex Int
+  before        Json
+  after         Json
+  evidenceNote  String
+  createdAt     DateTime     @default(now())
+}
+
+model SchedulerHealth {
+  id              String    @id @default("personal")
+  instanceId      String?
+  status          String
+  lastHeartbeatAt DateTime
+  lastTickAt      DateTime?
+  lastResult      String?
+  schedule        String
+  timezone        String    @default("Europe/Istanbul")
+}
+
+model EmailDelivery {
+  key       String       @id
+  messageId String
+  message   EmailMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  createdAt DateTime     @default(now())
+}
+
+model EmailTemplate {
+  id              String    @id
+  providerId      String
+  sender          String
+  parserVersion   String
+  sampleMessageId String
+  status          String    @default("USER_APPROVED")
+  confirmedAt     DateTime  @default(now())
+  liveValidatedAt DateTime?
+}
+
+model OAuthAttempt {
+  stateHash String    @id
+  expiresAt DateTime
+  usedAt    DateTime?
+}
+
+model DailyReport {
+  runId      String      @id
+  run        AnalysisRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  body       String
+  listingIds String[]
+  createdAt  DateTime    @default(now())
+}
+
+// Bounded public research audit. No e-mail bodies, secrets or full copied pages.
+model ResearchRun {
+  id          String   @id @default(cuid())
+  trigger     String
+  segment     String
+  status      String
+  previousId  String?
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  summary     Json
+  snapshot    Json
+  decisions   Json
+  changes     Json
+  checks      Json
+  discoveries Json
+
+  @@index([startedAt])
+}
+
+model ResearchResource {
+  url             String   @id
+  host            String
+  kind            String
+  policyStatus    String
+  state           String   @default("DISCOVERED")
+  discoveredFrom  String?
+  discoveredAt    DateTime @default(now())
+  lastCheckedAt   DateTime?
+  lastSuccessAt   DateTime?
+  sha256          String?
+  lastReason      String?
+
+  @@index([state, policyStatus])
 }

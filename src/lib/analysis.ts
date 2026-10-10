@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import type { Category } from "./constants";
+import { normalizeBodyType, provinces, normalizeFuel } from "./constants";
 type D = Prisma.Decimal;
 const decimal = (value: Prisma.Decimal.Value) => new Prisma.Decimal(value);
 export type Evidence = {
@@ -8,11 +9,15 @@ export type Evidence = {
   category: Category;
   province: string;
   district: string;
+  neighborhood?: string | null;
+  transactionType?: string | null;
   price: string;
   isDemo: boolean;
   lastObservedAt: Date | string;
   property?: {
     sizeM2?: string | null;
+    netM2?: string | null;
+    grossM2?: string | null;
     propertyType?: string | null;
     rooms?: string | null;
     buildingAge?: number | null;
@@ -29,6 +34,9 @@ export type Evidence = {
     fuel?: string | null;
     transmission?: string | null;
     damageHistory?: string | null;
+    bodyType?: string | null;
+    bodyTypeVerified?: boolean;
+    bodyTypeEvidence?: string | null;
   } | null;
   land?: {
     sizeM2?: string | null;
@@ -61,6 +69,16 @@ const same = (a?: string | null, b?: string | null) =>
   !!a && !!b && norm(a) === norm(b);
 const known = (value?: string | null) =>
   !!value && !["bilinmiyor", "unknown", "doğrulanmadı"].includes(norm(value)!);
+const silivri = (l: Evidence) =>
+  !l.isDemo &&
+  norm(l.province) === "istanbul" &&
+  norm(l.district) === "silivri";
+const verifiedBody = (l: Evidence) =>
+  !!(
+    l.vehicle?.bodyTypeVerified &&
+    l.vehicle.bodyTypeEvidence &&
+    normalizeBodyType(l.vehicle.bodyType)
+  );
 export function quantile(values: D[], fraction: number): D {
   if (!values.length) throw new Error("Boş örneklem");
   const sorted = [...values].sort((a, b) => a.comparedTo(b));
@@ -78,6 +96,11 @@ export function riskFlags(listing: Evidence): RiskFlag[] {
     add("LOCATION", "Konum bilgisi eksik; yerinde doğrulama gerekli.");
   if (listing.category === "ARABA") {
     const v = listing.vehicle;
+    if (!listing.isDemo && !verifiedBody(listing))
+      add(
+        "BODY_TYPE",
+        "Gövde tipi doğrulanmamış; SUV sınıflandırması inceleme bekliyor.",
+      );
     if (!known(v?.damageHistory)) add("DAMAGE", "Hasar geçmişi doğrulanmamış.");
     if (v?.mileage == null) add("MILEAGE", "Kilometre bilgisi eksik.");
     if (
@@ -102,7 +125,15 @@ export function riskFlags(listing: Evidence): RiskFlag[] {
   } else if (listing.category === "EV") {
     const p = listing.property;
     if (
-      !p?.sizeM2 ||
+      silivri(listing) &&
+      (!known(listing.neighborhood) || !p?.netM2 || !p.grossM2)
+    )
+      add(
+        "AREA_NEIGHBORHOOD",
+        "Silivri karşılaştırması için mahalle ve ayrı net/brüt m² gerekli.",
+      );
+    if (
+      !(p?.sizeM2 || p?.netM2) ||
       !p.propertyType ||
       !p.rooms ||
       p.buildingAge == null ||
@@ -138,8 +169,13 @@ export function comparablePrice(
     subject.id === candidate.id ||
     subject.category !== candidate.category ||
     subject.isDemo !== candidate.isDemo ||
-    !same(subject.province, candidate.province) ||
-    !same(subject.district, candidate.district)
+    (!!subject.transactionType &&
+      !same(subject.transactionType, candidate.transactionType)) ||
+    (subject.category === "ARABA" && verifiedBody(subject)
+      ? !provinces.some((p) => same(p, subject.province)) ||
+        !provinces.some((p) => same(p, candidate.province))
+      : !same(subject.province, candidate.province) ||
+        !same(subject.district, candidate.district))
   )
     return null;
   const age = now.getTime() - new Date(candidate.lastObservedAt).getTime();
@@ -149,12 +185,21 @@ export function comparablePrice(
     const a = subject.vehicle,
       b = candidate.vehicle;
     if (
+      (a?.bodyType || b?.bodyType) &&
+      (!verifiedBody(subject) ||
+        !verifiedBody(candidate) ||
+        normalizeBodyType(a?.bodyType) !== normalizeBodyType(b?.bodyType))
+    )
+      return null;
+    if (
       !a ||
       !b ||
       !same(a.make, b.make) ||
       !same(a.model, b.model) ||
       !same(a.trim, b.trim) ||
-      !same(a.fuel, b.fuel) ||
+      !a.fuel ||
+      !b.fuel ||
+      normalizeFuel(a.fuel) !== normalizeFuel(b.fuel) ||
       !same(a.transmission, b.transmission) ||
       !known(a.damageHistory) ||
       !same(a.damageHistory, b.damageHistory) ||
@@ -168,8 +213,51 @@ export function comparablePrice(
       return null;
     return decimal(candidate.price);
   }
-  const a = subject.category === "EV" ? subject.property : subject.land;
-  const b = candidate.category === "EV" ? candidate.property : candidate.land;
+  const strictHome =
+    subject.category === "EV" &&
+    (silivri(subject) ||
+      !!subject.property?.netM2 ||
+      !!subject.property?.grossM2);
+  if (
+    (silivri(subject) || subject.neighborhood || candidate.neighborhood) &&
+    !same(subject.neighborhood, candidate.neighborhood)
+  )
+    return null;
+  if (strictHome) {
+    const p = subject.property,
+      q = candidate.property;
+    if (
+      !p?.netM2 ||
+      !p.grossM2 ||
+      !q?.netM2 ||
+      !q.grossM2 ||
+      decimal(p.netM2).lte(0) ||
+      decimal(q.netM2).lte(0) ||
+      decimal(p.grossM2).lt(p.netM2) ||
+      decimal(q.grossM2).lt(q.netM2)
+    )
+      return null;
+    const grossRatio = decimal(q.grossM2).div(p.grossM2);
+    if (grossRatio.lt(0.75) || grossRatio.gt(1.25)) return null;
+  }
+  const a =
+    subject.category === "EV"
+      ? {
+          ...subject.property,
+          sizeM2: strictHome
+            ? subject.property?.netM2
+            : subject.property?.sizeM2,
+        }
+      : subject.land;
+  const b =
+    candidate.category === "EV"
+      ? {
+          ...candidate.property,
+          sizeM2: strictHome
+            ? candidate.property?.netM2
+            : candidate.property?.sizeM2,
+        }
+      : candidate.land;
   if (
     !a?.sizeM2 ||
     !b?.sizeM2 ||
@@ -200,6 +288,12 @@ export function comparablePrice(
       !same(p.zoning, q.zoning) ||
       !known(p.roadAccess) ||
       !same(p.roadAccess, q.roadAccess)
+    )
+      return null;
+    if (
+      !subject.isDemo &&
+      (silivri(subject) || p.sharedOwnership || q.sharedOwnership) &&
+      (!known(p.sharedOwnership) || !same(p.sharedOwnership, q.sharedOwnership))
     )
       return null;
   }
@@ -244,8 +338,8 @@ export function assess(
       normalizedPrice: item.price.toFixed(2),
       reason:
         subject.category === "ARABA"
-          ? "Aynı il/ilçe, marka/model/donanım, benzer yıl/km ve aynı beyan edilen hasar bilgisi."
-          : "Aynı il/ilçe ve tür; benzer özellikler. Alan farkı m² üzerinden normalleştirildi.",
+          ? "Aynı marka/model/donanım, benzer yıl/km, eşleşen gövde tipi ve aynı beyan edilen hasar bilgisi; doğrulanmış gövde tipinde Marmara kapsamı."
+          : "Aynı konum ve mahalle, eşleşen tür/oda/yaş veya imar/yol/hisse beyanı; alan farkı aynı m² türü üzerinden normalleştirildi. Beyanlar belge doğrulaması değildir.",
     })),
   };
   const subjectAge = now.getTime() - new Date(subject.lastObservedAt).getTime();

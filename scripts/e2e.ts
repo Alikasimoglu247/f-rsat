@@ -31,6 +31,10 @@ const testEnv = {
   TELEGRAM_CHAT_ID: "",
   SMTP_HOST: "",
   AUTHORIZED_FEED_URL: "",
+  GMAIL_CLIENT_ID: "",
+  GMAIL_CLIENT_SECRET: "",
+  GMAIL_REDIRECT_URI: "",
+  GMAIL_TOKEN_ENCRYPTION_KEY: "",
 };
 function run(command: string, args: string[]) {
   const result = spawnSync(command, args, { env: testEnv, stdio: "inherit" });
@@ -40,7 +44,7 @@ run("npx", ["prisma", "migrate", "deploy"]);
 const testDb = new pg.Pool({ connectionString: configured });
 try {
   await testDb.query(
-    'TRUNCATE TABLE "Listing", "ListingSource", "ImportJob", "AnalysisRun", "AppSettings", "SearchProfile" CASCADE',
+    'TRUNCATE TABLE "Listing", "ListingSource", "ImportJob", "AnalysisRun", "AppSettings", "SearchProfile", "EmailMessage", "EmailTemplate", "MailboxConnection", "OAuthAttempt", "SchedulerHealth" CASCADE',
   );
 } finally {
   await testDb.end();
