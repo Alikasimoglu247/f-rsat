@@ -32,6 +32,41 @@ import {
 
 export const RESEARCH_SEGMENT =
   "İstanbul / Silivri / Değirmenköy · 200–400 m² satılık arsa ve tarla; hukuki sınıflar ayrı";
+
+/** One daily tick covers eligible segments, instead of refreshing SUVs only once per rotation. */
+export async function runResearchBatch(options: {
+  trigger: ResearchTrigger;
+  run?: (options: {
+    trigger: ResearchTrigger;
+  }) => Promise<{ id: string; status: string }>;
+}) {
+  let last: { id: string; status: string } | null = null;
+  let completed = false,
+    incomplete = false;
+  for (let round = 0; round < researchSegments.length; round++) {
+    const result = await (options.run ?? runResearch)({
+      trigger: options.trigger,
+    });
+    if (["DEFERRED", "RUNNING"].includes(result.status))
+      return last
+        ? {
+            ...last,
+            status: !completed
+              ? "FAILED"
+              : result.status === "RUNNING" || incomplete
+                ? "PARTIAL"
+                : last.status,
+          }
+        : result;
+    last = result;
+    completed ||= result.status !== "FAILED";
+    incomplete ||= ["FAILED", "PARTIAL"].includes(result.status);
+  }
+  return {
+    ...last!,
+    status: completed ? (incomplete ? "PARTIAL" : "COMPLETED") : "FAILED",
+  };
+}
 const json = (value: unknown): Prisma.InputJsonValue =>
   JSON.parse(JSON.stringify(value));
 const resourceUrl = (value: string) => canonicalUrl(value)!;

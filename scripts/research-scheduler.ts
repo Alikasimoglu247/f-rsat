@@ -7,12 +7,14 @@ const args = process.argv.slice(2);
 if (args.some((arg) => arg !== "--probe"))
   throw new Error("Kullanım: tsx scripts/research-scheduler.ts [--probe]");
 const probe = args.includes("--probe");
-const { runResearch } = await import("../src/lib/research/loop");
+const { runResearch, runResearchBatch } =
+  await import("../src/lib/research/loop");
 let scheduler: Awaited<ReturnType<typeof startResearchScheduler>>;
 try {
   scheduler = await startResearchScheduler({
     probe,
-    run: ({ trigger }) => runResearch({ trigger }),
+    run: ({ trigger }) =>
+      probe ? runResearch({ trigger }) : runResearchBatch({ trigger }),
     onEvent: (event) => console.info(JSON.stringify(event)),
   });
 } catch (error) {

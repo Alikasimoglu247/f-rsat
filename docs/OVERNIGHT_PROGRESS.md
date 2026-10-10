@@ -148,7 +148,7 @@ robots/erişim engelleri kaldırılmadı. Sonraki normal çağrı DEFERRED oldu.
 
 ## 12. Testler, CI ve kullanılabilir önizleme
 
-**128 birim + 61 PostgreSQL + 23 tarayıcı = 212 test geçti**.
+**130 birim + 61 PostgreSQL + 23 tarayıcı = 214 test geçti**.
 Build, lint, TypeScript başarılı. Ayrı `_test`/`_e2e` kullanıldı; gerçek DB
 sıfırlanmadı. Yeni regresyonlar hafıza/bekleme/no-network, worker kilidi, kaynak
 izni, JSON'un çalıştırılmaması, fiyat/ID/konum çelişkisi, yenileme-keşif dengesi,
@@ -174,6 +174,11 @@ PID/heartbeat** doğrulandı. İkinci worker kilit nedeniyle 73 ile çıktı.
 Son durumda araştırma worker'ı RUNNING, her gün **09.00 Europe/Istanbul**;
 sonraki plan **11 Ekim 2026 09.00**. Bu gelecek başarı iddiası değildir.
 Bugünkü 09.00 FAILED; başarılı tetikleme **SCHEDULED_PROBE**.
+
+Günlük iş en fazla altı uygun segmenti sırayla işler; bir segment hatası diğer
+segmentlere geçişi durdurmaz. Yalnızca bir segment/gün ile SUV'un haftalarca
+eskimesi önlendi. Altı turluk günlük işin yarın tamamlanacağı iddia edilmedi;
+durma, hata aktarımı ve tur sınırı testlerde doğrulandı.
 
 En basit ücretsiz kalıcı seçenek: sürekli açık kullanıcı makinesi, mevcut
 kalıcı PostgreSQL ve hizmet yöneticisi altında tek worker. Linux süreç

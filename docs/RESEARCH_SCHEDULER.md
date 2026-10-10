@@ -12,6 +12,14 @@ Varsayılan zamanlama her gün **09.00, Europe/Istanbul**. İsteğe bağlı
 `INVESTMENT_RESEARCH_CRON` bu araştırma sürecinin zamanlamasını değiştirir;
 mevcut posta zamanlayıcısının `DAILY_CRON` ayarıyla ilişkili değildir.
 
+Her günlük tetiklemede en fazla altı ayrı, bekleme süresi dolmuş segment
+araştırılır; böylece SUV yalnızca haftalık sıra geldiğinde kontrol edilmez.
+Bir segmentin başarısızlığı diğer izinli segmentleri engellemez. Tümü hata
+verirse günlük sonuç FAILED, karışık/eksik sonuçlarda PARTIAL olur.
+Aktif başka iş veya tüm segmentlerin beklemesi halinde tekrar yapılmaz.
+Prob kabul mekanizması tek turdur; günlük altı turun fiilen tamamlandığı
+yalnızca gerçek SCHEDULED kayıtlarıyla doğrulanabilir.
+
 Bu komutun çalıştığı makine açık, süreç çalışır, ağ ve PostgreSQL erişimi hazır
 olmalıdır. Codex Cloud oturumu kapanırsa günlük araştırma devam edeceğine dair
 bir garanti yoktur. Kod veya cron ifadesinin depoda bulunması, kesintisiz bir
