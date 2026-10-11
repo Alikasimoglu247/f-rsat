@@ -37,6 +37,10 @@ Seed dört kategoride dokuzar, toplam **36 açıkça DEMO etiketli kayıt** olu�
 
 ## Kaynaklara dayalı Silivri yatırım pilotu
 
+**Product V2:** Ana deneyim artık Genel Bakış, Keşfet, Yatırım Analizi, Araştırma Merkezi ve Takip Listem'dir. Araştırma uygulama içinden başlatılır; kaynak kontrolü, kalıcı görev ve gerçek worker durumu görünür. Cloud araştırma kayıtları güvenli paketle mevcut Windows PostgreSQL'e birleştirilebilir. [Windows güncelleme](docs/WINDOWS_V2_GUNCELLEME.md) · [Kabul sonuçları ve sınırlar](docs/PRODUCT_V2_ACCEPTANCE.md).
+
+Boş veritabanında eski JSON adayları aktif ilan veya canlı fırsat olarak gösterilmez. JSON aşağıdaki ilk pilotun tarihsel arşividir. Gerçek kayıtlar PostgreSQL'den, güncel kararlar araştırma kanıtlarından gelir; veri aktarımı eski gözlemleri yeniden tarihlemez.
+
 Menüde **Yatırım Analizi** (`/yatirim-analizi`), resmî ekonomik verileri, mahalle kapsamını ve gerçek kaynak adaylarının gerekçeli değerlendirmesini birlikte gösterir. TCMB, Silivri Belediyesi, UAB ve AFAD kanıtlarında dönem/kapsam; ilanlarda kaynak, yayın tarihi ve gözlem zamanı ayrıdır. Haber üzerinden aktarılan Endeksa ilçe istatistiği bağımsız doğrulanmış mahalle veya tekil taşınmaz değeri değildir.
 
 9 Ekim 2026 araştırmasında **5 kaynak adayı** bulundu. Genç City'nin üç ve Akgün Gayrimenkul'ün bir fiyatlı arazi ilanı mevcut PostgreSQL'e aktarıldı; fiyatı/alanı açıklanmayan Selimpaşa villa projesi araştırma adayı olarak kaldı. İlanların hâlâ satışa açık olduğu, hukuki beyanları ve yeterli emsalleri doğrulanmadı. **4 gerçek fiyat kaydı, 5 gerekçeli değerlendirme, 0 yeterli emsal puanı, 0 incelemeye değer sonucu.** Demo kayıtlar ayrıdır.

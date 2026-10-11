@@ -43,7 +43,7 @@ if ($LASTEXITCODE -ne 0) {
   throw "Docker kurulum/hazirlik hatasi. Yukaridaki mesaja bakin; hicbir veri volume'u silinmedi."
 }
 Write-Host ""
-Write-Host "FIRSATRADAR HAZIR: http://127.0.0.1:3000/yatirim-analizi"
+Write-Host "FIRSATRADAR HAZIR: http://127.0.0.1:3000"
 Write-Host "Arastirma her gun 09.00 Europe/Istanbul'da, bilgisayar ve Docker acikken calisir."
-Write-Host "Ilk kurulum yeni bos veritabani acar; Cloud'daki ilanlari kendi basina tasimaz."
-Start-Process "http://127.0.0.1:3000/yatirim-analizi"
+Write-Host "Cloud paketi varsa uygulama icindeki Arastirma Merkezi > Arastirma paketi yukle ile onizleyip aktarabilirsiniz."
+Start-Process "http://127.0.0.1:3000"

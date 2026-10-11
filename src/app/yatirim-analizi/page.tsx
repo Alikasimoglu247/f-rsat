@@ -1,5 +1,5 @@
-import { InvestmentPage } from "@/components/investment-page";
+import { ProductPage } from "@/components/product-page";
 
 export default function Page() {
-  return <InvestmentPage />;
+  return <ProductPage mode="analysis" />;
 }

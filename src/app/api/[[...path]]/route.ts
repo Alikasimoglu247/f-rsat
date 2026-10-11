@@ -16,12 +16,36 @@ import { verifyBodyType, bodyReviewSchema } from "@/lib/vehicle-review";
 import { emailGet, emailPost } from "@/lib/email/api";
 import { sourceCoverage } from "@/lib/email/coverage";
 import { investmentReport } from "@/lib/investment-report";
+import { productReport } from "@/lib/product-report";
+import {
+  exportResearchBundle,
+  importResearchBundle,
+} from "@/lib/research/transfer";
+import {
+  requireLocalControl,
+  claimResearchTask,
+  executeResearchTask,
+} from "@/lib/research/control";
+import { after } from "next/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 type Context = { params: Promise<{ path?: string[] }> };
 export async function GET(request: Request, context: Context) {
   try {
     const path = (await context.params).path ?? [];
+    if (path.join("/") === "product") return json(await productReport());
+    if (path.join("/") === "research/export")
+      return new Response(
+        JSON.stringify(await exportResearchBundle(), null, 2),
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "Content-Disposition":
+              'attachment; filename="FIRSATRADAR_GERCEK_VERI.json"',
+            "Cache-Control": "no-store",
+          },
+        },
+      );
     if (path[0] === "email") return await emailGet(path.slice(1));
     if (path[0] === "health") {
       await db.$queryRaw`SELECT 1`;
@@ -73,7 +97,7 @@ export async function GET(request: Request, context: Context) {
       });
     if (path[0] === "settings")
       return json({
-        settings: await db.appSettings.findUniqueOrThrow({
+        settings: (await db.appSettings.findUnique({
           where: { id: "personal" },
           select: {
             telegramEnabled: true,
@@ -81,7 +105,12 @@ export async function GET(request: Request, context: Context) {
             minScore: true,
             includeDemoNotifications: true,
           },
-        }),
+        })) ?? {
+          telegramEnabled: false,
+          emailEnabled: false,
+          minScore: 70,
+          includeDemoNotifications: false,
+        },
         credentials: credentialStatus(),
         schedule: process.env.DAILY_CRON ?? "0 9 * * *",
         timezone: "Europe/Istanbul",
@@ -100,8 +129,29 @@ export async function POST(request: Request, context: Context) {
     const path = (await context.params).path ?? [],
       body = await readJson(
         request,
-        path[0] === "email" && path[1] === "eml" ? 2_750_000 : 2_100_000,
+        path[0] === "research" && path[1] === "transfer"
+          ? 15_000_000
+          : path[0] === "email" && path[1] === "eml"
+            ? 2_750_000
+            : 2_100_000,
       );
+    if (path[0] === "research") {
+      requireLocalControl(request);
+      if (path[1] === "transfer") {
+        const input = z
+          .object({ bundle: z.unknown(), apply: z.boolean().default(false) })
+          .strict()
+          .parse(body);
+        return json(await importResearchBundle(input.bundle, input.apply));
+      }
+      if (["start", "reevaluate"].includes(path[1])) {
+        z.object({}).strict().parse(body);
+        const action = path[1] === "start" ? "RESEARCH" : "REEVALUATE";
+        const task = await claimResearchTask(action);
+        after(() => executeResearchTask(task.id, action));
+        return json({ id: task.id, status: task.status }, 202);
+      }
+    }
     if (path[0] === "email") return await emailPost(path.slice(1), body);
     if (path[0] === "listings" && path.length === 1) {
       const input = listingSchema.parse(body);

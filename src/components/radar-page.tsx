@@ -216,6 +216,7 @@ interface SettingsData {
   schedule: string;
   timezone: string;
   profiles: (ProfileView & {
+    pilotKey: string | null;
     id: string;
     name: string;
     category: Category | null;
@@ -1396,7 +1397,26 @@ function SettingsPage() {
   if (state.error)
     return <ErrorBox message={state.error} retry={state.refresh} />;
   if (!state.data) return null;
-  return <SettingsForm data={state.data} refresh={state.refresh} />;
+  return (
+    <>
+      <section className="v2-panel" style={{ marginBottom: 24 }}>
+        <h2>Araştırma tercihleri</h2>
+        <p>
+          Pilot kapsamını düzenleyin. Değişiklikler gerçek ilan seçimine ve
+          araştırma değerlendirmelerine uygulanır.
+        </p>
+        {state.data.profiles
+          .filter((p) => p.pilotKey)
+          .map((profile) => (
+            <details key={profile.id} style={{ marginTop: 16 }}>
+              <summary>{profile.name} · Kapsamı düzenle</summary>
+              <ProfileEditor profile={profile} includeMailOptions={false} />
+            </details>
+          ))}
+      </section>
+      <SettingsForm data={state.data} refresh={state.refresh} />
+    </>
+  );
 }
 function SettingsForm({
   data,

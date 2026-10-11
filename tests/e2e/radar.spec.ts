@@ -6,9 +6,15 @@ test("dashboard, dört kategori ve il/ilçe/fiyat filtreleri", async ({
 }) => {
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: "Fırsatlar, radarında." }),
+    page.getByRole("heading", { name: "Piyasayı izle. Kanıtla karar ver." }),
   ).toBeVisible();
-  await expect(page.locator(".stat-card").first()).toContainText("36");
+  await expect(
+    page.getByRole("region", { name: "İlk kurulum durumu" }),
+  ).toBeVisible();
+  await expect(page.getByText("36 demo kayıt", { exact: false })).toBeVisible();
+  await page
+    .getByText("Veri araçları ve önceki işlevler", { exact: true })
+    .click();
   await page.getByRole("link", { name: "Fırsatlar", exact: true }).click();
   for (const [category, title] of [
     ["EV", "daire"],
@@ -64,7 +70,7 @@ test("takip listesi sayfa yenilendikten sonra kalır", async ({ page }) => {
     name: /Kadıköy 2\+1 daire 1 takibe al/,
   });
   await button.click();
-  await page.getByRole("link", { name: "Takip Listem", exact: true }).click();
+  await page.goto("/takip-listem/eski");
   await expect(page.getByRole("article")).toHaveCount(1);
   await page.reload();
   await expect(page.getByRole("article")).toHaveCount(1);
@@ -149,6 +155,9 @@ test("bildirim tercihleri, arama profili ve günlük iş idempotency", async ({
   await expect(page.getByRole("status").first()).toContainText(
     "zaten tamamlanmış",
   );
+  await page
+    .getByText("Veri araçları ve önceki işlevler", { exact: true })
+    .click();
   await page.getByRole("link", { name: "Bildirimler", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Günlük iş kayıtları" }),

@@ -104,6 +104,43 @@ afterEach(async () => {
   await db.researchResource.deleteMany();
 });
 afterAll(() => db.$disconnect());
+it("çalışan araştırmanın gerçek ilerlemesini saklar ve nihai sonucu ilerleme yazısıyla ezmez", async () => {
+  let release!: () => void;
+  let progressReported!: () => void;
+  const gate = new Promise<void>((done) => {
+    release = done;
+  });
+  const reported = new Promise<void>((done) => {
+    progressReported = done;
+  });
+  const running = runResearch({
+    now: clock,
+    acquire: async ({ onProgress } = {}) => {
+      onProgress?.({ checkedUrls: 3, parsedSources: 1, candidates: 0 });
+      progressReported();
+      await gate;
+      return fixture();
+    },
+  });
+  await reported;
+  try {
+    await expect
+      .poll(async () => (await db.researchRun.findFirstOrThrow()).summary)
+      .toMatchObject({
+        progress: { checkedUrls: 3, parsedSources: 1, candidates: 0 },
+      });
+    expect((await db.researchRun.findFirstOrThrow()).status).toBe("RUNNING");
+  } finally {
+    release();
+  }
+  const final = await running;
+  expect(final.status).toBe("COMPLETED");
+  const stored = await db.researchRun.findUniqueOrThrow({
+    where: { id: final.id },
+  });
+  expect(stored.summary).toHaveProperty("engineAnalyzed", 1);
+  expect(stored.summary).not.toHaveProperty("progress");
+});
 it("aynı yayıncının yeni ilçesi/kategorisi önceki kaynak kapsamını silmez", async () => {
   await runResearch({ now: clock, acquire: async () => fixture() });
   const next = fixture("450000", false, 37, new Date(clock.getTime() + 60_000));

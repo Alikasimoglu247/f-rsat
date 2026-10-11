@@ -51,8 +51,12 @@ jobs:
       - run: npm run typecheck
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+      - name: Validate private Windows Compose specification
+        run: docker compose -f compose.windows.yaml config --no-interpolate --no-env-resolution --quiet
       - name: Build server image
         run: docker build -t firsatradar:ci .
+      - name: Verify Windows Compose services and persistent data on Linux
+        run: node scripts/windows-compose-smoke.mjs firsatradar:ci
       - name: Verify encrypted token persistence across container restarts
         run: npm run test:runtime -- firsatradar:ci
       - uses: actions/upload-artifact@v4

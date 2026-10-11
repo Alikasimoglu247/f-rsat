@@ -52,7 +52,7 @@ export function PriceChart({
             dataKey="date"
             tickLine={false}
             axisLine={false}
-            tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+            tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
           />
           <YAxis
             width={70}
@@ -62,7 +62,7 @@ export function PriceChart({
             tickLine={false}
             axisLine={false}
             domain={["auto", "auto"]}
-            tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+            tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
           />
           <Tooltip
             contentStyle={{
@@ -122,7 +122,7 @@ export function CoverageChart({
             allowDecimals={false}
             tickLine={false}
             axisLine={false}
-            tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+            tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
           />
           <Tooltip
             contentStyle={{

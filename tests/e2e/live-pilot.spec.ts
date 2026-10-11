@@ -5,7 +5,7 @@ test.beforeAll(resetE2eFixtures);
 test("gerçek veri boşken huni sebebi, kurulum gereksinimi ve yeni ekran dürüstçe gösterilir", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/genel-bakis/eski");
   const card = page.getByRole("article", {
     name: "Silivri Gayrimenkul Fırsatları",
   });
@@ -96,7 +96,7 @@ test("eksik bildirim kullanıcı tarafından tamamlanır; yeni ekranda puansız 
   await expect(
     page.getByRole("status").filter({ hasText: /ilan analiz edildi/ }),
   ).toBeVisible();
-  await page.goto("/");
+  await page.goto("/genel-bakis/eski");
   const card = page.getByRole("article", {
     name: "Silivri Gayrimenkul Fırsatları",
   });

@@ -228,14 +228,13 @@ test("URL eşleşmesi güncel kaynak fiyatını uzlaştırılmamış eski verita
   });
   await expect(candidate).toContainText("₺450.000");
   await expect(candidate).toContainText("Yetersiz veri");
-  await expect(candidate).toContainText(
+  await candidate
+    .getByRole("button", { name: "Analizi aç", exact: true })
+    .click();
+  await expect(page.getByRole("dialog")).toContainText(
     "güncel fiyat veritabanı kaydıyla uzlaştırılamadı",
   );
-  await expect(
-    candidate.getByRole("link", {
-      name: "Fiyat geçmişini ve eşleşen emsalleri incele →",
-    }),
-  ).toHaveAttribute("href", "/ilan/e2e-synthetic-price-conflict");
+
   const result = await (await page.request.get("/api/investment")).json();
   const stored = result.pilots[0].decisions.find(
     (item: { id: string }) => item.id === "e2e-synthetic-price-conflict",
@@ -246,31 +245,27 @@ test("URL eşleşmesi güncel kaynak fiyatını uzlaştırılmamış eski verita
     assessment: null,
     verdict: "Yetersiz veri",
   });
-  expect(result.pilots[0].decisions).toHaveLength(5);
+  expect(result.pilots[0].decisions).toHaveLength(1);
+  expect(result.pilots[0].archive).toHaveLength(4);
 });
 
 test("araştırma geçmişi gerçek zamanlayıcı denemesini günlük başarıdan ayırır", async ({
   page,
 }) => {
-  await page.goto("/yatirim-analizi");
+  await page.goto("/arastirma-merkezi");
   const cycle = page.getByRole("region", { name: "Araştırma döngüsü" });
   await expect(cycle).toContainText("Durdurulmuş");
   await expect(cycle).toContainText("Gerçek zamanlayıcı denemesi");
   await expect(cycle).toContainText(
-    "günlük programla tamamlanan araştırma yok",
+    /günlük programla tamamlanan araştırma yok/i,
   );
-  await expect(cycle.getByRole("row")).toHaveCount(3);
+  await cycle.locator(".v2-run summary").first().click();
+  await cycle.locator(".v2-run summary").last().click();
   await expect(cycle).toContainText("e2e-synthetic-research-first");
   await expect(cycle).toContainText("e2e-synthetic-research-second");
-  await cycle
-    .getByText("Son çalışmada kararlar neden yeniden değerlendirildi?", {
-      exact: true,
-    })
-    .click();
+
   await expect(cycle).toContainText("önceki olumlu gerekçe karardan çıkarıldı");
-  await cycle
-    .getByText("Son kaynak kontrolleri ve engeller", { exact: true })
-    .click();
+
   await expect(cycle).toContainText("önceki fiyat güncel kanıt değil");
   const result = await (await page.request.get("/api/investment")).json();
   expect(result.researchLoop.mode).toBe("PERSISTED_RESEARCH");
@@ -289,17 +284,25 @@ test("başarısız güncel kontrol eski fiyatı ve uyumsuz dönemleri fırsat ka
 }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto("/yatirim-analizi");
+  await page.getByRole("button", { name: /Geçmiş araştırma arşivi/ }).click();
   const candidate = page.getByRole("article").filter({
     has: page.getByRole("heading", {
       name: legacy.candidates.find((item) => item.id === "genc-300")!.title,
       exact: true,
     }),
   });
-  await expect(candidate).toContainText(
+  await candidate
+    .getByRole("button", { name: "Analizi aç", exact: true })
+    .click();
+  await expect(page.getByRole("dialog")).toContainText(
     "Geçmiş veya uzlaştırılmamış fiyat/özellik gözlemi",
   );
+  await page.getByRole("button", { name: "Pencereyi kapat" }).click();
   await expect(candidate).toContainText("Yetersiz veri");
   await expect(candidate).not.toContainText("Hesaplanan istenen birim fiyat");
+  await page
+    .getByText("Kaynaklar ve hesaplama yöntemi", { exact: true })
+    .click();
   await expect(
     page.getByText("Güncel ve aynı döneme ait kanıt eksik", { exact: false }),
   ).toBeVisible();

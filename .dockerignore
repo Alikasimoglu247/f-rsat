@@ -5,6 +5,8 @@ node_modules
 .env
 .env.*
 .local
+FIRSATRADAR_GERCEK_VERI*.json
+FIRSATRADAR_V2_WINDOWS*.zip
 test-results
 playwright-report
 *.log

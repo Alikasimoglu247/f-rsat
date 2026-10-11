@@ -561,6 +561,11 @@ export async function collectResearch(
     segmentId?: SegmentId;
     deferredUrls?: string[];
     refreshEconomy?: boolean;
+    onProgress?: (progress: {
+      checkedUrls: number;
+      parsedSources: number;
+      candidates: number;
+    }) => void;
   } = {},
 ): Promise<AcquisitionResult> {
   const fetcher = options.fetcher ?? fetchResearchPage,
@@ -596,7 +601,7 @@ export async function collectResearch(
     reason: string,
     page?: ResearchFetchResult,
     errorHttpStatus?: number,
-  ) =>
+  ) => {
     result.checks.push({
       url,
       status,
@@ -605,6 +610,14 @@ export async function collectResearch(
       ...(page ? { sha256: page.sha256, httpStatus: page.status } : {}),
       ...(errorHttpStatus ? { httpStatus: errorHttpStatus } : {}),
     });
+    options.onProgress?.({
+      checkedUrls: result.checks.filter(
+        (check) => check.status !== "BUDGET_DEFERRED",
+      ).length,
+      parsedSources: result.sources.length,
+      candidates: result.candidates.length,
+    });
+  };
   async function raw(url: string) {
     if (!safeResearchUrl(url)) {
       record(

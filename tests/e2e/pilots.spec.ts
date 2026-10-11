@@ -4,7 +4,7 @@ test.beforeAll(resetE2eFixtures);
 test("iki pilot kartı boş gerçek kapsamı, canlı alım eksikliğini ve mobil görünümü gösterir", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/genel-bakis/eski");
   for (const name of [
     "Silivri Gayrimenkul Fırsatları",
     "Marmara SUV Fırsatları",
@@ -29,7 +29,7 @@ test("iki pilot kartı boş gerçek kapsamı, canlı alım eksikliğini ve mobil
 test("pilot ilçe, kategori, gövde tipi ve bütçe filtreleri düzenlenip kalıcı saklanır", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/genel-bakis/eski");
   const name = "Silivri Gayrimenkul Fırsatları",
     card = page.getByRole("article", { name });
   await card.locator("summary").click();
@@ -78,7 +78,7 @@ test("belirsiz SUV incelemeden sonra pilota alınır; yeterli emsal yoksa fırsa
     },
   });
   expect(response.ok()).toBe(true);
-  await page.goto("/");
+  await page.goto("/genel-bakis/eski");
   const card = page.getByRole("article", { name: "Marmara SUV Fırsatları" });
   await expect(card.locator(".pilot-stats dd").first()).toHaveText("0");
   await page.goto("/veri-kaynaklari");
@@ -98,7 +98,7 @@ test("belirsiz SUV incelemeden sonra pilota alınır; yeterli emsal yoksa fırsa
       }),
     }),
   ).toHaveCount(0);
-  await page.goto("/");
+  await page.goto("/genel-bakis/eski");
   await expect(card.locator(".pilot-stats dd").first()).toHaveText("1");
   await expect(card).toContainText("Yeterli emsale sahip gerçek fırsat yok");
 });

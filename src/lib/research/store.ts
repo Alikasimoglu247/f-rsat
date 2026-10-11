@@ -206,7 +206,7 @@ export function researchChanges(
 export async function loadResearchState() {
   const history = await db.researchRun.findMany({
     orderBy: { startedAt: "desc" },
-    take: 5,
+    take: 30,
   });
   const latestRun = history.find((run) => run.status !== "RUNNING") ?? null;
   const resources = await db.researchResource.findMany({

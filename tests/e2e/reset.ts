@@ -7,7 +7,7 @@ export async function resetE2eFixtures() {
   const pool = new pg.Pool({ connectionString: target });
   try {
     await pool.query(
-      'TRUNCATE TABLE "Listing", "ListingSource", "ImportJob", "AnalysisRun", "AppSettings", "SearchProfile", "EmailMessage", "EmailTemplate", "MailboxConnection", "OAuthAttempt", "SchedulerHealth" CASCADE',
+      'TRUNCATE TABLE "ResearchTask", "ResearchRun", "ResearchResource", "Listing", "ListingSource", "ImportJob", "AnalysisRun", "AppSettings", "SearchProfile", "EmailMessage", "EmailTemplate", "MailboxConnection", "OAuthAttempt", "SchedulerHealth" CASCADE',
     );
   } finally {
     await pool.end();

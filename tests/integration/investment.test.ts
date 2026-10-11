@@ -15,7 +15,7 @@ import { listingSchema } from "../../src/lib/validation";
 const now = new Date("2026-10-09T21:05:00Z");
 beforeEach(async () => {
   await db.$executeRawUnsafe(
-    'TRUNCATE TABLE "Listing", "ListingSource", "ImportJob", "AnalysisRun", "AppSettings", "SearchProfile", "EmailMessage", "EmailTemplate", "MailboxConnection", "OAuthAttempt" CASCADE',
+    'TRUNCATE TABLE "ResearchRun", "ResearchResource", "Listing", "ListingSource", "ImportJob", "AnalysisRun", "AppSettings", "SearchProfile", "EmailMessage", "EmailTemplate", "MailboxConnection", "OAuthAttempt" CASCADE',
   );
   await ensureSources(db);
   await ensurePilotProfiles(db);
@@ -57,8 +57,8 @@ it("kaynak fiyatlarını PostgreSQL'e bir kez kaydeder; fiyatı olmayan projeyi 
   expect(silivri).toMatchObject({
     databaseCount: 1,
     researchCount: 5,
-    analyzedCount: 5,
-    pricedCount: 4,
+    analyzedCount: 1,
+    pricedCount: 1,
     comparableSupported: 0,
     reviewCount: 0,
   });
@@ -69,7 +69,7 @@ it("kaynak fiyatlarını PostgreSQL'e bir kez kaydeder; fiyatı olmayan projeyi 
     silivri.decisions.find((item) => item.sourceUrl === candidate.sourceUrl),
   ).toMatchObject({
     origin: "DATABASE",
-    unitPrice: "1466.67",
+    unitPrice: null,
     verdict: "Yetersiz veri",
   });
   expect(
@@ -83,11 +83,12 @@ it("araştırma adayları da mevcut kullanıcı kategori/ilçe/bütçe filtreler
     data: { categories: ["TARLA"], maxPrice: "500000" },
   });
   const filtered = (await investmentReport(now)).pilots[0];
-  expect(filtered.decisions).toHaveLength(1);
-  expect(filtered.decisions[0]).toMatchObject({
+  expect(filtered.decisions).toHaveLength(0);
+  expect(filtered.archive).toHaveLength(1);
+  expect(filtered.archive[0]).toMatchObject({
     category: "TARLA",
     price: "425000",
-    verdict: "Riskli",
+    verdict: "Yetersiz veri",
   });
   await db.searchProfile.update({
     where: { pilotKey: "SILIVRI" },
@@ -146,7 +147,7 @@ it("dört fiyatlı kaynak adayı eski motorla analiz edilir; imar/hisse/tür far
   const report = await investmentReport(now);
   expect(report.pilots[0]).toMatchObject({
     databaseCount: 4,
-    analyzedCount: 5,
+    analyzedCount: 4,
     reviewCount: 0,
     comparableSupported: 0,
   });
@@ -157,5 +158,6 @@ it("dört fiyatlı kaynak adayı eski motorla analiz edilir; imar/hisse/tür far
   ).toBe(true);
   expect(
     report.pilots[0].decisions.filter((item) => item.verdict === "Riskli"),
-  ).toHaveLength(2);
+  ).toHaveLength(0);
+  expect(report.pilots[0].activeCount).toBe(0);
 });

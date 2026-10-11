@@ -59,7 +59,13 @@ export type PilotView = {
     observedAt: string;
   }[];
 };
-export function ProfileEditor({ profile }: { profile: ProfileView }) {
+export function ProfileEditor({
+  profile,
+  includeMailOptions = true,
+}: {
+  profile: ProfileView;
+  includeMailOptions?: boolean;
+}) {
   const [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false);
   async function save(event: FormEvent<HTMLFormElement>) {
@@ -80,14 +86,18 @@ export function ProfileEditor({ profile }: { profile: ProfileView }) {
         transactionType: f.get("transactionType"),
         trackPriceDrops: f.get("trackPriceDrops") === "on",
         minScore: Number(f.get("minScore")),
-        mailLabelIds: String(f.get("mailLabelIds") ?? "")
-          .split(",")
-          .map((v) => v.trim())
-          .filter(Boolean),
-        mailSenders: String(f.get("mailSenders") ?? "")
-          .split(",")
-          .map((v) => v.trim())
-          .filter(Boolean),
+        mailLabelIds: !includeMailOptions
+          ? (profile.mailLabelIds ?? [])
+          : String(f.get("mailLabelIds") ?? "")
+              .split(",")
+              .map((v) => v.trim())
+              .filter(Boolean),
+        mailSenders: !includeMailOptions
+          ? (profile.mailSenders ?? [])
+          : String(f.get("mailSenders") ?? "")
+              .split(",")
+              .map((v) => v.trim())
+              .filter(Boolean),
       });
       setMessage("Profil filtreleri kaydedildi.");
       window.dispatchEvent(new Event("radar:refresh"));
@@ -227,27 +237,31 @@ export function ProfileEditor({ profile }: { profile: ProfileView }) {
           />
           {label("Fiyat düşüşlerini takip et")}
         </label>
-        <label>
-          {label("Bildirim etiket ID’leri")}
-          <input
-            name="mailLabelIds"
-            defaultValue={profile.mailLabelIds?.join(",") ?? ""}
-            placeholder="Virgülle ayır"
-          />
-        </label>
-        <label>
-          {label("Bildirim göndericileri")}
-          <input
-            name="mailSenders"
-            defaultValue={profile.mailSenders?.join(",") ?? ""}
-            placeholder="Virgülle ayır"
-          />
-        </label>
-        <p className="helper">
-          Bu eşleme, ayrıştırılamayan bildirimleri de pilot hunisine atar; Gmail
-          erişim iznini genişletmez. İkisi de doluysa tüm etiketler ve
-          göndericilerden biri eşleşmelidir.
-        </p>
+        {includeMailOptions && (
+          <>
+            <label>
+              {label("Bildirim etiket ID’leri")}
+              <input
+                name="mailLabelIds"
+                defaultValue={profile.mailLabelIds?.join(",") ?? ""}
+                placeholder="Virgülle ayır"
+              />
+            </label>
+            <label>
+              {label("Bildirim göndericileri")}
+              <input
+                name="mailSenders"
+                defaultValue={profile.mailSenders?.join(",") ?? ""}
+                placeholder="Virgülle ayır"
+              />
+            </label>
+            <p className="helper">
+              Bu eşleme, ayrıştırılamayan bildirimleri de pilot hunisine atar;
+              Gmail erişim iznini genişletmez. İkisi de doluysa tüm etiketler ve
+              göndericilerden biri eşleşmelidir.
+            </p>
+          </>
+        )}
         <p className="helper">
           Çoklu seçimde boş bırakılan filtre tümünü kapsar. Mahalle, marka,
           model, yıl ve kilometre için pilotta üst sınır yoktur.

@@ -89,7 +89,16 @@ export async function investmentReport(now = new Date()) {
     loadResearchState(),
     researchSchedulerStatus(now),
   ]);
-  const research = state.snapshot;
+  // The bundled JSON is an archive, never proof of a research run on this DB.
+  const research = state.latestRun
+    ? state.snapshot
+    : {
+        ...state.snapshot,
+        sources: state.snapshot.sources.map((source) => ({
+          ...source,
+          checkStatus: "UNVERIFIED",
+        })),
+      };
   const reports = ["SILIVRI", "MARMARA_SUV"].map((pilotKey) => {
     const profile = profiles.find((item) => item.pilotKey === pilotKey);
     // Existing editable search profiles remain the authority for real database scope.
@@ -210,7 +219,7 @@ export async function investmentReport(now = new Date()) {
           (item) => urlKey(item.sourceUrl) === urlKey(candidate.sourceUrl),
         ),
     );
-    const decisions = [...stored, ...unique];
+    const decisions = stored;
     return {
       pilotKey,
       name:
@@ -228,9 +237,20 @@ export async function investmentReport(now = new Date()) {
         (item) => item.verdict === "İncelemeye değer",
       ).length,
       decisions,
+      archive: unique.map((decision) => ({
+        ...decision,
+        priceCurrent: false,
+        verdict: "Yetersiz veri" as const,
+        assessment: null,
+        unitPrice: null,
+        whyCould: [],
+      })),
+      activeCount: stored.filter((item) => item.priceCurrent).length,
+      archiveCount:
+        stored.filter((item) => !item.priceCurrent).length + unique.length,
     };
   });
-  const history = state.history.slice(0, 5).map((run) => {
+  const history = state.history.map((run) => {
     const summary = jsonRecord(run.summary);
     const changes = Array.isArray(run.changes)
       ? run.changes.filter((value): value is ResearchChange => {
@@ -326,7 +346,7 @@ export async function investmentReport(now = new Date()) {
       (id): id is string => !!id,
     ),
     researchLoop: {
-      mode: state.latestRun ? "PERSISTED_RESEARCH" : "LEGACY_SNAPSHOT",
+      mode: state.latestRun ? "PERSISTED_RESEARCH" : "LEGACY_ARCHIVE",
       history,
       scheduler,
       dailyRunCount: state.history.filter(

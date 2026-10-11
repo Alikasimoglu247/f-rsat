@@ -173,6 +173,8 @@ export async function runResearch(
   if (!claimed.claimed)
     return { id: claimed.run.id, status: claimed.run.status, summary: null };
   const { run, previous, strategy } = claimed;
+  let progressWrite = Promise.resolve();
+  let lastProgressAt = 0;
   const priorSnapshot = previous
     ? (previous.snapshot as unknown as ResearchSnapshot)
     : null;
@@ -203,6 +205,22 @@ export async function runResearch(
       ]),
     ];
     acquired = await (options.acquire ?? collectResearch)({
+      onProgress: (progress) => {
+        if (Date.now() - lastProgressAt < 1000) return;
+        lastProgressAt = Date.now();
+        const summary = json({
+          strategy,
+          progress: { ...progress, updatedAt: new Date().toISOString() },
+        });
+        progressWrite = progressWrite
+          .then(async () => {
+            await db.researchRun.updateMany({
+              where: { id: run.id, status: "RUNNING" },
+              data: { summary },
+            });
+          })
+          .catch(() => undefined);
+      },
       knownUrls,
       blockedUrls: blockedResources.map((item) => item.url),
       pageBudget: options.pageBudget,
@@ -232,6 +250,7 @@ export async function runResearch(
       now,
     });
     const completedAt = options.now ?? new Date();
+    await progressWrite;
     const snapshot = mergeResearch(priorSnapshot, acquired, completedAt);
     const changes = researchChanges(priorSnapshot, snapshot, completedAt);
     const priorUrls = new Set([
@@ -613,6 +632,7 @@ export async function runResearch(
     });
     return { id: run.id, status, summary };
   } catch (error) {
+    await progressWrite;
     const invalid: ResearchSnapshot = {
       ...(priorSnapshot ?? research),
       sources: (priorSnapshot ?? research).sources.map((source) => ({

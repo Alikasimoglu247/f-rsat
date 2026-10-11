@@ -397,3 +397,14 @@ model ResearchResource {
 
   @@index([state, policyStatus])
 }
+
+// Local UI actions are durable: restarting the web process is not a success.
+model ResearchTask {
+  id          String   @id @default(cuid())
+  action      String
+  status      String
+  requestedAt DateTime @default(now())
+  completedAt DateTime?
+  result      Json
+  @@index([requestedAt])
+}
