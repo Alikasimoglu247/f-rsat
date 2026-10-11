@@ -8,7 +8,7 @@ $composeFile = Join-Path (Get-Location).Path "compose.windows.yaml"
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
   throw "Docker Desktop bulunamadi. Once Docker Desktop'i kurup baslatin: https://www.docker.com/products/docker-desktop/"
 }
-docker info --format "{{.Server.Version}}" *> $null
+docker info --format "{{.ServerVersion}}" *> $null
 if ($LASTEXITCODE -ne 0) {
   throw "Docker Desktop motoru calismiyor. Docker Desktop'i acin, hazir olmasini bekleyin ve yeniden deneyin."
 }
