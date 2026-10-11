@@ -26,6 +26,10 @@ Aktarım şema/bütünlük/kimlik/referans denetimi ve rollback önizlemesi yapa
 
 Yerel Docker image build, 32 GB Cloud disk kotasına takıldı. Yalnızca Docker build cache temizlendi; çalışan PostgreSQL container/volume ve gerçek kayıtlar korunmuştur. İmaj build ve gerçek Windows Compose servis grafiği GitHub CI'da ayrıca doğrulanır: boş ilk kurulum, erişim denetimi, gerçek worker heartbeat'i, web/worker yeniden oluşturulunca veri ve aynı PostgreSQL'in korunması. Bu, Windows GUI/PowerShell testi değildir. Önceki konteynerler arası şifreli token kalıcılığı kontrolü korunmuştur.
 
+İlk V2 CI denemesinde imaj ve tüm web testleri geçti; Compose kabulünün yeniden başlatma sonrası HTTP isteği eski bağlantıyı yeniden kullandığı için `UND_ERR_SOCKET` ile başarısız oldu. Container'lar sağlık kontrolünde hazırdı. Kabul istemcisinde her istek için bağlantı kapatma ve 15 saniye timeout eklendi; servis/veri/güvenlik kontrolleri kaldırılmadı. Final CI sonucu PR'da ayrıca belirtilir.
+
+Gerçek uygulamada ağsız yeniden değerlendirme düğmesi de çalıştırıldı: kalıcı task **COMPLETED**, `networkResearch:false`; gerçek ilan/araştırma sayısı **14/24** korundu, yeterli kanıta sahip fırsat yine **0**. Analiz motoru mevcut demo kayıtlarını kendi ayrı havuzunda da günceller; gerçek ürün sonuçlarına karıştırmaz.
+
 ## Sınırlar / takip işi
 
 - Bu Cloud oturumundan kullanıcının Windows masaüstüne erişim yok. ZIP kurulumunun kullanıcı tarafından başlatılması zorunlu; Windows'a kurulmuş gibi raporlanmaz.

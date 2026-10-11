@@ -67,6 +67,9 @@ async function api(path, body) {
   const response = await fetch(`http://127.0.0.1:${port}/api/${path}`, {
     method: body === undefined ? "GET" : "POST",
     headers: {
+      // A web-container restart invalidates its pooled TCP sockets. Open a
+      // connection for each acceptance request rather than reuse the old one.
+      Connection: "close",
       Authorization: `Basic ${Buffer.from(`radar:${access}`).toString("base64")}`,
       ...(body !== undefined
         ? {
@@ -76,6 +79,7 @@ async function api(path, body) {
         : {}),
     },
     ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+    signal: AbortSignal.timeout(15_000),
   });
   if (!response.ok)
     throw new Error(
@@ -103,7 +107,10 @@ try {
     initial.investment.researchLoop.scheduler.status !== "RUNNING"
   )
     throw new Error("Fresh empty runtime / worker heartbeat mismatch");
-  const unauthenticated = await fetch(`http://127.0.0.1:${port}/api/health`);
+  const unauthenticated = await fetch(`http://127.0.0.1:${port}/api/health`, {
+    headers: { Connection: "close" },
+    signal: AbortSignal.timeout(15_000),
+  });
   if (unauthenticated.status !== 401) throw new Error("Access control missing");
   await api("settings"); // no seed is required to open first-run settings
   const created = await api("listings", {
