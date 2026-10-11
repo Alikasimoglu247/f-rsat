@@ -1,0 +1,56 @@
+# FirsatRadar AI / private Windows-only Docker Desktop runtime.
+# Compose intentionally does not publish PostgreSQL or bind the web to a LAN interface.
+name: firsatradar
+services:
+  postgres:
+    image: public.ecr.aws/docker/library/postgres:17.9@sha256:2a0d0fe14825b0939f78a8cad5cd4e6aa68bf94d0e5dd96e24b6d23af4315545
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env.windows.local}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.windows.local}
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in .env.windows.local}
+    volumes:
+      - radar_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 25
+  migrate:
+    build: .
+    image: firsatradar:windows-local
+    env_file: .env.windows.local
+    command: ["sh", "-c", "npm run db:migrate && npx tsx scripts/bootstrap.ts"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+  web:
+    image: firsatradar:windows-local
+    env_file: .env.windows.local
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 15s
+      timeout: 6s
+      retries: 12
+      start_period: 30s
+  research:
+    image: firsatradar:windows-local
+    env_file: .env.windows.local
+    restart: unless-stopped
+    command: ["npm", "run", "research:scheduler"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+volumes:
+  radar_postgres:

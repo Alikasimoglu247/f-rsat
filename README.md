@@ -4,6 +4,9 @@ Türkçe, kişisel emlak ve ikinci el araç fırsat keşif uygulaması. Next.js 
 
 ## Başlatma
 
+**Windows'ta kişisel yerel kullanım:** Docker Desktop'i kurup bu depoyu ZIP olarak klasöre çıkarın; `FIRSATRADAR_BASLAT.cmd` dosyasına çift tıklayın. Araştırma için `SIMDI_ARASTIR.cmd`, kapatmak için `FIRSATRADAR_DURDUR.cmd`. Bulut ortamındaki 14 gerçek kayıt yeni yerel veritabanına kendiliğinden taşınmaz. Ayrıntılar: [Windows kurulumu](docs/WINDOWS_LOCAL_SETUP.md).
+
+
 Node.js 24.19 veya üstü, npm, Docker ve Docker Compose gerekir. Docker imajı TCMB PDF'leri için Poppler içerir; Docker dışında araştırma çalıştırırken `pdftotext` kurulu olmalıdır.
 
 ```sh
