@@ -27,7 +27,7 @@ export async function productReport(now = new Date()) {
       take: 500,
     }),
     db.listing.groupBy({ by: ["isDemo"], _count: true }),
-    db.researchTask.findMany({ orderBy: { requestedAt: "desc" }, take: 5 }),
+    db.researchTask.findMany({ where:{action:{in:["RESEARCH","REEVALUATE"]}},orderBy: { requestedAt: "desc" }, take: 5 }),
     db.researchResource.findMany({
       orderBy: { lastCheckedAt: "desc" },
       take: 100,

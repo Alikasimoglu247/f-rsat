@@ -26,7 +26,8 @@
     "research:worker": "node scripts/research-worker.mjs",
     "research:transfer": "tsx scripts/research-transfer.ts",
     "db:test": "tsx scripts/test-db.ts",
-    "test:runtime": "node scripts/runtime-smoke.mjs"
+    "test:runtime": "node scripts/runtime-smoke.mjs",
+    "browser:probe": "tsx scripts/browser-research-scheduler.ts --probe"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.0",

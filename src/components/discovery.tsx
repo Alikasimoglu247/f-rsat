@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { BrowserIntake } from "./browser-intake";
 import { useState } from "react";
 import type { ListingView } from "@/lib/listings";
 import { money, dateTime, categoryLabels } from "@/lib/constants";
@@ -25,18 +26,21 @@ const statuses: Record<string, string> = {
   INSUFFICIENT: "En az 5 yeterli emsal bulunamadı",
   SUPPORTED: "Yeterli emsal var",
 };
-export function DiscoveryPage() {
+export function DiscoveryPage({notesOnly = false}: {notesOnly?:boolean} = {}) {
   const [pilotId, setPilotId] = useState(""),
+    [samples, setSamples] = useState(false),
     [page, setPage] = useState(1);
   const { data, loading, error, refresh } = useApi<Data>(
-    `discovery?pilotId=${encodeURIComponent(pilotId)}&page=${page}`,
+    `discovery?pilotId=${encodeURIComponent(pilotId)}&page=${page}&samples=${samples}&notes=${notesOnly}`,
   );
   if (loading) return <Loading />;
   if (error) return <ErrorBox message={error} retry={refresh} />;
   if (!data) return null;
   return (
     <div className="page-stack">
+      <BrowserIntake />
       <section className="panel">
+        <label><input type="checkbox" checked={samples} onChange={e=>{setSamples(e.target.checked);setPilotId("");setPage(1);}}/> Üç kayıtlık teknik pilotu göster (örnek veri)</label>
         <label>
           Pilot filtresi
           <select
@@ -55,12 +59,12 @@ export function DiscoveryPage() {
           </select>
         </label>
         <p>
-          {data.total} gerçek ilan · demo kayıtları dahil değildir. Pilot
+          {data.total} {samples ? "örnek ilan — gerçek piyasa verisi değildir" : notesOnly ? "kişisel ilan notu · mevcut araştırma kayıtları aşağıdadır" : "gerçek ilan · demo kayıtları dahil değildir"}. Pilot
           filtresi işlem, bütçe ve doğrulanmış gövde tipini de uygular; bunları
           tamamlamadan ilanı tüm gerçek ilanlarda görebilirsin.
         </p>
       </section>
-      {!data.total && <Empty title="Henüz gerçek ilan yok" />}
+      {!data.total && <Empty title={notesOnly ? "Henüz kişisel ilan notu eklenmedi" : "Henüz gerçek ilan yok"} />}
       {data.listings.map(
         ({ listing: l, missingFields, comparableStatus, opportunity }) => {
           const details = { ...l.property, ...l.vehicle, ...l.land } as Record<
@@ -72,6 +76,7 @@ export function DiscoveryPage() {
               <h2>
                 <Link href={`/ilan/${l.id}`}>{l.title}</Link>
               </h2>
+              <Button variant="outline" onClick={()=>window.dispatchEvent(new CustomEvent("radar:browser-note",{detail:{...details,title:l.title,category:l.category,province:l.province,district:l.district,neighborhood:l.neighborhood,sourceUrl:l.sourceUrl,externalId:l.externalId,price:l.price,isDemo:l.isDemo,sourceDate:l.provenance?.sourceDate,sourceDateKind:l.provenance?.sourceDateKind??"UNSPECIFIED"}}))}>Yeni fiyat gözlemi gir</Button>
               {opportunity && (
                 <span className="badge positive">Yeterli kanıtlı fırsat</span>
               )}
@@ -118,6 +123,15 @@ export function DiscoveryPage() {
                 {l.assessment?.sampleCount ?? 0} emsal
               </p>
               <p className="helper">
+                Kaynakta belirtilen tarih: {String(l.provenance?.sourceDate ?? "Bilgi yok")} ({String(l.provenance?.sourceDateKind ?? "Türü belirsiz")}).
+                Sayfa gözlemi: {dateTime(l.provenance?.observedAt as string | undefined)}.
+                Fiyat teyidi: {l.provenance?.verification === "PAGE_PRICE_UNCONFIRMED" ? "Yok" : "Ayrıntılara bakın"}.
+                Satış durumu: {l.provenance?.verification === "PAGE_PRICE_UNCONFIRMED" ? "Teyitsiz" : "Ayrıntılara bakın"}.
+              </p>
+              <details><summary>Fiyat gözlemleri ({l.prices?.length ?? 0})</summary>
+                {l.prices?.map((p, i) => <p key={i}>{dateTime(p.observedAt)} · {money(p.price)}</p>)}
+              </details>
+              <p className="helper">
                 Son fiyat gözlemi: {dateTime(l.lastObservedAt)}. Eksik verilerle
                 veya yetersiz emsalle fırsat etiketi verilmez.
               </p>
@@ -145,3 +159,4 @@ export function DiscoveryPage() {
     </div>
   );
 }
+

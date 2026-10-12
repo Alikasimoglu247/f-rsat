@@ -1,5 +1,7 @@
 "use client";
 import Link from "next/link";
+import { DiscoveryPage } from "./discovery";
+import { BrowserResearch } from "./browser-research";
 import { useEffect, useState } from "react";
 import {
   ArrowUpRight,
@@ -209,6 +211,7 @@ export function ProductPage({ mode }: { mode: Mode }) {
           onTransfer={() => setTransfer(true)}
         />
       )}
+      {mode === "explore" && <><BrowserResearch /><details><summary>Kişisel notlar ve teknik pilot</summary><section aria-label="Kişisel ilan gözlemleri"><DiscoveryPage notesOnly /></section></details></>}
       {(mode === "explore" || mode === "analysis" || mode === "watch") && (
         <Candidates
           data={data}
