@@ -2,6 +2,7 @@ import "dotenv/config";
 import { db } from "../src/lib/db";
 import { startResearchScheduler } from "../src/lib/research/scheduler";
 import { ResearchWorkerAlreadyRunningError } from "../src/lib/research/worker-lock";
+import { queueBrowserSchedule } from "../src/lib/research/browser-jobs";
 
 const args = process.argv.slice(2);
 if (args.some((arg) => arg !== "--probe"))
@@ -13,8 +14,10 @@ let scheduler: Awaited<ReturnType<typeof startResearchScheduler>>;
 try {
   scheduler = await startResearchScheduler({
     probe,
-    run: ({ trigger }) =>
-      probe ? runResearch({ trigger }) : runResearchBatch({ trigger }),
+    run: async ({ trigger }) => {
+      await queueBrowserSchedule(trigger);
+      return probe ? runResearch({ trigger }) : runResearchBatch({ trigger });
+    },
     onEvent: (event) => console.info(JSON.stringify(event)),
   });
 } catch (error) {

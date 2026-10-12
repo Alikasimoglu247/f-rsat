@@ -21,12 +21,12 @@ export const browserIntakeSchema = z.object({
   if (v.sourceDate && (!Number.isFinite(Date.parse(v.sourceDate)) || new Date(v.sourceDate).toISOString().slice(0,10) !== v.sourceDate || v.sourceDate > new Date(v.observedAt).toLocaleDateString("sv-SE",{timeZone:"Europe/Istanbul"})))
     ctx.addIssue({code:"custom",path:["sourceDate"],message:"Geçerli, gözlemden ileri olmayan ilan tarihi gerekli."});
 });
-export async function saveBrowserIntake(raw: unknown) {
+export async function saveBrowserIntake(raw: unknown, options: {sourceId?:string} = {}) {
   const input = browserIntakeSchema.parse(raw);
   return db.$transaction(async tx => {
     // Shares the existing import lock, including manual entries.
     await tx.$queryRaw`SELECT pg_advisory_xact_lock(451807)::text`;
-    const sourceId = input.record.isDemo ? "browser-pilot-demo" : "manual";
+    const sourceId = input.record.isDemo ? "browser-pilot-demo" : options.sourceId ?? "manual";
     await tx.listingSource.upsert({where:{id:sourceId}, update:{}, create:{
       id:sourceId, name:input.record.isDemo ? "Tarayıcı pilotu — ÖRNEK VERİ" : "Manuel giriş", method:input.record.isDemo ? "DEMO" : "MANUAL", authorization:"Kullanıcının tek tek girdiği not; veri yeniden kullanım izni değildir", accessStatus:"AVAILABLE", categories:["EV","ARABA","ARSA","TARLA"],
     }});

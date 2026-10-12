@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { saveBrowserIntake } from "@/lib/browser-intake";
+import { browserResearchState,queueBrowserJob,claimBrowserJob,finishBrowserJob,failBrowserJob } from "@/lib/research/browser-jobs";
 import { browseListings, dashboard } from "@/lib/queries";
 import { importRecords, listingInclude } from "@/lib/listings";
 import { listingSchema, settingsSchema, profileSchema } from "@/lib/validation";
@@ -34,6 +35,7 @@ type Context = { params: Promise<{ path?: string[] }> };
 export async function GET(request: Request, context: Context) {
   try {
     const path = (await context.params).path ?? [];
+    if(path.join("/")==="browser-research")return json(await browserResearchState());
     if (path.join("/") === "product") return json(await productReport());
     if (path.join("/") === "research/export")
       return new Response(
@@ -136,14 +138,19 @@ export async function POST(request: Request, context: Context) {
             ? 2_750_000
             : 2_100_000,
       );
-    if (path.join("/") === "browser-intake") {
+    if (path[0] === "browser-research" || path.join("/") === "browser-intake") {
       // Next's Docker URL uses 0.0.0.0 internally. Validate the public Host
       // against configured origin before passing a normalized request to the guard.
       const configured = new URL(process.env.APP_BASE_URL ?? request.url);
       if (request.headers.get("host") !== configured.host)
         throw new HttpError(403, "Uygulamanın yerel adresini kullanın.");
       requireLocalControl(new Request(new URL(new URL(request.url).pathname, configured.origin), {headers:request.headers}));
-      return json(await saveBrowserIntake(body), 201);
+      if(path[0]==="browser-intake")return json(await saveBrowserIntake(body),201);
+      if(path[1]==="queue"){const v=z.object({url:z.url()}).strict().parse(body);return json(await queueBrowserJob(v.url),202);}
+      if(path[1]==="claim"){const v=z.object({id:z.string()}).strict().parse(body);return json(await claimBrowserJob(v.id));}
+      if(path[1]==="capture"){const v=z.object({id:z.string(),leaseToken:z.string(),page:z.unknown(),links:z.array(z.url()).max(50).default([])}).strict().parse(body);return json(await finishBrowserJob(v.id,v.leaseToken,v.page,v.links));}
+      if(path[1]==="fail"){const v=z.object({id:z.string(),leaseToken:z.string(),reason:z.string().max(400)}).strict().parse(body);return json(await failBrowserJob(v.id,v.leaseToken,v.reason));}
+      throw new HttpError(404,"Tarayıcı işlemi bulunamadı.");
     }
     if (path[0] === "research") {
       requireLocalControl(request);
