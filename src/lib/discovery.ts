@@ -8,6 +8,8 @@ import { HttpError } from "./http";
 const query = z
   .object({
     pilotId: z.string().max(100).optional(),
+    samples: z.enum(["true", "false"]).default("false"),
+    notes: z.enum(["true", "false"]).default("false"),
     page: z.coerce.number().int().min(1).max(100000).default(1),
   })
   .strict();
@@ -24,7 +26,7 @@ export async function newRealListings(params: Record<string, string>) {
   if (input.pilotId && !profile) throw new HttpError(404, "Pilot bulunamadı.");
   const [all, profiles] = await Promise.all([
     db.listing.findMany({
-      where: { isDemo: false, identityStatus: "ACTIVE" },
+      where: { ...(input.samples === "true" ? { sourceId: "browser-pilot-demo", isDemo: true } : {isDemo:false, ...(input.notes === "true" ? {provenance:{path:["method"],equals:"USER_SELECTED_AUTHORIZED_DATA"}} : {})}), identityStatus: "ACTIVE" },
       include: listingInclude,
       orderBy: [{ createdAt: "desc" }, { id: "asc" }],
     }),

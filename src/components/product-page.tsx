@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { DiscoveryPage } from "./discovery";
 import { useEffect, useState } from "react";
 import {
   ArrowUpRight,
@@ -209,6 +210,7 @@ export function ProductPage({ mode }: { mode: Mode }) {
           onTransfer={() => setTransfer(true)}
         />
       )}
+      {mode === "explore" && <section aria-label="Kişisel ilan gözlemleri"><h2>Seçtiğim ilanlar ve teknik pilot</h2><DiscoveryPage notesOnly /></section>}
       {(mode === "explore" || mode === "analysis" || mode === "watch") && (
         <Candidates
           data={data}

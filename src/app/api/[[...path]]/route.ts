@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { saveBrowserIntake } from "@/lib/browser-intake";
 import { browseListings, dashboard } from "@/lib/queries";
 import { importRecords, listingInclude } from "@/lib/listings";
 import { listingSchema, settingsSchema, profileSchema } from "@/lib/validation";
@@ -135,6 +136,15 @@ export async function POST(request: Request, context: Context) {
             ? 2_750_000
             : 2_100_000,
       );
+    if (path.join("/") === "browser-intake") {
+      // Next's Docker URL uses 0.0.0.0 internally. Validate the public Host
+      // against configured origin before passing a normalized request to the guard.
+      const configured = new URL(process.env.APP_BASE_URL ?? request.url);
+      if (request.headers.get("host") !== configured.host)
+        throw new HttpError(403, "Uygulamanın yerel adresini kullanın.");
+      requireLocalControl(new Request(new URL(new URL(request.url).pathname, configured.origin), {headers:request.headers}));
+      return json(await saveBrowserIntake(body), 201);
+    }
     if (path[0] === "research") {
       requireLocalControl(request);
       if (path[1] === "transfer") {
