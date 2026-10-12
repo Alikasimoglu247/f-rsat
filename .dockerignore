@@ -1,0 +1,13 @@
+.git
+.github
+node_modules
+.next
+.env
+.env.*
+.local
+FIRSATRADAR_GERCEK_VERI*.json
+FIRSATRADAR_V2_WINDOWS*.zip
+test-results
+playwright-report
+*.log
+*.tsbuildinfo

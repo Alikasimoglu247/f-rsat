@@ -19,6 +19,31 @@ export const categoryLabels = {
 } as const;
 export type Category = keyof typeof categoryLabels;
 export const categoryKeys = ["EV", "ARABA", "ARSA", "TARLA"] as const;
+export const bodyTypes = [
+  "SUV",
+  "CROSSOVER",
+  "SEDAN",
+  "HATCHBACK",
+  "STATION_WAGON",
+  "COUPE",
+  "PICKUP",
+  "VAN",
+] as const;
+export const pilotFuels = ["Elektrikli", "Hibrit", "Benzin", "Dizel"] as const;
+export function normalizeFuel(value?: string | null) {
+  const norm = value?.normalize("NFC").trim().toLocaleLowerCase("tr-TR");
+  if (["elektrik", "elektrikli", "electric"].includes(norm ?? ""))
+    return "elektrik";
+  if (["hibrit", "hybrid"].includes(norm ?? "")) return "hibrit";
+  if (norm === "benzinli") return "benzin";
+  return norm;
+}
+export const normalizeBodyType = (value?: string | null) => {
+  const text = value?.trim().toLocaleUpperCase("en-US");
+  return text && bodyTypes.includes(text as (typeof bodyTypes)[number])
+    ? text
+    : null;
+};
 export function money(value: string | number | null | undefined) {
   if (value == null) return "—";
   const text = String(value),

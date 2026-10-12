@@ -1,0 +1,8 @@
+From: Test Notifications <bildirim@arabam.com>
+To: fixture@example.test
+Subject: Sentetik test araç bildirimi
+Message-ID: <synthetic-arabam-1@example.test>
+MIME-Version: 1.0
+Content-Type: text/html; charset=UTF-8
+
+<html><body><table><tr class="listing-card"><td><a href="https://www.arabam.com/ilan/ikinci-el/otomobil/test-car/12345678">Sentetik test araç ilanı</a></td><td><p>Fiyat: 850.000 TL</p><p>Konum: Bursa / Nilüfer</p><p>Marka: Test</p><p>Model: Example</p><p>Yıl: 2020</p><p>Kilometre: 75.000</p></td></tr></table><img src="https://example.test/never-fetch"></body></html>

@@ -8,7 +8,7 @@ import { demoListings } from "../../prisma/demo";
 import { browseListings } from "../../src/lib/queries";
 beforeEach(async () => {
   await db.$executeRawUnsafe(
-    'TRUNCATE TABLE "Listing", "ListingSource", "ImportJob", "AnalysisRun", "AppSettings", "SearchProfile" CASCADE',
+    'TRUNCATE TABLE "Listing", "ListingSource", "ImportJob", "AnalysisRun", "AppSettings", "SearchProfile", "EmailMessage", "EmailTemplate", "MailboxConnection", "OAuthAttempt" CASCADE',
   );
   await ensureSources(db);
 });
@@ -25,7 +25,7 @@ const input = () =>
 it("decimal fiyatı korur; mükerrer dosya ve değişen fiyat geçmişini doğru işler", async () => {
   const original = await importRecords([input()], "csv", "CSV");
   expect(original.inserted).toBe(1);
-  const repeated = await importRecords([input()], "json", "JSON");
+  const repeated = await importRecords([input()], "csv", "CSV");
   expect(repeated.duplicates).toBe(1);
   const changed = await importRecords(
     [{ ...input(), price: "1100000.25" }],
@@ -44,7 +44,7 @@ it("decimal fiyatı korur; mükerrer dosya ve değişen fiyat geçmişini doğru
   expect(listing.provenance).toHaveProperty("importJobId");
 });
 it("tüm dosyayı tek işlemde saklar; kimlik çakışmasında kısmi veri kalmaz", async () => {
-  await importRecords([input()], "manual", "MANUAL");
+  await importRecords([input()], "csv", "CSV");
   await expect(
     importRecords(
       [
@@ -54,7 +54,11 @@ it("tüm dosyayı tek işlemde saklar; kimlik çakışmasında kısmi veri kalma
           sourceUrl: "https://example.com/new",
           externalId: "new",
         },
-        { ...input(), category: "ARABA" },
+        {
+          ...input(),
+          sourceUrl: "https://example.com/invalid",
+          category: "INVALID" as "EV",
+        },
       ],
       "csv",
       "CSV",

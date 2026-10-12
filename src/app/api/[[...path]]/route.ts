@@ -10,17 +10,56 @@ import { optionalAiExplanation } from "@/lib/ai";
 import type { ListingView } from "@/lib/listings";
 import { failure, HttpError, json, readJson } from "@/lib/http";
 import { z } from "zod";
+import { newRealListings } from "@/lib/discovery";
+import { liveReadiness } from "@/lib/readiness";
+import { verifyBodyType, bodyReviewSchema } from "@/lib/vehicle-review";
+import { emailGet, emailPost } from "@/lib/email/api";
+import { sourceCoverage } from "@/lib/email/coverage";
+import { investmentReport } from "@/lib/investment-report";
+import { productReport } from "@/lib/product-report";
+import {
+  exportResearchBundle,
+  importResearchBundle,
+} from "@/lib/research/transfer";
+import {
+  requireLocalControl,
+  claimResearchTask,
+  executeResearchTask,
+} from "@/lib/research/control";
+import { after } from "next/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 type Context = { params: Promise<{ path?: string[] }> };
 export async function GET(request: Request, context: Context) {
   try {
     const path = (await context.params).path ?? [];
+    if (path.join("/") === "product") return json(await productReport());
+    if (path.join("/") === "research/export")
+      return new Response(
+        JSON.stringify(await exportResearchBundle(), null, 2),
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "Content-Disposition":
+              'attachment; filename="FIRSATRADAR_GERCEK_VERI.json"',
+            "Cache-Control": "no-store",
+          },
+        },
+      );
+    if (path[0] === "email") return await emailGet(path.slice(1));
     if (path[0] === "health") {
       await db.$queryRaw`SELECT 1`;
       return json({ status: "ok", database: "connected" });
     }
     if (path[0] === "dashboard") return json(await dashboard());
+    if (path.join("/") === "investment") return json(await investmentReport());
+    if (path[0] === "readiness") return json(await liveReadiness());
+    if (path[0] === "discovery")
+      return json(
+        await newRealListings(
+          Object.fromEntries(new URL(request.url).searchParams),
+        ),
+      );
     if (path[0] === "listings" && path[1]) {
       const listing = await db.listing.findUnique({
         where: { id: path[1] },
@@ -40,20 +79,7 @@ export async function GET(request: Request, context: Context) {
           Object.fromEntries(new URL(request.url).searchParams),
         ),
       );
-    if (path[0] === "sources")
-      return json({
-        sources: await db.listingSource.findMany({
-          include: {
-            logs: { orderBy: { createdAt: "desc" }, take: 5 },
-            _count: { select: { listings: true } },
-          },
-          orderBy: { name: "asc" },
-        }),
-        imports: await db.importJob.findMany({
-          orderBy: { createdAt: "desc" },
-          take: 20,
-        }),
-      });
+    if (path[0] === "sources") return json(await sourceCoverage());
     if (path[0] === "notifications")
       return json({
         notifications: await db.notification.findMany({
@@ -64,10 +90,14 @@ export async function GET(request: Request, context: Context) {
           orderBy: { startedAt: "desc" },
           take: 20,
         }),
+        reports: await db.dailyReport.findMany({
+          orderBy: { createdAt: "desc" },
+          take: 10,
+        }),
       });
     if (path[0] === "settings")
       return json({
-        settings: await db.appSettings.findUniqueOrThrow({
+        settings: (await db.appSettings.findUnique({
           where: { id: "personal" },
           select: {
             telegramEnabled: true,
@@ -75,7 +105,12 @@ export async function GET(request: Request, context: Context) {
             minScore: true,
             includeDemoNotifications: true,
           },
-        }),
+        })) ?? {
+          telegramEnabled: false,
+          emailEnabled: false,
+          minScore: 70,
+          includeDemoNotifications: false,
+        },
         credentials: credentialStatus(),
         schedule: process.env.DAILY_CRON ?? "0 9 * * *",
         timezone: "Europe/Istanbul",
@@ -92,8 +127,33 @@ export async function GET(request: Request, context: Context) {
 export async function POST(request: Request, context: Context) {
   try {
     const path = (await context.params).path ?? [],
-      body = await readJson(request);
-    if (path[0] === "listings") {
+      body = await readJson(
+        request,
+        path[0] === "research" && path[1] === "transfer"
+          ? 15_000_000
+          : path[0] === "email" && path[1] === "eml"
+            ? 2_750_000
+            : 2_100_000,
+      );
+    if (path[0] === "research") {
+      requireLocalControl(request);
+      if (path[1] === "transfer") {
+        const input = z
+          .object({ bundle: z.unknown(), apply: z.boolean().default(false) })
+          .strict()
+          .parse(body);
+        return json(await importResearchBundle(input.bundle, input.apply));
+      }
+      if (["start", "reevaluate"].includes(path[1])) {
+        z.object({}).strict().parse(body);
+        const action = path[1] === "start" ? "RESEARCH" : "REEVALUATE";
+        const task = await claimResearchTask(action);
+        after(() => executeResearchTask(task.id, action));
+        return json({ id: task.id, status: task.status }, 202);
+      }
+    }
+    if (path[0] === "email") return await emailPost(path.slice(1), body);
+    if (path[0] === "listings" && path.length === 1) {
       const input = listingSchema.parse(body);
       await ensureSources(db);
       return json(await importRecords([input], "manual", "MANUAL"), 201);
@@ -153,6 +213,31 @@ export async function POST(request: Request, context: Context) {
     }
     if (path[0] === "profiles") {
       const { minScore, ...profile } = profileSchema.parse(body);
+      if (path[1]) {
+        if (!(await db.searchProfile.findUnique({ where: { id: path[1] } })))
+          throw new HttpError(404, "Profil bulunamadı.");
+        return json(
+          await db.$transaction(async (tx) => {
+            const saved = await tx.searchProfile.update({
+              where: { id: path[1] },
+              data: {
+                ...profile,
+                category: profile.category ?? null,
+                province: profile.province ?? null,
+                district: profile.district ?? null,
+                minPrice: profile.minPrice ?? null,
+                maxPrice: profile.maxPrice ?? null,
+                transactionType: profile.transactionType ?? null,
+              },
+            });
+            await tx.alert.updateMany({
+              where: { profileId: saved.id },
+              data: { minScore },
+            });
+            return saved;
+          }),
+        );
+      }
       return json(
         await db.searchProfile.create({
           data: { ...profile, alerts: { create: { minScore } } },
@@ -160,6 +245,8 @@ export async function POST(request: Request, context: Context) {
         201,
       );
     }
+    if (path[0] === "listings" && path[1] && path[2] === "body-type")
+      return json(await verifyBodyType(path[1], bodyReviewSchema.parse(body)));
     if (path[0] === "notifications" && path[1] === "dispatch") {
       z.object({}).strict().parse(body);
       return json(await dispatchNotifications());

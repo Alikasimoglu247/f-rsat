@@ -1,0 +1,645 @@
+{
+  "researchedAt": "2026-10-09T21:08:58.748551+00:00",
+  "sources": [
+    {
+      "id": "policy",
+      "name": "TCMB — 10 Eylül faiz kararı",
+      "url": "https://www.tcmb.gov.tr/wps/wcm/connect/tr/tcmb+tr/main+menu/duyurular/basin/2026/duy2026-38",
+      "retrievedAt": "2026-10-09T20:39:58.140135+00:00",
+      "kind": "OFFICIAL",
+      "validForDays": 45,
+      "sha256": "196e61614ce44f52b6e746109fb501f0788952131d835567d2169eb59211d7e9",
+      "usageNote": "Kaynak belirtilerek kişisel araştırma; ticari yeniden kullanım izni verilmiş sayılmaz."
+    },
+    {
+      "id": "cpi",
+      "name": "TCMB / TÜİK — tüketici fiyatları",
+      "url": "https://www.tcmb.gov.tr/wps/wcm/connect/TR/TCMB+TR/Main+Menu/Istatistikler/Enflasyon+Verileri",
+      "retrievedAt": "2026-10-09T20:39:58.501629+00:00",
+      "kind": "OFFICIAL",
+      "validForDays": 45,
+      "sha256": "798fc48c4ae1bfc0b826e21d815b517ef71ffce36619d704f5e7c025bbb85fb8",
+      "usageNote": "Aylık gerçekleşmiş enflasyon; gelecek yıl tahmini değildir."
+    },
+    {
+      "id": "housing",
+      "name": "TCMB — Ağustos 2026 konut ve yeni kiracı kira endeksleri",
+      "url": "https://www.tcmb.gov.tr/wps/wcm/connect/8bbac42a-c854-4c58-8b0c-e7e55c35ec2d/KFE.pdf?MOD=AJPERES",
+      "retrievedAt": "2026-10-09T20:43:00.884113+00:00",
+      "kind": "OFFICIAL",
+      "validForDays": 90,
+      "sha256": "d381a8ac5d3e9357731c3eff26cae7da5df199982a857d476d4723df81e8fcb7",
+      "usageNote": "Türkiye ve İstanbul endeksleri; Silivri mahalle fiyatı veya TL kira değildir."
+    },
+    {
+      "id": "municipality",
+      "name": "Silivri Belediyesi — askı ilanları",
+      "url": "https://www.silivri.bel.tr/",
+      "retrievedAt": "2026-10-09T20:39:19.931373+00:00",
+      "kind": "OFFICIAL",
+      "validForDays": 7,
+      "sha256": "1920c0785e7110604c391a6239d224073cc52312ea2a638ce2c3d4d40f7dc0ce",
+      "usageNote": "Yalnızca belirtilen uygulama alanı/parseller; tüm mahalleye genellenmez."
+    },
+    {
+      "id": "rail",
+      "name": "Ulaştırma ve Altyapı Bakanlığı — 4 Ekim 2026 açıklaması",
+      "url": "https://www.uab.gov.tr/haberler/halkali-kapikule-de-seyahat-sueresi-4-saatten-1-5-saate-duesecek/",
+      "retrievedAt": "2026-10-09T20:42:16.557412+00:00",
+      "kind": "OFFICIAL",
+      "validForDays": 60,
+      "sha256": "5683a96c298bcb8ba836173bd4491805f191fa8a792a7cfd6abbc6166d45744e",
+      "usageNote": "Açılış duyurusu ve devam eden etaplar; Silivri istasyonu veya fiyat artışı kanıtı değildir."
+    },
+    {
+      "id": "hazard",
+      "name": "AFAD — Türkiye Deprem Tehlike Haritası",
+      "url": "https://www.afad.gov.tr/turkiye-deprem-tehlike-haritasi",
+      "retrievedAt": "2026-10-09T20:41:20.886359+00:00",
+      "kind": "OFFICIAL",
+      "validForDays": 365,
+      "sha256": "61deb9e8540b6b2df66f68e0dec018c753cf9cac1e58a1888e2be8a8b143f7a0",
+      "usageNote": "Tehlike çerçevesi; parsel zemini veya tekil binanın dayanım raporu değildir."
+    },
+    {
+      "id": "villa",
+      "name": "Interesting Real Estate — Kılıç Ceylan Country",
+      "url": "https://interestingrealestate.com/listings/kilic-ceylan-country",
+      "retrievedAt": "2026-10-09T20:44:00.684830+00:00",
+      "kind": "PUBLISHER",
+      "validForDays": 7,
+      "sha256": "27e17fa5f1f99b6a7033792509f20931cda5c64fd221b2b153e145a4592b1fd6",
+      "usageNote": "Tekil halka açık sayfanın kişisel değerlendirmesi. Robots ana sayfalara izin veriyor, /api yasak; toplu veri veya yeniden yayım lisansı doğrulanmış değildir."
+    },
+    {
+      "id": "genc-300",
+      "name": "Genç City — 1096",
+      "url": "https://www.genccity.com/satilik-arsa/silivri-degirmenkoyde-300-metre-parsel-tamami-440-bin-tl/049048057054",
+      "retrievedAt": "2026-10-09T20:58:20.828679+00:00",
+      "kind": "PUBLISHER",
+      "validForDays": 7,
+      "sha256": "5309469642412e3b9ae1cc63e5cdc5f3f7cf7c217b96a7d3237683073d93281c",
+      "usageNote": "Tekil halka açık ilan sayfasından sınırlı kişisel araştırma. Robots bu ilan yolunu yasaklamıyor; toplu veri toplama/yeniden yayım lisansı doğrulanmadı. Beyanlar belge doğrulaması değil."
+    },
+    {
+      "id": "genc-farm250",
+      "name": "Genç City — 1099",
+      "url": "https://www.genccity.com/satilik-tarla/degirmenkoy-de-muhtesem-bir-parsel-asfalta-yakin-250-m%C2%B2-425-bin-tl/049048057057",
+      "retrievedAt": "2026-10-09T20:58:20.829388+00:00",
+      "kind": "PUBLISHER",
+      "validForDays": 7,
+      "sha256": "13b2d120f00b2eace9e0e8c1a1ee50c2443a5a37910ba7a134593a91051bda06",
+      "usageNote": "Tekil halka açık ilan sayfasından sınırlı kişisel araştırma. Robots bu ilan yolunu yasaklamıyor; toplu veri toplama/yeniden yayım lisansı doğrulanmadı. Beyanlar belge doğrulaması değil."
+    },
+    {
+      "id": "genc-zoned250",
+      "name": "Genç City — 1090",
+      "url": "https://www.genccity.com/satilik-arsa/silivri-degirmenkoyde-imarli-250-metre-arsa/049048057048",
+      "retrievedAt": "2026-10-09T20:58:20.830286+00:00",
+      "kind": "PUBLISHER",
+      "validForDays": 7,
+      "sha256": "ba8459acf3bc857d1d149a7caa24e82249bdd8256c8a8f36aee29c7c57d483bf",
+      "usageNote": "Tekil halka açık ilan sayfasından sınırlı kişisel araştırma. Robots bu ilan yolunu yasaklamıyor; toplu veri toplama/yeniden yayım lisansı doğrulanmadı. Beyanlar belge doğrulaması değil."
+    },
+    {
+      "id": "akgun-3653",
+      "name": "Akgün Gayrimenkul — 1021",
+      "url": "https://www.gayrimenkulakgun.com/tr-TR/satilik-yatirimlik-arsa/silivri-degirmenkoyde-imara-ilk-acilacak-bolgede-3653-m2/049048050049",
+      "retrievedAt": "2026-10-09T20:58:20.830890+00:00",
+      "kind": "PUBLISHER",
+      "validForDays": 7,
+      "sha256": "cb8c28d8deffb4ac90f1d1515a9a0819b5e80c69cbbb4146431936e542e5c5aa",
+      "usageNote": "Tekil halka açık ilan sayfasından sınırlı kişisel araştırma. Robots bu ilan yolunu yasaklamıyor; toplu veri toplama/yeniden yayım lisansı doğrulanmadı. Beyanlar belge doğrulaması değil."
+    },
+    {
+      "id": "district-context",
+      "name": "Mynet / Endeksa — Temmuz 2026 Silivri daire istatistiği",
+      "url": "https://finans.mynet.com/haber/detay/emlak/deprem-sonrasi-istanbul-da-gozler-bu-ilcelere-cevrildi-metrekare-fiyatlari-belli-oldu/569460/",
+      "retrievedAt": "2026-10-09T21:05:47.861255+00:00",
+      "kind": "SECONDARY",
+      "validForDays": 90,
+      "sha256": "0751661c557c6cdd5418eb6a9188316416437909a7e40cca86399026d1a3ee46",
+      "usageNote": "Kaynaklı tek istatistik alıntısı; haberin tamamı, görseller ve finansal piyasa verileri kopyalanmadı. Endeksa örneklemi ve model çıktısı bağımsız doğrulanmadı; mahalle/tekil taşınmaz emsali değil."
+    }
+  ],
+  "facts": [
+    {
+      "id": "policy-rate",
+      "sourceId": "policy",
+      "label": "Politika faizi",
+      "value": 37,
+      "unit": "%",
+      "period": "2026-09-10",
+      "scope": "Türkiye"
+    },
+    {
+      "id": "cpi-september",
+      "sourceId": "cpi",
+      "label": "Yıllık TÜFE",
+      "value": 29.73,
+      "unit": "%",
+      "period": "2026-09",
+      "scope": "Türkiye"
+    },
+    {
+      "id": "cpi-august",
+      "sourceId": "cpi",
+      "label": "Ağustos yıllık TÜFE",
+      "value": 31.51,
+      "unit": "%",
+      "period": "2026-08",
+      "scope": "Türkiye"
+    },
+    {
+      "id": "housing-turkey",
+      "sourceId": "housing",
+      "label": "Konut fiyatları: nominal yıllık değişim",
+      "value": 23,
+      "unit": "%",
+      "period": "2026-08",
+      "scope": "Türkiye"
+    },
+    {
+      "id": "housing-real",
+      "sourceId": "housing",
+      "label": "Konut fiyatları: reel yıllık değişim",
+      "value": -6.5,
+      "unit": "%",
+      "period": "2026-08",
+      "scope": "Türkiye"
+    },
+    {
+      "id": "housing-istanbul",
+      "sourceId": "housing",
+      "label": "Konut fiyatları: nominal yıllık değişim",
+      "value": 26.3,
+      "unit": "%",
+      "period": "2026-08",
+      "scope": "İstanbul"
+    },
+    {
+      "id": "rent-istanbul",
+      "sourceId": "housing",
+      "label": "Yeni kiracı kira endeksi: nominal yıllık değişim",
+      "value": 34.5,
+      "unit": "%",
+      "period": "2026-08",
+      "scope": "İstanbul"
+    },
+    {
+      "id": "rent-real-turkey",
+      "sourceId": "housing",
+      "label": "Yeni kiracı kira endeksi: reel yıllık değişim",
+      "value": -3.9,
+      "unit": "%",
+      "period": "2026-08",
+      "scope": "Türkiye"
+    },
+    {
+      "id": "mimarsinan-plan",
+      "sourceId": "municipality",
+      "label": "Mimarsinan 18. madde uygulaması: askı 25 Eylül–26 Ekim 2026",
+      "value": null,
+      "unit": null,
+      "period": null,
+      "scope": "Belirtilen ada/parseller"
+    },
+    {
+      "id": "cumhuriyet-plan",
+      "sourceId": "municipality",
+      "label": "Cumhuriyet 2. Etap: mahkeme iptali sonrası geri dönüşüm ve yeni uygulama; askı 17 Eylül–16 Ekim 2026",
+      "value": null,
+      "unit": null,
+      "period": null,
+      "scope": "Cumhuriyet 2. Etap uygulama alanı"
+    },
+    {
+      "id": "rail-stage",
+      "sourceId": "rail",
+      "label": "153 km Çerkezköy–Kapıkule kesimi için 9 Ekim açılışı duyuruldu; Ispartakule–Çerkezköy ve Halkalı bağlantısı yapımda",
+      "value": null,
+      "unit": null,
+      "period": "2026-10-04",
+      "scope": "Trakya demiryolu koridoru"
+    },
+    {
+      "id": "seismic-framework",
+      "sourceId": "hazard",
+      "label": "Deprem Tehlike Haritası 1 Ocak 2019’da yürürlüğe girdi; bina ve zemin incelemesi ayrıca gerekli",
+      "value": null,
+      "unit": null,
+      "period": "2019-01-01",
+      "scope": "Türkiye"
+    },
+    {
+      "id": "villa-offer",
+      "sourceId": "villa",
+      "label": "IRE-0037: Selimpaşa’da satılık villa projesi; fiyat talep üzerine, net/brüt alan ve oda bilgisi yok",
+      "value": null,
+      "unit": null,
+      "period": "2026-09-14",
+      "scope": "Selimpaşa / Silivri"
+    },
+    {
+      "id": "villa-finance",
+      "sourceId": "villa",
+      "label": "Yayıncı kredi uygunluğunu “Not eligible” olarak işaretliyor",
+      "value": null,
+      "unit": null,
+      "period": null,
+      "scope": "IRE-0037"
+    },
+    {
+      "id": "genc-300-offer",
+      "sourceId": "genc-300",
+      "label": "Genç City 1096: 440000 TL, 300 m², Değirmenköy, ARSA; yayın tarihi 2026-01-22",
+      "value": null,
+      "unit": null,
+      "period": "2026-01-22",
+      "scope": "Değirmenköy / Silivri"
+    },
+    {
+      "id": "genc-farm250-offer",
+      "sourceId": "genc-farm250",
+      "label": "Genç City 1099: 425000 TL, 250 m², Değirmenköy, TARLA; yayın tarihi 2026-01-29",
+      "value": null,
+      "unit": null,
+      "period": "2026-01-29",
+      "scope": "Değirmenköy / Silivri"
+    },
+    {
+      "id": "genc-farm250-risk",
+      "sourceId": "genc-farm250",
+      "label": "Hisseli tapu beyanı: kullanım sınırı ve pay satışı belirsiz.",
+      "value": null,
+      "unit": null,
+      "period": "2026-01-29",
+      "scope": "1099"
+    },
+    {
+      "id": "genc-zoned250-offer",
+      "sourceId": "genc-zoned250",
+      "label": "Genç City 1090: 900000 TL, 250 m², Değirmenköy, ARSA; yayın tarihi 2024-10-18",
+      "value": null,
+      "unit": null,
+      "period": "2024-10-18",
+      "scope": "Değirmenköy / Silivri"
+    },
+    {
+      "id": "akgun-3653-offer",
+      "sourceId": "akgun-3653",
+      "label": "Akgün Gayrimenkul 1021: 12500000 TL, 3653 m², Değirmenköy, ARSA; yayın tarihi 2026-01-26",
+      "value": null,
+      "unit": null,
+      "period": "2026-01-26",
+      "scope": "Değirmenköy / Silivri"
+    },
+    {
+      "id": "akgun-3653-risk",
+      "sourceId": "akgun-3653",
+      "label": "“İlk imara açılacak” ve “prefabrik ev yapılabilir” iddiaları için resmî belge yok.",
+      "value": null,
+      "unit": null,
+      "period": "2026-01-26",
+      "scope": "1021"
+    },
+    {
+      "id": "silivri-july-asking-context",
+      "sourceId": "district-context",
+      "label": "Haberde aktarılan Silivri daire ortalama satış m² fiyatı — model/örneklem doğrulanmadı",
+      "value": 44470,
+      "unit": "TL/m²",
+      "period": "2026-07",
+      "scope": "Silivri ilçesi, daire; mahalle veya villa değil"
+    }
+  ],
+  "candidates": [
+    {
+      "id": "ire-0037",
+      "sourceId": "villa",
+      "externalId": "IRE-0037",
+      "sourceUrl": "https://interestingrealestate.com/listings/kilic-ceylan-country",
+      "publishedAt": "2026-09-14",
+      "observedAt": "2026-10-09T20:44:00.684830+00:00",
+      "title": "Kılıç Ceylan Country",
+      "category": "EV",
+      "province": "İstanbul",
+      "district": "Silivri",
+      "neighborhood": "Selimpaşa",
+      "transactionType": "SATILIK",
+      "price": null,
+      "netM2": null,
+      "grossM2": null,
+      "propertyType": "Villa",
+      "rooms": null,
+      "buildingAge": null,
+      "condition": null,
+      "legalStatus": null,
+      "earthquakeInfo": null,
+      "mortgageEligible": false,
+      "factIds": ["villa-offer", "villa-finance"],
+      "features": [
+        "Yayıncı beyanı: özel havuz ve bahçe",
+        "Yayıncı beyanı: bağımsız iki katlı villalar"
+      ],
+      "limitations": [
+        "Proje sunumu; bağımsız bölüm seçimi ve güncel satış mevcudiyeti teyit edilmedi.",
+        "Sayfadaki 0 m² ve NaN birim fiyat geçersiz; eksik veri olarak işlendi.",
+        "Fotoğraflar teslim tarihi veya iskân kanıtı değil."
+      ],
+      "sizeM2": null,
+      "classification": null,
+      "zoning": null,
+      "roadAccess": null,
+      "parcelNumber": null,
+      "sharedOwnership": null,
+      "agriculturalRestrictions": null,
+      "riskSignals": [],
+      "areaBasis": null
+    },
+    {
+      "id": "genc-300",
+      "sourceId": "genc-300",
+      "externalId": "1096",
+      "sourceUrl": "https://www.genccity.com/satilik-arsa/silivri-degirmenkoyde-300-metre-parsel-tamami-440-bin-tl/049048057054",
+      "publishedAt": "2026-01-22",
+      "observedAt": "2026-10-09T20:58:20.828679+00:00",
+      "title": "300 m² Değirmenköy arsa",
+      "category": "ARSA",
+      "province": "İstanbul",
+      "district": "Silivri",
+      "neighborhood": "Değirmenköy",
+      "transactionType": "SATILIK",
+      "price": "440000",
+      "netM2": null,
+      "grossM2": null,
+      "propertyType": null,
+      "rooms": null,
+      "buildingAge": null,
+      "condition": null,
+      "legalStatus": null,
+      "earthquakeInfo": null,
+      "mortgageEligible": null,
+      "factIds": ["genc-300-offer"],
+      "features": ["Yayıncı alan beyanı: 300 m²"],
+      "limitations": [
+        "İmar ve tapu durumu kaynakta “Bilgi Yok”.",
+        "İlan tarihi Ocak 2026; bugün sayfada mevcut olması satışın hâlâ açık olduğuna dair teyit değil."
+      ],
+      "sizeM2": "300",
+      "classification": null,
+      "zoning": null,
+      "roadAccess": null,
+      "parcelNumber": "344/91",
+      "sharedOwnership": null,
+      "agriculturalRestrictions": null,
+      "riskSignals": [],
+      "areaBasis": "PUBLISHER_PARCEL"
+    },
+    {
+      "id": "genc-farm250",
+      "sourceId": "genc-farm250",
+      "externalId": "1099",
+      "sourceUrl": "https://www.genccity.com/satilik-tarla/degirmenkoy-de-muhtesem-bir-parsel-asfalta-yakin-250-m%C2%B2-425-bin-tl/049048057057",
+      "publishedAt": "2026-01-29",
+      "observedAt": "2026-10-09T20:58:20.829388+00:00",
+      "title": "250 m² Değirmenköy hisseli tarla",
+      "category": "TARLA",
+      "province": "İstanbul",
+      "district": "Silivri",
+      "neighborhood": "Değirmenköy",
+      "transactionType": "SATILIK",
+      "price": "425000",
+      "netM2": null,
+      "grossM2": null,
+      "propertyType": null,
+      "rooms": null,
+      "buildingAge": null,
+      "condition": null,
+      "legalStatus": null,
+      "earthquakeInfo": null,
+      "mortgageEligible": null,
+      "factIds": ["genc-farm250-offer", "genc-farm250-risk"],
+      "features": [
+        "Yayıncı alan beyanı: 250 m²",
+        "Yayıncı tapu beyanı: Hisseli"
+      ],
+      "limitations": [
+        "İlan açıklaması “parselin tamamı” diyor; tapu alanı “Hisseli”. Bağımsız mülkiyet varsayılmadı.",
+        "“Asfalta yakın” yasal yol erişimi kanıtı değil."
+      ],
+      "sizeM2": "250",
+      "classification": "TARLA",
+      "zoning": null,
+      "roadAccess": null,
+      "parcelNumber": "420/20",
+      "sharedOwnership": "Hisseli",
+      "agriculturalRestrictions": null,
+      "riskSignals": [
+        "Hisseli tapu beyanı: kullanım sınırı ve pay satışı belirsiz."
+      ],
+      "areaBasis": "PUBLISHER_PARCEL"
+    },
+    {
+      "id": "genc-zoned250",
+      "sourceId": "genc-zoned250",
+      "externalId": "1090",
+      "sourceUrl": "https://www.genccity.com/satilik-arsa/silivri-degirmenkoyde-imarli-250-metre-arsa/049048057048",
+      "publishedAt": "2024-10-18",
+      "observedAt": "2026-10-09T20:58:20.830286+00:00",
+      "title": "250 m² Değirmenköy “imarlı” arsa beyanı",
+      "category": "ARSA",
+      "province": "İstanbul",
+      "district": "Silivri",
+      "neighborhood": "Değirmenköy",
+      "transactionType": "SATILIK",
+      "price": "900000",
+      "netM2": null,
+      "grossM2": null,
+      "propertyType": null,
+      "rooms": null,
+      "buildingAge": null,
+      "condition": null,
+      "legalStatus": null,
+      "earthquakeInfo": null,
+      "mortgageEligible": null,
+      "factIds": ["genc-zoned250-offer"],
+      "features": ["Yayıncı alan beyanı: 250 m²"],
+      "limitations": [
+        "Başlık “imarlı” diyor; imar alanı “Bilgi Yok”. Resmî imar hakkı doğrulanmadı.",
+        "Alan detay tablosunda yok; 250 m² başlık ve açıklama beyanından alındı.",
+        "İlan tarihi Ekim 2024; güncel fiyat ve satış mevcudiyeti ayrıca teyit edilmedi."
+      ],
+      "sizeM2": "250",
+      "classification": null,
+      "zoning": null,
+      "roadAccess": null,
+      "parcelNumber": "396/14",
+      "sharedOwnership": null,
+      "agriculturalRestrictions": null,
+      "riskSignals": [],
+      "areaBasis": "PUBLISHER_PARCEL"
+    },
+    {
+      "id": "akgun-3653",
+      "sourceId": "akgun-3653",
+      "externalId": "1021",
+      "sourceUrl": "https://www.gayrimenkulakgun.com/tr-TR/satilik-yatirimlik-arsa/silivri-degirmenkoyde-imara-ilk-acilacak-bolgede-3653-m2/049048050049",
+      "publishedAt": "2026-01-26",
+      "observedAt": "2026-10-09T20:58:20.830890+00:00",
+      "title": "3653 m² Değirmenköy Bağlar bölgesi arazi",
+      "category": "ARSA",
+      "province": "İstanbul",
+      "district": "Silivri",
+      "neighborhood": "Değirmenköy",
+      "transactionType": "SATILIK",
+      "price": "12500000",
+      "netM2": null,
+      "grossM2": null,
+      "propertyType": null,
+      "rooms": null,
+      "buildingAge": null,
+      "condition": null,
+      "legalStatus": null,
+      "earthquakeInfo": null,
+      "mortgageEligible": null,
+      "factIds": ["akgun-3653-offer", "akgun-3653-risk"],
+      "features": [
+        "Yayıncı alan beyanı: 3653 m²",
+        "Yayıncı tapu beyanı: Müstakil"
+      ],
+      "limitations": [
+        "Kategori “yatırımlık arsa”, açıklama “bağ yeri”; hukuki arazi sınıfı doğrulanmadı.",
+        "Ada/parsel alanlarında numara yerine açıklama var; kimlik olarak kullanılmadı.",
+        "İlan No 1021, açıklamada 10694: kanonik kaynak URL’si kimlik kanıtı olarak korundu."
+      ],
+      "sizeM2": "3653",
+      "classification": null,
+      "zoning": null,
+      "roadAccess": null,
+      "parcelNumber": null,
+      "sharedOwnership": "Müstakil",
+      "agriculturalRestrictions": null,
+      "riskSignals": [
+        "“İlk imara açılacak” ve “prefabrik ev yapılabilir” iddiaları için resmî belge yok."
+      ],
+      "areaBasis": "PUBLISHER_PARCEL"
+    }
+  ],
+  "neighborhoods": [
+    {
+      "name": "Selimpaşa",
+      "priceM2": null,
+      "monthlyRent": null,
+      "evidenceIds": ["villa-offer"],
+      "finding": "Bir villa proje sunumu bulundu. Fiyat ve alan yok; mahalle ortalaması veya kira getirisi çıkarılamaz."
+    },
+    {
+      "name": "Değirmenköy",
+      "priceM2": null,
+      "monthlyRent": null,
+      "evidenceIds": [
+        "genc-300-offer",
+        "genc-farm250-offer",
+        "genc-zoned250-offer",
+        "akgun-3653-offer"
+      ],
+      "finding": "Dört fiyatlı kaynak adayı var. Hisse, imar ve arazi türleri eşleşmiyor; mahalle ortalaması veya ortak emsal medyanı hesaplanmadı."
+    },
+    {
+      "name": "Mimarsinan",
+      "priceM2": null,
+      "monthlyRent": null,
+      "evidenceIds": ["mimarsinan-plan"],
+      "finding": "Askıdaki 18. madde uygulaması yalnızca sayılan parseller için kontrol edilmeli; tüm mahalleye imar/değer artışı atfedilemez."
+    },
+    {
+      "name": "Cumhuriyet",
+      "priceM2": null,
+      "monthlyRent": null,
+      "evidenceIds": ["cumhuriyet-plan"],
+      "finding": "2. Etapta mahkeme iptali sonrası uygulama duyurusu var. Aday parselin uygulama içinde olup olmadığı bilinmiyor; hukuk ve likidite riski ayrıca incelenmeli."
+    },
+    {
+      "name": "Diğer Silivri mahalleleri",
+      "priceM2": null,
+      "monthlyRent": null,
+      "evidenceIds": [],
+      "finding": "Bu araştırmada doğrulanmış mahalle düzeyinde güncel satış/kira örneklemi yok. İstanbul endeksi mahalle fiyatı yerine kullanılmadı."
+    }
+  ],
+  "strategies": [
+    {
+      "category": "EV",
+      "name": "Konut: belgeli ve kiralanabilir bağımsız bölüm",
+      "upside": "Yerel kira talebi ve benzer net/brüt alanlı fiyat örnekleri doğrulanırsa kira + değer koruma tezi incelenebilir.",
+      "downside": "Nominal artış tek başına reel kazanç değil. Yapı dayanımı, iskân, aidat, boşluk süresi ve finansman maliyeti sonuçları değiştirebilir.",
+      "evidenceIds": [
+        "housing-istanbul",
+        "cpi-august",
+        "rent-istanbul",
+        "policy-rate",
+        "seismic-framework"
+      ],
+      "missing": [
+        "Mahalle net/brüt m² örneklemi",
+        "Gerçek TL kira, boşluk ve giderler",
+        "Bina/tapu/iskân belgeleri"
+      ],
+      "liquidity": "Bu pilotta gerçekleşmiş satış süresi yok; krediye uygunluk ve alıcı havuzu üzerinden yalnızca koşullu değerlendirme."
+    },
+    {
+      "category": "ARSA",
+      "name": "Arsa: mevcut imar hakkı ve müstakil tapu",
+      "upside": "Mevcut resmî yapılaşma hakkı, yol ve altyapı belgelenirse benzer imarlı parsellerle değer analizi yapılabilir.",
+      "downside": "Demiryolu duyurusu tek başına imar hakkı veya fiyat artışı sağlamaz. Askı/iptal süreçleri ve hisseler çıkışı zorlaştırabilir.",
+      "evidenceIds": [
+        "mimarsinan-plan",
+        "cumhuriyet-plan",
+        "rail-stage",
+        "policy-rate"
+      ],
+      "missing": [
+        "Ada/parsel, güncel imar belgesi",
+        "Hisse, yol, altyapı ve takyidat",
+        "Aynı imar hakkına sahip güncel emsaller"
+      ],
+      "liquidity": "Konut ile doğrudan karşılaştırılmadı; parsel bazlı alıcı ve işlem süresi verisi yok."
+    },
+    {
+      "category": "TARLA",
+      "name": "Tarla: mevcut tarımsal kullanım",
+      "upside": "Tarımsal kullanım ve erişim uygunsa gelir/kullanım tezi araştırılabilir; gelecekte imara açılma varsayımı yapılmaz.",
+      "downside": "Tarımsal kısıtlar, su/yol erişimi, hisseli tapu ve uzun satış süresi riski araştırılmalı. Üretim geliri ölçülmedi.",
+      "evidenceIds": ["rail-stage", "policy-rate"],
+      "missing": [
+        "Tarımsal kullanım ve kısıt belgeleri",
+        "Su/yol, hisse ve parsel bilgisi",
+        "Ürün verimi, gerçek gelir/gider, tarla emsalleri"
+      ],
+      "liquidity": "İşlem sayısı ve satış süresi bilinmiyor; kesin likidite sıralaması üretilemez."
+    }
+  ],
+  "excludedSources": [
+    {
+      "name": "PropertyQuestTurkey",
+      "reason": "Kullanım şartları önizlemede örnek proje/piyasa verileri bulunduğunu söylüyor; fiyatları ve ilanları gerçek kabul edilmedi."
+    },
+    {
+      "name": "RE/MAX",
+      "reason": "Başka platformda kullanım/toplu kopyalama izni doğrulanmadı; ilanlar içe aktarılmadı."
+    },
+    {
+      "name": "VakıfBank",
+      "reason": "Güvenlik kodu ekranı görüldü; işlem durduruldu."
+    },
+    {
+      "name": "KiraMetre",
+      "reason": "Kullanım şartları izinsiz kopyalamayı kısıtlıyor; veri kullanım lisansı ve temel örneklem bağımsız doğrulanmadı. Sayfadaki kira/amortisman sonuçları ilana getiri veya fırsat kanıtı yapılmadı."
+    },
+    {
+      "name": "Silivri Gündem kira yazısı",
+      "reason": "Aralık 2025 tarihli, ölçüm yöntemi ve adı belirtilen uzman kanıtı yok; güncel kira ve talep ölçümü olarak kullanılmadı."
+    }
+  ]
+}

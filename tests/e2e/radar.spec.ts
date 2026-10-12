@@ -1,12 +1,20 @@
 import { expect, test } from "@playwright/test";
+import { resetE2eFixtures } from "./reset";
+test.beforeAll(resetE2eFixtures);
 test("dashboard, dört kategori ve il/ilçe/fiyat filtreleri", async ({
   page,
 }) => {
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: "Fırsatlar, radarında." }),
+    page.getByRole("heading", { name: "Piyasayı izle. Kanıtla karar ver." }),
   ).toBeVisible();
-  await expect(page.locator(".stat-card").first()).toContainText("36");
+  await expect(
+    page.getByRole("region", { name: "İlk kurulum durumu" }),
+  ).toBeVisible();
+  await expect(page.getByText("36 demo kayıt", { exact: false })).toBeVisible();
+  await page
+    .getByText("Veri araçları ve önceki işlevler", { exact: true })
+    .click();
   await page.getByRole("link", { name: "Fırsatlar", exact: true }).click();
   for (const [category, title] of [
     ["EV", "daire"],
@@ -62,7 +70,7 @@ test("takip listesi sayfa yenilendikten sonra kalır", async ({ page }) => {
     name: /Kadıköy 2\+1 daire 1 takibe al/,
   });
   await button.click();
-  await page.getByRole("link", { name: "Takip Listem", exact: true }).click();
+  await page.goto("/takip-listem/eski");
   await expect(page.getByRole("article")).toHaveCount(1);
   await page.reload();
   await expect(page.getByRole("article")).toHaveCount(1);
@@ -74,7 +82,7 @@ test("takip listesi sayfa yenilendikten sonra kalır", async ({ page }) => {
 test("CSV içe aktarımı, aynı dosyada mükerrer önleme ve hatalı satır", async ({
   page,
 }) => {
-  const csv = `title,category,province,district,price,isDemo\n[DEMO] E2E CSV ilanı,ARSA,Yalova,Merkez,775000.25,true`;
+  const csv = `title,category,province,district,price,isDemo,externalId\n[DEMO] E2E CSV ilanı,ARSA,Yalova,Merkez,775000.25,true,e2e-csv-42`;
   await page.goto("/veri-kaynaklari");
   await page
     .getByRole("button", { name: "İçe aktar", exact: true })
@@ -147,6 +155,9 @@ test("bildirim tercihleri, arama profili ve günlük iş idempotency", async ({
   await expect(page.getByRole("status").first()).toContainText(
     "zaten tamamlanmış",
   );
+  await page
+    .getByText("Veri araçları ve önceki işlevler", { exact: true })
+    .click();
   await page.getByRole("link", { name: "Bildirimler", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Günlük iş kayıtları" }),
@@ -161,6 +172,7 @@ test("tüm sayfalar, koyu tema ve mobil görünüm çalışır", async ({ page }
   for (const path of [
     "/",
     "/firsatlar",
+    "/yeni-ilanlar",
     "/fiyat-gecmisi",
     "/takip-listem",
     "/veri-kaynaklari",

@@ -1,0 +1,665 @@
+{
+  "schemaVersion": 1,
+  "scope": "Public source/documentation research; no listing crawler or account automation",
+  "summary": {
+    "candidateServicesAndCatalogs": 19,
+    "openSourceCandidates": 10,
+    "totalCandidates": 29,
+    "httpAttempts": 66,
+    "uniqueUrls": 65,
+    "origin200": 40,
+    "origin404": 4,
+    "proxyDenied": 22,
+    "publicDataQueryAttempts": 5,
+    "publicDataQueriesReachedProvider": 0,
+    "downloadedCatalogPackages": 1,
+    "usableActiveListingResponses": 0,
+    "importedRealListings": 0,
+    "realComparableAnalyses": 0,
+    "sahibindenRequests": 0,
+    "state": "BLOCKED_NOT_COMPLETE"
+  },
+  "requests": [
+    {
+      "url": "https://api.github.com/repos/eminfidan/arabamcom-clone-app/readme",
+      "queriedAt": "2026-10-08T22:56:58.837546+00:00",
+      "name": "Arabam-clone-docs",
+      "status": 200
+    },
+    {
+      "url": "https://api.github.com/repos/fatihberber20/turkey_car_price_randomforest/license",
+      "queriedAt": "2026-10-08T22:56:59.325633+00:00",
+      "name": "Car-ML-license",
+      "status": 200
+    },
+    {
+      "url": "https://api.github.com/repos/Abmn0/emlak_dataset/readme",
+      "queriedAt": "2026-10-08T22:57:55.924948+00:00",
+      "name": "Emlak-dataset-docs",
+      "status": 404
+    },
+    {
+      "url": "https://api.github.com/repos/khaled-t7s/housing-price-classification-id3/license",
+      "queriedAt": "2026-10-08T22:56:59.540388+00:00",
+      "name": "Housing-ML-license",
+      "status": 200
+    },
+    {
+      "url": "https://api.github.com/repos/MarketcheckHub/marketcheck-mcp-client/readme",
+      "queriedAt": "2026-10-08T22:56:57.594893+00:00",
+      "name": "Marketcheck-client",
+      "status": 404
+    },
+    {
+      "url": "https://registry.npmjs.org/@marketcheck%2fmcp-client",
+      "queriedAt": "2026-10-08T22:56:57.595550+00:00",
+      "name": "Marketcheck-package",
+      "status": 200
+    },
+    {
+      "url": "https://api.github.com/repos/MarketcheckCarsInc/marketcheck-api-sdk-php/readme",
+      "queriedAt": "2026-10-08T22:57:54.780417+00:00",
+      "name": "Marketcheck-php-docs",
+      "status": 200
+    },
+    {
+      "url": "https://api.github.com/repos/Kubrakara/OtoApi/contents/backend/app/main.py",
+      "queriedAt": "2026-10-08T22:57:55.432416+00:00",
+      "name": "OtoApi-code",
+      "status": 200
+    },
+    {
+      "url": "https://api.github.com/repos/Kubrakara/OtoApi/git/trees/main?recursive=1",
+      "queriedAt": "2026-10-08T22:56:59.126223+00:00",
+      "name": "OtoApi-tree",
+      "status": 200
+    },
+    {
+      "url": "https://api.github.com/repos/MeterApp/vehicle-db/readme",
+      "queriedAt": "2026-10-08T22:56:57.595973+00:00",
+      "name": "Vehicle-catalog-docs",
+      "status": 200
+    },
+    {
+      "url": "https://registry.npmjs.org/@meterapp/vehicle-db/-/vehicle-db-2.14.0.tgz",
+      "queriedAt": "2026-10-08T22:58:28.318731+00:00",
+      "name": "Vehicle-catalog-download",
+      "status": 200,
+      "integrityVerified": true,
+      "downloadedBytes": 2265265,
+      "packageLicense": "ISC",
+      "packageVersion": "2.14.0",
+      "dataKind": "vehicle_catalog_not_listings"
+    },
+    {
+      "url": "https://api.github.com/repos/MeterApp/vehicle-db/contents",
+      "queriedAt": "2026-10-08T22:57:54.779998+00:00",
+      "name": "Vehicle-catalog-files",
+      "status": 200
+    },
+    {
+      "url": "https://api.github.com/repos/MeterApp/vehicle-db/license",
+      "queriedAt": "2026-10-08T22:56:58.292328+00:00",
+      "name": "Vehicle-catalog-license",
+      "status": 404
+    },
+    {
+      "url": "https://registry.npmjs.org/@meterapp%2fvehicle-db",
+      "queriedAt": "2026-10-08T22:57:54.779403+00:00",
+      "name": "Vehicle-catalog-package",
+      "status": 200
+    },
+    {
+      "url": "https://api.github.com/search/repositories?q=arabam+api&per_page=5",
+      "queriedAt": "2026-10-08T22:53:47.444480+00:00",
+      "query": "arabam api",
+      "status": 200
+    },
+    {
+      "url": "https://api.github.com/search/repositories?q=emlak+dataset&per_page=3",
+      "queriedAt": "2026-10-08T22:56:20.964261+00:00",
+      "query": "emlak dataset",
+      "status": 200
+    },
+    {
+      "url": "https://api.github.com/search/repositories?q=emlakjet+api&per_page=5",
+      "queriedAt": "2026-10-08T22:53:47.444030+00:00",
+      "query": "emlakjet api",
+      "status": 200
+    },
+    {
+      "url": "https://api.github.com/search/repositories?q=hepsiemlak+api&per_page=5",
+      "queriedAt": "2026-10-08T22:53:51.104798+00:00",
+      "query": "hepsiemlak api",
+      "status": 200
+    },
+    {
+      "url": "https://api.github.com/search/repositories?q=marketcheck+api+sdk&per_page=3",
+      "queriedAt": "2026-10-08T22:56:19.515706+00:00",
+      "query": "marketcheck api sdk",
+      "status": 200
+    },
+    {
+      "url": "https://api.github.com/search/repositories?q=nada+values+api&per_page=3",
+      "queriedAt": "2026-10-08T22:56:20.691282+00:00",
+      "query": "nada values api",
+      "status": 200
+    },
+    {
+      "url": "https://api.github.com/search/repositories?q=otoapi&per_page=5",
+      "queriedAt": "2026-10-08T22:53:48.743346+00:00",
+      "query": "otoapi",
+      "status": 200
+    },
+    {
+      "url": "https://api.github.com/search/repositories?q=reidin+api&per_page=3",
+      "queriedAt": "2026-10-08T22:56:19.516329+00:00",
+      "query": "reidin api",
+      "status": 200
+    },
+    {
+      "url": "https://api.github.com/search/repositories?q=reidin&per_page=5",
+      "queriedAt": "2026-10-08T22:53:48.554653+00:00",
+      "query": "reidin",
+      "status": 200
+    },
+    {
+      "url": "https://api.github.com/search/repositories?q=silivri+dataset&per_page=5",
+      "queriedAt": "2026-10-08T22:53:49.885381+00:00",
+      "query": "silivri dataset",
+      "status": 200
+    },
+    {
+      "url": "https://api.github.com/search/repositories?q=turkey+car+dataset&per_page=5",
+      "queriedAt": "2026-10-08T22:53:50.259213+00:00",
+      "query": "turkey car dataset",
+      "status": 200
+    },
+    {
+      "url": "https://api.github.com/search/repositories?q=turkey+housing+dataset&per_page=5",
+      "queriedAt": "2026-10-08T22:53:50.897811+00:00",
+      "query": "turkey housing dataset",
+      "status": 200
+    },
+    {
+      "url": "https://api.github.com/search/repositories?q=turkish+car+api&per_page=3",
+      "queriedAt": "2026-10-08T22:56:22.053948+00:00",
+      "query": "turkish car api",
+      "status": 200
+    },
+    {
+      "url": "https://api.github.com/search/repositories?q=turkish+real+estate+data&per_page=3",
+      "queriedAt": "2026-10-08T22:56:21.640913+00:00",
+      "query": "turkish real estate data",
+      "status": 200
+    },
+    {
+      "url": "https://registry.npmjs.org/-/v1/search?text=arabam&size=5",
+      "queriedAt": "2026-10-08T22:55:19.667582+00:00",
+      "query": "arabam",
+      "status": 200
+    },
+    {
+      "url": "https://registry.npmjs.org/-/v1/search?text=emlakjet&size=5",
+      "queriedAt": "2026-10-08T22:55:19.667122+00:00",
+      "query": "emlakjet",
+      "status": 200
+    },
+    {
+      "url": "https://registry.npmjs.org/-/v1/search?text=marketcheck+api&size=5",
+      "queriedAt": "2026-10-08T22:55:19.666627+00:00",
+      "query": "marketcheck api",
+      "status": 200
+    },
+    {
+      "url": "https://registry.npmjs.org/-/v1/search?text=nada+vehicle+values&size=5",
+      "queriedAt": "2026-10-08T22:55:20.487756+00:00",
+      "query": "nada vehicle values",
+      "status": 200
+    },
+    {
+      "url": "https://registry.npmjs.org/-/v1/search?text=otoapi&size=5",
+      "queriedAt": "2026-10-08T22:55:20.389585+00:00",
+      "query": "otoapi",
+      "status": 200
+    },
+    {
+      "url": "https://registry.npmjs.org/-/v1/search?text=real+estate+listings+api&size=5",
+      "queriedAt": "2026-10-08T22:55:21.161439+00:00",
+      "query": "real estate listings api",
+      "status": 200
+    },
+    {
+      "url": "https://registry.npmjs.org/-/v1/search?text=reidin&size=5",
+      "queriedAt": "2026-10-08T22:55:20.442326+00:00",
+      "query": "reidin",
+      "status": 200
+    },
+    {
+      "url": "https://registry.npmjs.org/-/v1/search?text=turkey+car+market&size=5",
+      "queriedAt": "2026-10-08T22:55:21.125384+00:00",
+      "query": "turkey car market",
+      "status": 200
+    },
+    {
+      "url": "https://www.emlakjet.com/",
+      "queriedAt": "2026-10-08T22:52:35.335269+00:00",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "failureLayer": "ENVIRONMENT_PROXY_CONNECT",
+      "providerHttpStatus": null
+    },
+    {
+      "url": "https://www.arabam.com/",
+      "queriedAt": "2026-10-08T22:52:35.335861+00:00",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "failureLayer": "ENVIRONMENT_PROXY_CONNECT",
+      "providerHttpStatus": null
+    },
+    {
+      "url": "https://www.reidin.com/",
+      "queriedAt": "2026-10-08T22:52:35.336261+00:00",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "failureLayer": "ENVIRONMENT_PROXY_CONNECT",
+      "providerHttpStatus": null
+    },
+    {
+      "url": "https://developer.nada.com/",
+      "queriedAt": "2026-10-08T22:52:35.336630+00:00",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "failureLayer": "ENVIRONMENT_PROXY_CONNECT",
+      "providerHttpStatus": null
+    },
+    {
+      "url": "https://data.ibb.gov.tr/api/3/action/package_search?q=emlak&rows=3",
+      "queriedAt": "2026-10-08T22:52:35.337012+00:00",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "failureLayer": "ENVIRONMENT_PROXY_CONNECT",
+      "providerHttpStatus": null
+    },
+    {
+      "url": "https://www.bing.com/search?q=Turkey+real+estate+listings+API+license",
+      "queriedAt": "2026-10-08T22:52:35.337280+00:00",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "failureLayer": "ENVIRONMENT_PROXY_CONNECT",
+      "providerHttpStatus": null
+    },
+    {
+      "url": "https://developers.attomdata.com/",
+      "queriedAt": "2026-10-08T22:54:54.990317+00:00",
+      "source": "ATTOM-docs",
+      "purpose": "public documentation or advertised open metadata; no listing crawler",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "failureLayer": "ENVIRONMENT_PROXY_CONNECT",
+      "providerHttpStatus": null
+    },
+    {
+      "url": "https://www.emlakjet.com/",
+      "queriedAt": "2026-10-08T22:54:54.991816+00:00",
+      "source": "Emlakjet-network-recheck",
+      "purpose": "public documentation or advertised open metadata; no listing crawler",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "failureLayer": "ENVIRONMENT_PROXY_CONNECT",
+      "providerHttpStatus": null
+    },
+    {
+      "url": "https://www.endeksa.com/",
+      "queriedAt": "2026-10-08T22:54:54.978142+00:00",
+      "source": "Endeksa",
+      "purpose": "public documentation or advertised open metadata; no listing crawler",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "failureLayer": "ENVIRONMENT_PROXY_CONNECT",
+      "providerHttpStatus": null
+    },
+    {
+      "url": "https://www.fueleconomy.gov/ws/rest/vehicle/menu/year",
+      "queriedAt": "2026-10-08T22:54:54.976246+00:00",
+      "source": "FuelEconomy",
+      "purpose": "public documentation or advertised open metadata; no listing crawler",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "failureLayer": "ENVIRONMENT_PROXY_CONNECT",
+      "providerHttpStatus": null
+    },
+    {
+      "url": "https://www.hepsiemlak.com/",
+      "queriedAt": "2026-10-08T22:54:54.956449+00:00",
+      "source": "Hepsiemlak",
+      "purpose": "public documentation or advertised open metadata; no listing crawler",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "failureLayer": "ENVIRONMENT_PROXY_CONNECT",
+      "providerHttpStatus": null
+    },
+    {
+      "url": "https://huggingface.co/api/datasets?search=turkey%20car&limit=3",
+      "queriedAt": "2026-10-08T22:54:54.957902+00:00",
+      "source": "Hugging-Face",
+      "purpose": "public documentation or advertised open metadata; no listing crawler",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "failureLayer": "ENVIRONMENT_PROXY_CONNECT",
+      "providerHttpStatus": null
+    },
+    {
+      "url": "https://data.ibb.istanbul/",
+      "queriedAt": "2026-10-08T22:54:54.970427+00:00",
+      "source": "IBB-alternatif-portal",
+      "purpose": "public documentation or advertised open metadata; no listing crawler",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "failureLayer": "ENVIRONMENT_PROXY_CONNECT",
+      "providerHttpStatus": null
+    },
+    {
+      "url": "https://www.indicata.com/",
+      "queriedAt": "2026-10-08T22:54:54.979669+00:00",
+      "source": "Indicata",
+      "purpose": "public documentation or advertised open metadata; no listing crawler",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "failureLayer": "ENVIRONMENT_PROXY_CONNECT",
+      "providerHttpStatus": null
+    },
+    {
+      "url": "https://www.jdpower.com/business/automotive/used-vehicle-values",
+      "queriedAt": "2026-10-08T22:54:54.957250+00:00",
+      "source": "JD-Power-NADAS",
+      "purpose": "public documentation or advertised open metadata; no listing crawler",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "failureLayer": "ENVIRONMENT_PROXY_CONNECT",
+      "providerHttpStatus": null
+    },
+    {
+      "url": "https://www.kaggle.com/api/v1/datasets/list?search=turkey%20car%20market",
+      "queriedAt": "2026-10-08T22:54:54.957600+00:00",
+      "source": "Kaggle",
+      "purpose": "public documentation or advertised open metadata; no listing crawler",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "failureLayer": "ENVIRONMENT_PROXY_CONNECT",
+      "providerHttpStatus": null
+    },
+    {
+      "url": "https://docs.marketcheck.com/",
+      "queriedAt": "2026-10-08T22:54:54.981575+00:00",
+      "source": "Marketcheck-docs",
+      "purpose": "public documentation or advertised open metadata; no listing crawler",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "failureLayer": "ENVIRONMENT_PROXY_CONNECT",
+      "providerHttpStatus": null
+    },
+    {
+      "url": "https://vpic.nhtsa.dot.gov/api/vehicles/GetVehicleTypesForMake/toyota?format=json",
+      "queriedAt": "2026-10-08T22:54:54.974642+00:00",
+      "source": "NHTSA-vPIC",
+      "purpose": "public documentation or advertised open metadata; no listing crawler",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "failureLayer": "ENVIRONMENT_PROXY_CONNECT",
+      "providerHttpStatus": null
+    },
+    {
+      "url": "https://otoapi.com/",
+      "queriedAt": "2026-10-08T22:54:54.956919+00:00",
+      "source": "OtoApi-aday",
+      "purpose": "public documentation or advertised open metadata; no listing crawler",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "failureLayer": "ENVIRONMENT_PROXY_CONNECT",
+      "providerHttpStatus": null
+    },
+    {
+      "url": "https://rapidapi.com/search/arabam",
+      "queriedAt": "2026-10-08T22:54:54.988275+00:00",
+      "source": "RapidAPI",
+      "purpose": "public documentation or advertised open metadata; no listing crawler",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "failureLayer": "ENVIRONMENT_PROXY_CONNECT",
+      "providerHttpStatus": null
+    },
+    {
+      "url": "https://evds2.tcmb.gov.tr/",
+      "queriedAt": "2026-10-08T22:54:54.973446+00:00",
+      "source": "TCMB-EVDS",
+      "purpose": "public documentation or advertised open metadata; no listing crawler",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "failureLayer": "ENVIRONMENT_PROXY_CONNECT",
+      "providerHttpStatus": null
+    },
+    {
+      "url": "https://data.tuik.gov.tr/",
+      "queriedAt": "2026-10-08T22:54:54.971945+00:00",
+      "source": "TUIK",
+      "purpose": "public documentation or advertised open metadata; no listing crawler",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "failureLayer": "ENVIRONMENT_PROXY_CONNECT",
+      "providerHttpStatus": null
+    },
+    {
+      "url": "https://api.github.com/repos/Ademkck/Turkey-Car-Market---Prediction-Prices-and-EDA/readme",
+      "queriedAt": "2026-10-08T22:54:57.890928+00:00",
+      "status": 200,
+      "contentType": "application/vnd.github.raw+json; charset=utf-8"
+    },
+    {
+      "url": "https://api.github.com/repos/Kubrakara/OtoApi/readme",
+      "queriedAt": "2026-10-08T22:54:56.587128+00:00",
+      "status": 404
+    },
+    {
+      "url": "https://api.github.com/repos/fatihberber20/turkey_car_price_randomforest/readme",
+      "queriedAt": "2026-10-08T22:54:56.649252+00:00",
+      "status": 200,
+      "contentType": "application/vnd.github.raw+json; charset=utf-8"
+    },
+    {
+      "url": "https://api.github.com/repos/gencelo/jetagent/readme",
+      "queriedAt": "2026-10-08T22:54:55.134099+00:00",
+      "status": 200,
+      "contentType": "application/vnd.github.raw+json; charset=utf-8"
+    },
+    {
+      "url": "https://api.github.com/repos/gmaxsoft/PHP_OTOAPI/readme",
+      "queriedAt": "2026-10-08T22:54:55.135542+00:00",
+      "status": 200,
+      "contentType": "application/vnd.github.raw+json; charset=utf-8"
+    },
+    {
+      "url": "https://api.github.com/repos/hakantulgac/arabam_api/readme",
+      "queriedAt": "2026-10-08T22:54:55.134986+00:00",
+      "status": 200,
+      "contentType": "application/vnd.github.raw+json; charset=utf-8"
+    },
+    {
+      "url": "https://api.github.com/repos/khaled-t7s/housing-price-classification-id3/readme",
+      "queriedAt": "2026-10-08T22:54:57.343316+00:00",
+      "status": 200,
+      "contentType": "application/vnd.github.raw+json; charset=utf-8"
+    },
+    {
+      "url": "https://api.github.com/repos/yigitguleryuz/2020-Turkey-Car-Prices-Prediction/readme",
+      "queriedAt": "2026-10-08T22:54:56.622915+00:00",
+      "status": 200,
+      "contentType": "application/vnd.github.raw+json; charset=utf-8"
+    }
+  ],
+  "catalogSample": {
+    "sourceDownload": "https://registry.npmjs.org/@meterapp/vehicle-db/-/vehicle-db-2.14.0.tgz",
+    "upstreamSourceDeclaration": {
+      "source_id": "nhtsa-vpic",
+      "source_name": "NHTSA Vehicle Product Information Catalog",
+      "source_url": "https://vpic.nhtsa.dot.gov/api/",
+      "license": "U.S. government public data",
+      "region": "United States",
+      "description": "Model-year catalog from the National Highway Traffic Safety Administration vPIC API.",
+      "retrieved_at": "2026-09-22",
+      "vehicle_type_ids": [
+        2,
+        3,
+        7
+      ],
+      "year_from": 1990,
+      "year_to": 2027,
+      "make_count": 396,
+      "model_count": 52654
+    },
+    "dataKind": "VEHICLE_CATALOG_NOT_ACTIVE_LISTINGS",
+    "hasListingPrice": false,
+    "hasListingLocation": false,
+    "hasListingUrl": false,
+    "pilotListingImports": 0,
+    "sampleRows": [
+      {
+        "year": 2024,
+        "make": "TOYOTA",
+        "model": "4Runner",
+        "vehicleType": "Multipurpose Passenger Vehicle (MPV)",
+        "upstreamSourceId": "nhtsa-vpic",
+        "price": null,
+        "listingLocation": null,
+        "listingUrl": null
+      },
+      {
+        "year": 2024,
+        "make": "TOYOTA",
+        "model": "C-HR",
+        "vehicleType": "Passenger Car",
+        "upstreamSourceId": "nhtsa-vpic",
+        "price": null,
+        "listingLocation": null,
+        "listingUrl": null
+      },
+      {
+        "year": 2024,
+        "make": "TOYOTA",
+        "model": "Camry",
+        "vehicleType": "Passenger Car",
+        "upstreamSourceId": "nhtsa-vpic",
+        "price": null,
+        "listingLocation": null,
+        "listingUrl": null
+      },
+      {
+        "year": 2024,
+        "make": "TOYOTA",
+        "model": "Celica",
+        "vehicleType": "Passenger Car",
+        "upstreamSourceId": "nhtsa-vpic",
+        "price": null,
+        "listingLocation": null,
+        "listingUrl": null
+      },
+      {
+        "year": 2024,
+        "make": "TOYOTA",
+        "model": "Corolla",
+        "vehicleType": "Passenger Car",
+        "upstreamSourceId": "nhtsa-vpic",
+        "price": null,
+        "listingLocation": null,
+        "listingUrl": null
+      }
+    ],
+    "queriedAt": "2026-10-08T22:58:28.318731+00:00",
+    "sourceLicenseStatus": "package ISC verified in registry metadata; upstream terms are package declarations, original website unreachable",
+    "packageVersion": "2.14.0",
+    "expectedIntegrity": "sha512-AeXIJQVqJ6Y+FVZYLgJjP/q/xN92Ove+lh9ldjxV36DKDuiZ99tzEb2EUTnv7EzlTmkH3pA2x/NZwOHKmWlc5w==",
+    "packageLicense": "ISC"
+  },
+  "runtimeValidation": {
+    "checkedAt": "2026-10-08T23:00:18.631Z",
+    "listingCounts": [
+      {
+        "_count": 36,
+        "isDemo": true
+      }
+    ],
+    "importedRealListings": 0,
+    "realComparableAnalyses": 0,
+    "realEmailReceipts": 0,
+    "gmailStatus": "DISCONNECTED",
+    "externalChannelsEnabled": false,
+    "dailyRun": {
+      "id": "manual:m22:2026-10-09:770f0193d0076f3c",
+      "status": "COMPLETED",
+      "processed": 36,
+      "sourceFailures": 0,
+      "sent": 0
+    },
+    "repeatedDailyRun": {
+      "id": "manual:m22:2026-10-09:770f0193d0076f3c",
+      "status": "ALREADY_COMPLETED",
+      "processed": 0
+    },
+    "reportTruthful": true,
+    "pilots": [
+      {
+        "name": "Silivri Gayrimenkul Fırsatları",
+        "totalReal": 0,
+        "opportunities": 0,
+        "funnel": {
+          "gmailNotifications": 0,
+          "localEmlSamples": 0,
+          "parsedListings": 0,
+          "userCompletedListings": 0,
+          "pendingListings": 0,
+          "savedReal": 0,
+          "unparsedNotifications": 0,
+          "matchedListings": 0,
+          "insufficientListings": 0,
+          "supportedOpportunities": 0,
+          "analysisPending": 0,
+          "missingData": 0
+        },
+        "lastSuccessfulIngestion": null
+      },
+      {
+        "name": "Marmara SUV Fırsatları",
+        "totalReal": 0,
+        "opportunities": 0,
+        "funnel": {
+          "gmailNotifications": 0,
+          "localEmlSamples": 0,
+          "parsedListings": 0,
+          "userCompletedListings": 0,
+          "pendingListings": 0,
+          "savedReal": 0,
+          "unparsedNotifications": 0,
+          "matchedListings": 0,
+          "insufficientListings": 0,
+          "supportedOpportunities": 0,
+          "analysisPending": 0,
+          "missingData": 0
+        },
+        "lastSuccessfulIngestion": null
+      }
+    ]
+  },
+  "validation": {
+    "checkedAt": "2026-10-08T23:04:07.459Z",
+    "unitTestsPassed": 72,
+    "postgresIntegrationTestsPassed": 41,
+    "evidenceAssertionsPassed": true,
+    "localBrowserChecks": {
+      "bothPilotCardsShowNoRealData": true,
+      "newListingsShowNoRealData": true,
+      "externalNavigationBlocked": true,
+      "personalBrowserSessionUsed": false
+    },
+    "liveProviderCertification": false
+  }
+}

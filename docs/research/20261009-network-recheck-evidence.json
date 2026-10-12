@@ -1,0 +1,1257 @@
+{
+  "checkedAt": "2026-10-08T23:30:29.578918+00:00",
+  "timezone": "Europe/Istanbul",
+  "branch": "feature/m2-email-discovery",
+  "baselineCommit": "162815368ebc185e5e10cef459419718e59a19a8",
+  "scope": "Current sale listings in Silivri; SUV/Crossover listings in Marmara",
+  "summary": {
+    "storedHttpObservations": 82,
+    "uniqueUrls": 80,
+    "originStatuses": {
+      "200": 61,
+      "301": 3,
+      "302": 2,
+      "307": 1
+    },
+    "connectDenials": 15,
+    "usableCurrentAuthorizedListings": 0,
+    "realImportedListings": 0,
+    "realAssessedListings": 0,
+    "realComparableLinks": 0,
+    "demoListings": 36
+  },
+  "limitations": [
+    "Results are persisted observations, not a count of every tool invocation: one diagnostic batch was repeated and its 17 files replaced.",
+    "HTTP 200 for pages/catalogs/metadata is not a successful listing query.",
+    "No Sahibinden request, scraping invocation, account login, payment or external message.",
+    "Current sources could not be authenticated or licensed; no production adapter was fabricated."
+  ],
+  "http": [
+    {
+      "url": "https://www.emlakjet.com/",
+      "queriedAt": "2026-10-08T23:19:37.689558+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 1000000,
+      "bodySha256": "640c0ba0ae46827cffd210d6d51a7a2fcca226901c58ce430f22e115aebb6b51",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "url": "https://www.arabam.com/",
+      "queriedAt": "2026-10-08T23:19:37.690088+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 508504,
+      "bodySha256": "d79f5387b4314b6bb3075b12b5c6a57d7f2c36f15e520f7cb094660a2ee05395",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "url": "https://api.github.com/repos/Alikasimoglu247/f-rsat",
+      "queriedAt": "2026-10-08T23:19:39.093168+00:00",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "location": null,
+      "bytesSaved": 5701,
+      "bodySha256": "163fd404267dcc3bfcc7e63ff48265979ad5e8942bf44dd47e553fafaa9c2186",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "url": "https://www.hepsiemlak.com/",
+      "queriedAt": "2026-10-08T23:19:37.690425+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 874227,
+      "bodySha256": "80d6e5a10c9c98b53570adc2f780fd99a7d6414475d2b6e3982582529340c054",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "url": "https://www.reidin.com/",
+      "queriedAt": "2026-10-08T23:19:37.690956+00:00",
+      "status": 301,
+      "contentType": "text/html",
+      "location": "https://reidin.com/",
+      "bytesSaved": 162,
+      "bodySha256": "9e17cb15dd75bbbd5dbb984eda674863c3b10ab72613cf8a39a00c3e11a8492a",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "url": "https://www.bing.com/search?q=Turkey+property+listings+API+license",
+      "queriedAt": "2026-10-08T23:19:37.691403+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 120995,
+      "bodySha256": "d88d7d7be1031383b6a96cf890a8cc03ab2d01b80e167d71bb15b599f87e2251",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "url": "https://data.ibb.gov.tr/api/3/action/package_search?q=emlak&rows=3",
+      "queriedAt": "2026-10-08T23:19:37.846759+00:00",
+      "status": 200,
+      "contentType": "application/json;charset=utf-8",
+      "location": null,
+      "bytesSaved": 15508,
+      "bodySha256": "9d9a7cd3d1ff8ba5dc0e42adc65f91311d6e18bd39011425d106a8c6429f3ba8",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "url": "https://huggingface.co/api/datasets?search=turkey%20car&limit=3",
+      "queriedAt": "2026-10-08T23:19:37.881571+00:00",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "location": null,
+      "bytesSaved": 2,
+      "bodySha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "url": "https://www.kaggle.com/api/v1/datasets/list?search=turkey%20car%20market",
+      "queriedAt": "2026-10-08T23:19:37.915814+00:00",
+      "status": 200,
+      "contentType": "application/json",
+      "location": null,
+      "bytesSaved": 42933,
+      "bodySha256": "078b60e24a36e45632f21d35aee13955c658e912a0ff25f71f424d78c9b359fc",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "url": "https://vpic.nhtsa.dot.gov/api/vehicles/GetVehicleTypesForMake/toyota?format=json",
+      "queriedAt": "2026-10-08T23:19:37.975136+00:00",
+      "status": 200,
+      "contentType": "application/json",
+      "location": null,
+      "bytesSaved": 374,
+      "bodySha256": "f869f5dc9b99a78a14106305acee5948e910b65c283c39407d8e3e6a010bed22",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "url": "https://www.fueleconomy.gov/ws/rest/vehicle/menu/year",
+      "queriedAt": "2026-10-08T23:19:39.046983+00:00",
+      "status": 200,
+      "contentType": "application/json",
+      "location": null,
+      "bytesSaved": 1378,
+      "bodySha256": "fd5e80f0adf1a9fffeb0174ac5995fad5e9a6c8f088ce2efae7eaeef6a8f40be",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "agentiz-after-all-draft",
+      "url": "https://www.agentiz.com/tr/partnership/aggregation",
+      "queriedAt": "2026-10-08T23:27:10.135487+00:00",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "outcome": "CONNECT_DENIED"
+    },
+    {
+      "name": "agentiz-feed",
+      "url": "https://www.agentiz.com/tr/partnership/aggregation",
+      "queriedAt": "2026-10-08T23:24:31.367295+00:00",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "outcome": "CONNECT_DENIED"
+    },
+    {
+      "name": "apideposu-root",
+      "url": "https://apideposu.com/tr",
+      "queriedAt": "2026-10-08T23:26:41.236715+00:00",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "outcome": "CONNECT_DENIED"
+    },
+    {
+      "name": "arabam-terms",
+      "url": "https://www.arabam.com/bireysel-uyelik-sozlesmesi",
+      "queriedAt": "2026-10-08T23:21:40.477674+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 334352,
+      "bodySha256": "9e55780c7a61a3460bec0da6b14ff29ed2d259fee5fd6f5fe477c1011ead09f5",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "attom-developers",
+      "url": "https://developers.attomdata.com/",
+      "queriedAt": "2026-10-08T23:26:42.902200+00:00",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "outcome": "CONNECT_DENIED"
+    },
+    {
+      "name": "carapis-turkey",
+      "url": "https://docs.carapis.com/markets/turkey",
+      "queriedAt": "2026-10-08T23:25:46.875061+00:00",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "outcome": "CONNECT_DENIED"
+    },
+    {
+      "name": "dataset-cars-april",
+      "url": "https://www.kaggle.com/api/v1/datasets/view/oguzarar/turkey-used-car-prices-april-2026",
+      "queriedAt": "2026-10-08T23:25:46.791906+00:00",
+      "status": 200,
+      "contentType": "application/json",
+      "location": null,
+      "bytesSaved": 7090,
+      "truncated": false,
+      "bodySha256": "cacbb1c95df9790a6ec175e84a1cffcf7e9d33ae899b39a5643db9d2b9e05bca",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "dataset-istanbul-anon",
+      "url": "https://www.kaggle.com/api/v1/datasets/view/beraterolelk/istanbul-real-estate-2024-anonymized",
+      "queriedAt": "2026-10-08T23:25:46.463906+00:00",
+      "status": 200,
+      "contentType": "application/json",
+      "location": null,
+      "bytesSaved": 14884,
+      "truncated": false,
+      "bodySha256": "a7b78693072b48b188bcfbc9c070bc757d6de40586f68fa4085763da7fe94fc2",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "dataset-istanbul-march",
+      "url": "https://www.kaggle.com/api/v1/datasets/view/brahimenesulusoy/istanbul-apartment-prices-2026",
+      "queriedAt": "2026-10-08T23:25:46.752334+00:00",
+      "status": 200,
+      "contentType": "application/json",
+      "location": null,
+      "bytesSaved": 12289,
+      "truncated": false,
+      "bodySha256": "e5e6e9f2b4d838d0f5ed5337d0d5784df7599b3e4193680a57dc09b2c14ba52c",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "dataset-istanbul-six",
+      "url": "https://www.kaggle.com/api/v1/datasets/view/sergionefedov/istanbul-real-estate-sales-and-rentals-20202026",
+      "queriedAt": "2026-10-08T23:25:46.474328+00:00",
+      "status": 200,
+      "contentType": "application/json",
+      "location": null,
+      "bytesSaved": 44648,
+      "truncated": false,
+      "bodySha256": "cb3aaf5293f6d9ef18ed9689ba54685836a03068b2b797390fdf22fa5edda564",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "emlakjet-terms",
+      "url": "https://www.emlakjet.com/kullanim-kosullari",
+      "queriedAt": "2026-10-08T23:21:40.477210+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 358995,
+      "bodySha256": "f95e6482f06ba15feb7ae5332b8e0af814b9c42a19150562366ecee538fa8c34",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "emlakplatform-after-all-draft",
+      "url": "https://www.emlakplatform.com.tr/tr/api-documentation",
+      "queriedAt": "2026-10-08T23:27:10.134657+00:00",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "outcome": "CONNECT_DENIED"
+    },
+    {
+      "name": "emlakplatform-api",
+      "url": "https://www.emlakplatform.com.tr/tr/services/api-make-data-access-to-your-website-easier",
+      "queriedAt": "2026-10-08T23:24:31.365152+00:00",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "outcome": "CONNECT_DENIED"
+    },
+    {
+      "name": "emlakplatform-docs",
+      "url": "https://www.emlakplatform.com.tr/tr/api-documentation",
+      "queriedAt": "2026-10-08T23:24:31.364554+00:00",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "outcome": "CONNECT_DENIED"
+    },
+    {
+      "name": "endeksa-api",
+      "url": "https://www.endeksa.com/tr/urunler/api-widget",
+      "queriedAt": "2026-10-08T23:24:31.365561+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=UTF-8",
+      "location": null,
+      "bytesSaved": 14237,
+      "truncated": false,
+      "bodySha256": "710d75ede6c77affb66f382af16652bc0c2fda328d4ba8b789ad460b7b3a8aaa",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "evds2-root",
+      "url": "https://evds2.tcmb.gov.tr/",
+      "queriedAt": "2026-10-08T23:26:41.297658+00:00",
+      "status": 302,
+      "contentType": null,
+      "location": "https://evds3.tcmb.gov.tr",
+      "bytesSaved": 0,
+      "truncated": false,
+      "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "evds3-root",
+      "url": "https://evds3.tcmb.gov.tr/",
+      "queriedAt": "2026-10-08T23:26:42.521638+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 1355,
+      "truncated": false,
+      "bodySha256": "cf7aea887bd6353b1b8da0445fa60b4594e8722a69edd3eba61da6c0687ef9b6",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "hepsiemlak-terms",
+      "url": "https://www.hepsiemlak.com/kullanim-kosullari",
+      "queriedAt": "2026-10-08T23:21:40.478047+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 168271,
+      "bodySha256": "4baff7ff2332b395996af790744cd42b461fa3c5e0effd51a683208674ed2ffe",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "ibb-arsa",
+      "url": "https://data.ibb.gov.tr/api/3/action/package_search?q=arsa&rows=20",
+      "queriedAt": "2026-10-08T23:24:33.238081+00:00",
+      "status": 200,
+      "contentType": "application/json;charset=utf-8",
+      "location": null,
+      "bytesSaved": 215,
+      "truncated": false,
+      "bodySha256": "ef16399b6ce836b7192148ac207baf1cecbdbfeb41763bc3ebf98adbc506e4a2",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "ibb-ihale",
+      "url": "https://data.ibb.gov.tr/api/3/action/package_search?q=ihale&rows=20",
+      "queriedAt": "2026-10-08T23:24:32.936853+00:00",
+      "status": 200,
+      "contentType": "application/json;charset=utf-8",
+      "location": null,
+      "bytesSaved": 215,
+      "truncated": false,
+      "bodySha256": "ef16399b6ce836b7192148ac207baf1cecbdbfeb41763bc3ebf98adbc506e4a2",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "ibb-konut",
+      "url": "https://data.ibb.gov.tr/api/3/action/package_search?q=konut&rows=20",
+      "queriedAt": "2026-10-08T23:24:33.238672+00:00",
+      "status": 200,
+      "contentType": "application/json;charset=utf-8",
+      "location": null,
+      "bytesSaved": 61837,
+      "truncated": false,
+      "bodySha256": "675f1ba5ca72d028a214a23e0ecea2cd93a8123b4207c805f4b331a458f2295f",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "ibb-license",
+      "url": "https://data.ibb.gov.tr/license",
+      "queriedAt": "2026-10-08T23:21:40.589238+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 28496,
+      "bodySha256": "c228fc05d10834cabe2439b30e845d7c6c0e62fa6223c48afe79ff0ac86b4a42",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "ibb-taşınmaz",
+      "url": "https://data.ibb.gov.tr/api/3/action/package_search?q=ta%C5%9F%C4%B1nmaz&rows=20",
+      "queriedAt": "2026-10-08T23:24:32.882597+00:00",
+      "status": 200,
+      "contentType": "application/json;charset=utf-8",
+      "location": null,
+      "bytesSaved": 215,
+      "truncated": false,
+      "bodySha256": "ef16399b6ce836b7192148ac207baf1cecbdbfeb41763bc3ebf98adbc506e4a2",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "indicata-full",
+      "url": "https://indicata.com/",
+      "queriedAt": "2026-10-08T23:24:52.608967+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=UTF-8",
+      "location": null,
+      "bytesSaved": 180944,
+      "truncated": false,
+      "bodySha256": "723466d08d4d1adf4f66cb5275a9fafb3238228efda18b902d93a89c526151eb",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "indicata-home",
+      "url": "https://www.indicata.com/",
+      "queriedAt": "2026-10-08T23:24:31.380472+00:00",
+      "status": 301,
+      "contentType": "text/html; charset=UTF-8",
+      "location": "https://indicata.com/",
+      "bytesSaved": 0,
+      "truncated": false,
+      "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "interestingrealestate-root",
+      "url": "https://interestingrealestate.com/",
+      "queriedAt": "2026-10-08T23:26:41.235848+00:00",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "outcome": "CONNECT_DENIED"
+    },
+    {
+      "name": "jdpower-root",
+      "url": "https://www.jdpower.com/",
+      "queriedAt": "2026-10-08T23:26:41.245351+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=UTF-8",
+      "location": null,
+      "bytesSaved": 155964,
+      "truncated": false,
+      "bodySha256": "7087ef90d1286b98f8a034a9a28e2078ca378244b5cdeba06f50583e397d0e81",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "kaggle-arabam",
+      "url": "https://www.kaggle.com/api/v1/datasets/list?search=arabam&sortBy=updated",
+      "queriedAt": "2026-10-08T23:24:55.588137+00:00",
+      "status": 200,
+      "contentType": "application/json",
+      "location": null,
+      "bytesSaved": 9429,
+      "truncated": false,
+      "bodySha256": "a655098c26c7909c20ef26325a078e7cd60da73e4dfa7854986e1f17c4dd95b7",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "kaggle-car-latest",
+      "url": "https://www.kaggle.com/api/v1/datasets/list?search=turkey+car&sortBy=updated",
+      "queriedAt": "2026-10-08T23:21:42.219702+00:00",
+      "status": 200,
+      "contentType": "application/json",
+      "location": null,
+      "bytesSaved": 66060,
+      "bodySha256": "ca8677bd355c449fc642c71eeb7663fe46ede3bddf02d6a0a9b244e8f3d5d82b",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "kaggle-istanbul",
+      "url": "https://www.kaggle.com/api/v1/datasets/list?search=istanbul+housing&sortBy=updated",
+      "queriedAt": "2026-10-08T23:24:54.971587+00:00",
+      "status": 200,
+      "contentType": "application/json",
+      "location": null,
+      "bytesSaved": 71278,
+      "truncated": false,
+      "bodySha256": "6cad00e691f8e57f124a7c4706f0e97939369aaa06ce767f187df6af6681d259",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "kaggle-property",
+      "url": "https://www.kaggle.com/api/v1/datasets/list?search=turkey+real+estate&sortBy=updated",
+      "queriedAt": "2026-10-08T23:21:42.167368+00:00",
+      "status": 200,
+      "contentType": "application/json",
+      "location": null,
+      "bytesSaved": 79391,
+      "bodySha256": "333558e155618731423e5b349da593c009298d5daf000aa5c60addff388c0af5",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "kaggle-silivri",
+      "url": "https://www.kaggle.com/api/v1/datasets/list?search=silivri&sortBy=updated",
+      "queriedAt": "2026-10-08T23:24:54.689043+00:00",
+      "status": 200,
+      "contentType": "application/json",
+      "location": null,
+      "bytesSaved": 4408,
+      "truncated": false,
+      "bodySha256": "aa6febc05205e8979ca3dadce7943bec835286763d348f7b7cf0fe9d4ee4692c",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "kaggle-suv",
+      "url": "https://www.kaggle.com/api/v1/datasets/list?search=turkey+suv&sortBy=updated",
+      "queriedAt": "2026-10-08T23:24:55.032035+00:00",
+      "status": 200,
+      "contentType": "application/json",
+      "location": null,
+      "bytesSaved": 4471,
+      "truncated": false,
+      "bodySha256": "9332db83ea5750f17439dff1c347d59fb818bd35975a1c12051a5a31b89a2a78",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "marketcheck-docs-full",
+      "url": "https://docs.marketcheck.com/docs",
+      "queriedAt": "2026-10-08T23:24:52.608735+00:00",
+      "status": 200,
+      "contentType": "text/html;charset=utf-8",
+      "location": null,
+      "bytesSaved": 1364936,
+      "truncated": false,
+      "bodySha256": "c13b6d0785c58f435e520ea8ef5d61f3786e986d224d2fa28fe76990991d4e8a",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "marketcheck-docs",
+      "url": "https://docs.marketcheck.com/",
+      "queriedAt": "2026-10-08T23:24:31.377770+00:00",
+      "status": 307,
+      "contentType": "text/html",
+      "location": "/docs",
+      "bytesSaved": 91,
+      "truncated": false,
+      "bodySha256": "296f90219926203ed3fb64720bb97e26fd022c61cb38f19ae37233b81d66d6f2",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "marketcheck-intro",
+      "url": "https://docs.marketcheck.com/docs/get-started/api/introduction",
+      "queriedAt": "2026-10-08T23:26:41.243272+00:00",
+      "status": 200,
+      "contentType": "text/html;charset=utf-8",
+      "location": null,
+      "bytesSaved": 719592,
+      "truncated": false,
+      "bodySha256": "342e09fff89899b5d852f17a9ffb92f38085cf5905c0e61cbc115aff04f385e9",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "marketcheck-start",
+      "url": "https://docs.marketcheck.com/docs/get-started",
+      "queriedAt": "2026-10-08T23:25:47.060262+00:00",
+      "status": 301,
+      "contentType": "text/html",
+      "location": "/docs/get-started/api/introduction",
+      "bytesSaved": 120,
+      "truncated": false,
+      "bodySha256": "ad2dbea85d141372e81f8b21bafd1ada229f4636622f90741525d11f600746b1",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "nada-developer",
+      "url": "https://developer.nada.com/",
+      "queriedAt": "2026-10-08T23:26:41.243431+00:00",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "outcome": "CONNECT_DENIED"
+    },
+    {
+      "name": "otoapi-docs",
+      "url": "https://otoapi.com/api-dokumani",
+      "queriedAt": "2026-10-08T23:24:52.607777+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 87007,
+      "truncated": false,
+      "bodySha256": "1fc262acc5495524a533853b015dddae4562fd17eb2488800986ec2dad373a71",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "otoapi-home",
+      "url": "https://otoapi.com/",
+      "queriedAt": "2026-10-08T23:24:31.488456+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 33067,
+      "truncated": false,
+      "bodySha256": "392c8a61a0922ac6c4cb2570c3e5ae4c9245ff0efe40c1dc0c7292a9ff11094c",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "postman-emlakplatform",
+      "url": "https://www.postman.com/flexcodesnet/workspace/emlak-platform-api/collection/3603680-758bab81-4cbb-4f20-aadd-956cd74e4025",
+      "queriedAt": "2026-10-08T23:25:47.093647+00:00",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "outcome": "CONNECT_DENIED"
+    },
+    {
+      "name": "propertyquest-root",
+      "url": "https://propertyquestturkey.com/",
+      "queriedAt": "2026-10-08T23:26:41.234885+00:00",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "outcome": "CONNECT_DENIED"
+    },
+    {
+      "name": "rapidapi-root",
+      "url": "https://rapidapi.com/",
+      "queriedAt": "2026-10-08T23:26:42.718229+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 212018,
+      "truncated": false,
+      "bodySha256": "43a7e8814110ffaaa54b501e976c3aba5b7f8d0325d0fe214dce5849d45d85d8",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "reidin-api",
+      "url": "https://reidin.com/api-solutions/",
+      "queriedAt": "2026-10-08T23:24:52.608315+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=UTF-8",
+      "location": null,
+      "bytesSaved": 66147,
+      "truncated": false,
+      "bodySha256": "d22c81edc45a744982c066907bdb719a95d7cac06f231e4d19b7058ceaf8f79a",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "reidin-home",
+      "url": "https://reidin.com/",
+      "queriedAt": "2026-10-08T23:24:31.373178+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=UTF-8",
+      "location": null,
+      "bytesSaved": 332366,
+      "truncated": false,
+      "bodySha256": "91f2d65f336a0f9836e37262d7498b225e122a210eef8be29e571daa7ee59de9",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "search-allowed-feed",
+      "url": "https://www.bing.com/search?q=%22emlak%22+%22RSS%22+%22Silivri%22+-site%3Asahibinden.com&setlang=tr",
+      "queriedAt": "2026-10-08T23:24:31.717277+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 89358,
+      "truncated": false,
+      "bodySha256": "d6ae33bbfa395044314abbc595a745c3d263bc9fce705fdaccf52dd08ae62da8",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "search-auto-api",
+      "url": "https://www.bing.com/search?q=T%C3%BCrkiye+ikinci+el+ara%C3%A7+ilan+verisi+API+lisans&setlang=tr",
+      "queriedAt": "2026-10-08T23:21:41.910399+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 89869,
+      "bodySha256": "44c68d3da563c41b0d1eeefa1a49a7d8d6528ed08104e46ebd7cb73099e6cf54",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "search-auto-open",
+      "url": "https://www.bing.com/search?q=T%C3%BCrkiye+ara%C3%A7+ilan+API+veri&setlang=tr",
+      "queriedAt": "2026-10-08T23:24:52.692035+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 124850,
+      "truncated": false,
+      "bodySha256": "c48dc588e98f1a42ca047d0e57a8dacd6f8350a35dfa6c1a83bee35de27e97fe",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "search-auto-rss",
+      "url": "https://www.bing.com/search?q=otomobil+ilanlar%C4%B1+RSS+besleme&setlang=tr",
+      "queriedAt": "2026-10-08T23:24:53.536602+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 88337,
+      "truncated": false,
+      "bodySha256": "e8ab0c342b46f4716341b9766910a48b5852151496dea1ff0b1f5d8cc484c7dd",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "search-autodata",
+      "url": "https://www.bing.com/search?q=Turkey+used+cars+API+free&setlang=tr",
+      "queriedAt": "2026-10-08T23:25:45.903334+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 377322,
+      "truncated": false,
+      "bodySha256": "a1c540f2fa3a597a6c7ffd984c764c3d6fd213e039cd7cc1b4a0e69b2389a356",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "search-autofeed",
+      "url": "https://www.bing.com/search?q=%22ikinci+el%22+%22XML%22+%22API%22+-site%3Asahibinden.com&setlang=tr",
+      "queriedAt": "2026-10-08T23:24:32.826987+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 91188,
+      "truncated": false,
+      "bodySha256": "8e954c81aff190d0a7e2cc46f5a07070541e85a7e7777256cfc9e09ba1c59bef",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "search-car-feed",
+      "url": "https://www.bing.com/search?q=used+car+listings+Turkey+API+data+feed+license&setlang=tr",
+      "queriedAt": "2026-10-08T23:24:54.521292+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 355855,
+      "truncated": false,
+      "bodySha256": "c21468b59e8959adf54fd30bef50cc1d3d09d05aec6563730821352250a0ad29",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "search-carapi",
+      "url": "https://www.bing.com/search?q=%22T%C3%BCrkiye%22+%22ara%C3%A7%22+%22API%22+%22ilan%22+-site%3Asahibinden.com+-scraper&setlang=tr",
+      "queriedAt": "2026-10-08T23:24:31.631595+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 89825,
+      "truncated": false,
+      "bodySha256": "e987d12d9d58da7707a49cb9bc88430302055672de48c728dd36c02f9d390bcd",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "search-emlak-api",
+      "url": "https://www.bing.com/search?q=T%C3%BCrkiye+emlak+ilan+API+XML+lisans&setlang=tr",
+      "queriedAt": "2026-10-08T23:21:40.658169+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 325242,
+      "bodySha256": "7c122dc54584d37456ea3fa59b0844230e8ec503f63da98330a9c7335f34a220",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "search-emlak-license",
+      "url": "https://www.bing.com/search?q=emlak+ilanlar%C4%B1+veri+lisans%C4%B1+API+%C3%BCcretsiz&setlang=tr",
+      "queriedAt": "2026-10-08T23:24:53.838209+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 87224,
+      "truncated": false,
+      "bodySha256": "0ce7072d49c691295ff8db4ff0fded992c4d338db01498a60524573155ae51fd",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "search-emlak-open",
+      "url": "https://www.bing.com/search?q=emlak+ilanlar%C4%B1+a%C3%A7%C4%B1k+API+T%C3%BCrkiye&setlang=tr",
+      "queriedAt": "2026-10-08T23:24:52.932102+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 89606,
+      "truncated": false,
+      "bodySha256": "bcbf2c75f84246dcca8f7462c6688a044ef5b213a866488023dc855c6baf491f",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "search-emlak-short",
+      "url": "https://www.bing.com/search?q=emlak+API&setlang=tr",
+      "queriedAt": "2026-10-08T23:25:45.901375+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 90183,
+      "truncated": false,
+      "bodySha256": "e35062663674a840338d8cfbb022138e876cfcf63d710e7e5d6670d7f002d376",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "search-emlakplatform-token",
+      "url": "https://www.bing.com/search?q=emlakplatform+API+access+token+free&setlang=tr",
+      "queriedAt": "2026-10-08T23:24:54.246940+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 91761,
+      "truncated": false,
+      "bodySha256": "1065a2decad5ce458aacd9f4de720b0c52521551da44625a93db1bd05195ccf1",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "search-google",
+      "url": "https://www.google.com/search?q=T%C3%BCrkiye+emlak+ilan+API+a%C3%A7%C4%B1k+veri",
+      "queriedAt": "2026-10-08T23:21:42.157950+00:00",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "outcome": "CONNECT_DENIED"
+    },
+    {
+      "name": "search-ibbauction",
+      "url": "https://www.bing.com/search?q=%22%C4%B0BB%22+%22ta%C5%9F%C4%B1nmaz%22+%22API%22&setlang=tr",
+      "queriedAt": "2026-10-08T23:24:32.329055+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 88836,
+      "truncated": false,
+      "bodySha256": "afe3fe1c2c64bdb04eda5b8306298ea39e22aff8b3551d4b7f102c5321c4bdc8",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "search-landdata",
+      "url": "https://www.bing.com/search?q=%22Silivri%22+%22sat%C4%B1l%C4%B1k%22+%22a%C3%A7%C4%B1k+veri%22&setlang=tr",
+      "queriedAt": "2026-10-08T23:24:31.942065+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 92717,
+      "truncated": false,
+      "bodySha256": "71917a558130912a4126980e33662a7888fb7d609c94e87bc8bbd2bf6015d92b",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "search-license-feed",
+      "url": "https://www.bing.com/search?q=Silivri+property+XML+feed&setlang=tr",
+      "queriedAt": "2026-10-08T23:25:46.366873+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 461951,
+      "truncated": false,
+      "bodySha256": "9e6540d1535fc8fa5120daeedf7ef771a88c71b8a77cf51c97f73283de177e18",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "search-property-feed",
+      "url": "https://www.bing.com/search?q=Turkey+property+listings+API+licensed+feed+free&setlang=tr",
+      "queriedAt": "2026-10-08T23:24:54.548540+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 91194,
+      "truncated": false,
+      "bodySha256": "a716f37e122089b44408a1a68b7340f8ca4a0ab1600830f163a4c22890d4b9cc",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "search-property-short",
+      "url": "https://www.bing.com/search?q=Turkey+real+estate+API&setlang=tr",
+      "queriedAt": "2026-10-08T23:25:45.900560+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 87818,
+      "truncated": false,
+      "bodySha256": "5bd780eb827bb5680160b10279bbb3a6708b6aad0fdcafe22112080d24c271b2",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "search-rss-short",
+      "url": "https://www.bing.com/search?q=emlak+RSS&setlang=tr",
+      "queriedAt": "2026-10-08T23:25:45.902723+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 88635,
+      "truncated": false,
+      "bodySha256": "2c686172e057d5b3b02686703de9c3e79e2bc7168449a579d2545e8c937d0c58",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "search-silivri-feed",
+      "url": "https://www.bing.com/search?q=Silivri+sat%C4%B1l%C4%B1k+emlak+RSS+XML+veri&setlang=tr",
+      "queriedAt": "2026-10-08T23:21:40.778535+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 93658,
+      "bodySha256": "236596e93fbf594c954a818ec9e66cc10016002f33189395150e9629b57ab837",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "search-silivri-rss",
+      "url": "https://www.bing.com/search?q=Silivri+emlak+RSS&setlang=tr",
+      "queriedAt": "2026-10-08T23:24:53.355068+00:00",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "location": null,
+      "bytesSaved": 128747,
+      "truncated": false,
+      "bodySha256": "9092c2e4b990bb034ea86f49354f0605e939afca0868469eeb28a2c005bad671",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "silivriemlak-root",
+      "url": "https://silivriemlak.com.tr/",
+      "queriedAt": "2026-10-08T23:26:41.235417+00:00",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "outcome": "CONNECT_DENIED"
+    },
+    {
+      "name": "tuik-data",
+      "url": "https://data.tuik.gov.tr/",
+      "queriedAt": "2026-10-08T23:26:41.246848+00:00",
+      "status": 302,
+      "contentType": null,
+      "location": "https://veriportali.tuik.gov.tr/",
+      "bytesSaved": 0,
+      "truncated": false,
+      "bodySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "outcome": "ORIGIN_RESPONSE"
+    },
+    {
+      "name": "tuik-new-portal",
+      "url": "https://veriportali.tuik.gov.tr/",
+      "queriedAt": "2026-10-08T23:27:10.136006+00:00",
+      "error": "URLError",
+      "detail": "<urlopen error Tunnel connection failed: 403 Forbidden>",
+      "outcome": "CONNECT_DENIED"
+    },
+    {
+      "name": "turkish-api-catalog",
+      "url": "https://raw.githubusercontent.com/3rt4nm4n/turkish-apis/master/README.md",
+      "queriedAt": "2026-10-08T23:25:46.878463+00:00",
+      "status": 200,
+      "contentType": "text/plain; charset=utf-8",
+      "location": null,
+      "bytesSaved": 11617,
+      "truncated": false,
+      "bodySha256": "e107c4e0ffd10cc3d94c77f3097a9c0b61feed28570330467f7f26d4bb698927",
+      "outcome": "ORIGIN_RESPONSE"
+    }
+  ],
+  "sourceDecisions": [
+    {
+      "name": "Emlakjet",
+      "url": "https://www.emlakjet.com/kullanim-kosullari",
+      "section": "6.2 and 8.2",
+      "decision": "Prior written permission required for automated mining/copying. No listing extraction performed."
+    },
+    {
+      "name": "Arabam",
+      "url": "https://www.arabam.com/bireysel-uyelik-sozlesmesi",
+      "section": "6.2",
+      "decision": "Copying, processing and transfer to another database restricted. No listing extraction performed."
+    },
+    {
+      "name": "Hepsiemlak",
+      "url": "https://www.hepsiemlak.com/kullanim-kosullari",
+      "decision": "Prior explicit written permission required for automatic monitoring/copying. No listing extraction performed."
+    },
+    {
+      "name": "OtoApi",
+      "url": "https://otoapi.com/api-dokumani",
+      "decision": "X-Api-Key required for all endpoints; homepage directs purchase of package. No existing key. Documentation samples are not live results."
+    },
+    {
+      "name": "MarketCheck",
+      "url": "https://docs.marketcheck.com/docs/get-started/api/introduction",
+      "decision": "API key/subscription required. Documented coverage US/Canada/UK; Turkey not established."
+    },
+    {
+      "name": "IBB CKAN",
+      "licenseUrl": "https://data.ibb.gov.tr/license",
+      "decision": "Open reuse licensed with attribution. q=emlak returned 3 aggregate expropriation datasets; q=konut returned 10 aggregate/statistical/context datasets. q=taşınmaz,ihale,arsa each 0. No current listing IDs, URLs, individual prices or attributes."
+    },
+    {
+      "name": "Kaggle Istanbul 2024 Anonymized",
+      "ref": "beraterolelk/istanbul-real-estate-2024-anonymized",
+      "license": "CC0",
+      "lastUpdated": "2026-09-29T06:49:49.133Z",
+      "decision": "Description says Synthesized and calibrated. Not genuine listings."
+    },
+    {
+      "name": "Kaggle Istanbul 2020-2026",
+      "ref": "sergionefedov/istanbul-real-estate-sales-and-rentals-20202026",
+      "license": "Apache 2.0",
+      "decision": "Description says listing-level apartment characteristics generated from hedonic model. Not genuine listings."
+    },
+    {
+      "name": "Kaggle Istanbul Apartment Prices",
+      "ref": "brahimenesulusoy/istanbul-apartment-prices-2026",
+      "license": "CC BY-SA 4.0 as uploader declaration",
+      "decision": "Scraped March 9-14, 2026 from Hepsiemlak. Stale for October pilot; underlying data reuse permission not verified."
+    },
+    {
+      "name": "Kaggle Turkey Car April 2026",
+      "ref": "oguzarar/turkey-used-car-prices-april-2026",
+      "license": "CC BY-SA 4.0 as uploader declaration",
+      "decision": "April snapshot, not current October listings. No current identity/source URL verification or original data rights proof."
+    },
+    {
+      "name": "Emlak Platform / Agentiz / Carapis and independent broker candidates",
+      "decision": "Official documentation or homepage requests remain blocked by CONNECT proxy; rights, pricing and current pilot listings not verified."
+    }
+  ],
+  "runtime": {
+    "real": 0,
+    "demo": 36,
+    "mailboxStatus": "DISCONNECTED",
+    "sources": [
+      {
+        "id": "manual",
+        "name": "Manuel giriş",
+        "accessStatus": "AVAILABLE",
+        "lastSuccessAt": "2026-10-07T22:48:59.615Z"
+      },
+      {
+        "id": "csv",
+        "name": "CSV içe aktarma",
+        "accessStatus": "AVAILABLE",
+        "lastSuccessAt": "2026-10-07T22:48:58.200Z"
+      },
+      {
+        "id": "json",
+        "name": "JSON içe aktarma",
+        "accessStatus": "AVAILABLE",
+        "lastSuccessAt": null
+      },
+      {
+        "id": "email",
+        "name": "İzinli arama e-postası",
+        "accessStatus": "AVAILABLE",
+        "lastSuccessAt": null
+      },
+      {
+        "id": "demo",
+        "name": "Demo veri seti",
+        "accessStatus": "DEMO",
+        "lastSuccessAt": "2026-10-08T09:30:18.801Z"
+      },
+      {
+        "id": "licensed-feed",
+        "name": "Yetkili API / lisanslı feed",
+        "accessStatus": "DISCONNECTED",
+        "lastSuccessAt": null
+      },
+      {
+        "id": "sahibinden-email",
+        "name": "Sahibinden bildirim e-postası",
+        "accessStatus": "NEEDS_SAMPLE",
+        "lastSuccessAt": null
+      },
+      {
+        "id": "arabam-email",
+        "name": "Arabam.com bildirim e-postası",
+        "accessStatus": "NEEDS_SAMPLE",
+        "lastSuccessAt": null
+      },
+      {
+        "id": "arabam",
+        "name": "Arabam",
+        "accessStatus": "PLANNED",
+        "lastSuccessAt": null
+      },
+      {
+        "id": "hepsiemlak",
+        "name": "Hepsiemlak",
+        "accessStatus": "PLANNED",
+        "lastSuccessAt": null
+      },
+      {
+        "id": "emlakjet",
+        "name": "Emlakjet",
+        "accessStatus": "PLANNED",
+        "lastSuccessAt": null
+      },
+      {
+        "id": "sahibinden",
+        "name": "Sahibinden",
+        "accessStatus": "PLANNED",
+        "lastSuccessAt": null
+      }
+    ],
+    "credentialPresence": [
+      {
+        "name": "AUTHORIZED_FEED_URL",
+        "present": false
+      },
+      {
+        "name": "AUTHORIZED_FEED_HOST",
+        "present": false
+      },
+      {
+        "name": "AUTHORIZED_FEED_TOKEN",
+        "present": false
+      },
+      {
+        "name": "GMAIL_CLIENT_ID",
+        "present": false
+      },
+      {
+        "name": "GMAIL_CLIENT_SECRET",
+        "present": false
+      },
+      {
+        "name": "OTOAPI_API_KEY",
+        "present": false
+      },
+      {
+        "name": "MARKETCHECK_API_KEY",
+        "present": false
+      },
+      {
+        "name": "EMLAKPLATFORM_API_TOKEN",
+        "present": false
+      }
+    ],
+    "http": [
+      {
+        "path": "/api/health",
+        "status": 200
+      },
+      {
+        "path": "/api/discovery",
+        "status": 200
+      },
+      {
+        "path": "/api/readiness",
+        "status": 200
+      }
+    ],
+    "readiness": {
+      "gmail": {
+        "status": "DISCONNECTED",
+        "configured": false,
+        "selectionSaved": false,
+        "lastSuccessAt": null,
+        "missing": [
+          "GMAIL_CLIENT_ID",
+          "GMAIL_CLIENT_SECRET",
+          "GMAIL_TOKEN_STORE (mutlak kalıcı yol)",
+          "GMAIL_TOKEN_STORE_PERSISTENT"
+        ]
+      },
+      "storage": {
+        "explicitAbsolute": true,
+        "declaredPersistent": false,
+        "requiredForProduction": true,
+        "status": "PERSISTENCE_UNCONFIRMED"
+      },
+      "scheduler": {
+        "status": "RUNNING",
+        "lastHeartbeatAt": "2026-10-08T23:27:28.036Z",
+        "lastTickAt": null,
+        "lastResult": null,
+        "schedule": "0 9 * * *",
+        "timezone": "Europe/Istanbul"
+      },
+      "channels": [
+        {
+          "channel": "TELEGRAM",
+          "configured": false,
+          "enabled": false,
+          "lastVerifiedSentAt": null
+        },
+        {
+          "channel": "EMAIL",
+          "configured": false,
+          "enabled": false,
+          "lastVerifiedSentAt": null
+        }
+      ],
+      "samples": {
+        "uploaded": 0,
+        "gmailMatchedTemplates": 0,
+        "needsRealExamples": true
+      },
+      "ci": {
+        "workflow": ".github/workflows/ci.yml",
+        "url": "https://github.com/Alikasimoglu247/f-rsat/actions",
+        "status": "CHECK_GITHUB_RUNS"
+      }
+    },
+    "analysis": {
+      "checkedAt": "2026-10-08T23:28:42.153Z",
+      "realInputs": 0,
+      "assessedRealRecords": 0,
+      "storedRealAnalyses": 0,
+      "realComparisonLinks": 0,
+      "realHistoryObservations": 0,
+      "pilots": [
+        {
+          "id": "pilot-silivri",
+          "name": "Silivri Gayrimenkul Fırsatları",
+          "funnel": {
+            "gmailNotifications": 0,
+            "localEmlSamples": 0,
+            "parsedListings": 0,
+            "userCompletedListings": 0,
+            "pendingListings": 0,
+            "savedReal": 0,
+            "unparsedNotifications": 0,
+            "matchedListings": 0,
+            "insufficientListings": 0,
+            "supportedOpportunities": 0,
+            "analysisPending": 0,
+            "missingData": 0
+          },
+          "totalReal": 0,
+          "discoveredToday": 0,
+          "opportunities": 0,
+          "lastSuccessfulIngestion": null
+        },
+        {
+          "id": "pilot-marmara-suv",
+          "name": "Marmara SUV Fırsatları",
+          "funnel": {
+            "gmailNotifications": 0,
+            "localEmlSamples": 0,
+            "parsedListings": 0,
+            "userCompletedListings": 0,
+            "pendingListings": 0,
+            "savedReal": 0,
+            "unparsedNotifications": 0,
+            "matchedListings": 0,
+            "insufficientListings": 0,
+            "supportedOpportunities": 0,
+            "analysisPending": 0,
+            "missingData": 0
+          },
+          "totalReal": 0,
+          "discoveredToday": 0,
+          "opportunities": 0,
+          "lastSuccessfulIngestion": null
+        }
+      ]
+    }
+  },
+  "verification": {
+    "unit": {
+      "passed": 72,
+      "failed": 0
+    },
+    "postgresqlIntegration": {
+      "passed": 41,
+      "failed": 0
+    },
+    "httpHealth": 200,
+    "httpDiscovery": 200,
+    "httpReadiness": 200,
+    "browserSuite": "Not rerun: application source, tests and dependencies unchanged.",
+    "liveProviderAcceptance": "BLOCKED"
+  },
+  "networkConfiguration": {
+    "observedDraftBefore": {
+      "revision": 11,
+      "type": "restricted",
+      "customRuleCount": 30,
+      "isRuntimePolicyProof": false
+    },
+    "savedChange": {
+      "allowed_domains": ["*"],
+      "status": "saved",
+      "requires_publish": true,
+      "publishedByAgent": false,
+      "appliedToCurrentRuntime": null,
+      "unrestrictedRuntimeVerified": false
+    },
+    "postSaveCheck": {
+      "emlakplatform": "CONNECT_DENIED",
+      "agentiz": "CONNECT_DENIED",
+      "tuikNewPortal": "CONNECT_DENIED"
+    },
+    "explanation": "Saved drafts and current runtime differ. User reports publishing unrestricted Internet; actual new-target requests still fail at CONNECT."
+  }
+}

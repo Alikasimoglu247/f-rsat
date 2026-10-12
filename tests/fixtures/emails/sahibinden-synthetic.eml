@@ -1,0 +1,19 @@
+From: Test Notifications <notifications@sahibinden.com>
+To: fixture@example.test
+Subject: Sentetik test arama bildirimi
+Message-ID: <synthetic-sahibinden-1@example.test>
+Date: Thu, 8 Oct 2026 09:00:00 +0300
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Başlık: Sentetik test Kadıköy dairesi
+Kategori: Ev
+Fiyat: 4.250.000,50 TL
+Konum: İstanbul / Kadıköy
+Konut tipi: Daire
+Oda: 2+1
+Alan: 100 m²
+Bina yaşı: 10
+Durum: İyi
+https://www.sahibinden.com/ilan/emlak-konut-satilik-sentetik-test-1234567890/detay

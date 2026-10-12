@@ -11,6 +11,8 @@ const size: Field = { name: "sizeM2", label: "Alan (m²)", type: "number" };
 export const fieldGroups: Record<Category, Field[]> = {
   EV: [
     size,
+    { name: "netM2", label: "Net alan (m²)", type: "number" },
+    { name: "grossM2", label: "Brüt alan (m²)", type: "number" },
     { name: "propertyType", label: "Konut tipi", placeholder: "Daire" },
     { name: "rooms", label: "Oda sayısı", placeholder: "2+1" },
     { name: "buildingAge", label: "Bina yaşı", type: "number" },
@@ -23,6 +25,12 @@ export const fieldGroups: Record<Category, Field[]> = {
     { name: "earthquakeInfo", label: "Beyan edilen deprem bilgisi" },
   ],
   ARABA: [
+    {
+      name: "bodyType",
+      label: "Gövde tipi",
+      placeholder: "SUV / CROSSOVER / SEDAN (bilinmiyorsa boş)",
+    },
+    { name: "bodyTypeEvidence", label: "Gövde tipi için incelenen kanıt" },
     { name: "make", label: "Marka", placeholder: "Toyota" },
     { name: "model", label: "Model", placeholder: "Corolla" },
     { name: "trim", label: "Donanım", placeholder: "1.5 Dream" },

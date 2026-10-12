@@ -19,12 +19,24 @@ import {
 import { Button } from "./ui/button";
 const links = [
   { href: "/", label: "Genel Bakış", icon: LayoutDashboard },
-  { href: "/firsatlar", label: "Fırsatlar", icon: ScanSearch },
-  { href: "/fiyat-gecmisi", label: "Fiyat Geçmişi", icon: ChartNoAxesCombined },
+  { href: "/kesfet", label: "Keşfet", icon: ScanSearch },
+  {
+    href: "/yatirim-analizi",
+    label: "Yatırım Analizi",
+    icon: ChartNoAxesCombined,
+  },
+  { href: "/arastirma-merkezi", label: "Araştırma Merkezi", icon: Database },
   { href: "/takip-listem", label: "Takip Listem", icon: Bookmark },
-  { href: "/veri-kaynaklari", label: "Veri Kaynakları", icon: Database },
-  { href: "/bildirimler", label: "Bildirimler", icon: Bell },
   { href: "/ayarlar", label: "Ayarlar", icon: Settings },
+];
+const tools = [
+  { href: "/genel-bakis/eski", label: "Önceki bildirim pilotları" },
+  { href: "/takip-listem/eski", label: "Önceki takip kayıtları (demo dahil)" },
+  { href: "/fiyat-gecmisi", label: "Fiyat Geçmişi" },
+  { href: "/yeni-ilanlar", label: "Yeni İlanlar" },
+  { href: "/firsatlar", label: "Fırsatlar" },
+  { href: "/veri-kaynaklari", label: "Veri Kaynakları" },
+  { href: "/bildirimler", label: "Bildirimler" },
 ];
 export function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
@@ -64,7 +76,6 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <strong>Kişisel çalışma alanı</strong>
             <span>Marmara Bölgesi</span>
           </div>
-          <span className="workspace-dot" />
         </div>
         <div className="nav-label">ÇALIŞMA ALANI</div>
         <nav aria-label="Ana menü">
@@ -88,6 +99,14 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </Link>
           ))}
         </nav>
+        <details className="v2-tools">
+          <summary>Veri araçları ve önceki işlevler</summary>
+          {tools.map((l) => (
+            <Link className="nav-link" href={l.href} key={l.href}>
+              {l.label}
+            </Link>
+          ))}
+        </details>
         <div className="sidebar-bottom">
           <div className="trust-card">
             <ShieldCheck size={20} />
@@ -106,7 +125,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             {dark ? <Sun size={17} /> : <Moon size={17} />}{" "}
             {dark ? "Açık görünüm" : "Koyu görünüm"}
           </button>
-          <span className="sidebar-caption">Kişisel analiz · v0.1</span>
+          <span className="sidebar-caption">Kişisel araştırma · v2</span>
         </div>
       </aside>
       <div className="main-shell">
@@ -116,8 +135,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
             Marmara, Türkiye
           </span>
           <div className="topbar-actions">
-            <Link href="/veri-kaynaklari" className="topbar-source">
-              Kaynakları yönet <ArrowUpRight size={14} />
+            <Link href="/arastirma-merkezi" className="topbar-source">
+              Araştırma Merkezi <ArrowUpRight size={14} />
             </Link>
             <Link
               href="/bildirimler"

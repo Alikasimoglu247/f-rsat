@@ -10,3 +10,5 @@ playwright-report/
 .next/
 *.tsbuildinfo
 .local/
+FIRSATRADAR_GERCEK_VERI*.json
+FIRSATRADAR_V2_WINDOWS*.zip
