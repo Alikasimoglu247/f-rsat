@@ -17,7 +17,10 @@ import {
   supportedFact,
   type ResearchCandidate,
   type ResearchSnapshot,
+  researchCandidateFresh,
+  type Decision,
 } from "./investment";
+import { dataQuality } from "./data-quality";
 import { assess } from "./analysis";
 import { researchInProfile } from "./research-import";
 import { loadResearchState } from "./research/store";
@@ -41,15 +44,7 @@ function candidateCurrent(
   snapshot: ResearchSnapshot,
   now: Date,
 ) {
-  const source = snapshot.sources.find(
-    (item) => item.id === candidate.sourceId,
-  );
-  return (
-    !!source &&
-    source.url === candidate.sourceUrl &&
-    source.retrievedAt === candidate.observedAt &&
-    sourceFresh(source, now)
-  );
+  return researchCandidateFresh(candidate, now, snapshot);
 }
 function urlKey(value: string | null) {
   try {
@@ -115,18 +110,27 @@ export async function investmentReport(now = new Date()) {
     };
     const pool = selected
       .filter((item) => {
-        if (item.source.method !== "PUBLIC_RESEARCH") return true;
+        if (!dataQuality(item, now).eligible) return false;
+        if (!["PUBLIC_RESEARCH", "LICENSED_FEED"].includes(item.source.method))
+          return true;
         const candidate = candidateFor(item.sourceUrl);
         return (
           !!candidate &&
           candidateReconciled(candidate, item) &&
           candidateCurrent(candidate, research, now) &&
           candidateLegalVerified(candidate, now, research) &&
+          (candidate.category !== "ARABA" ||
+            verifiedResearchField(
+              candidate,
+              "vehicleCondition",
+              now,
+              research,
+            )) &&
           verifiedResearchField(candidate, "availability", now, research)
         );
       })
       .map(evidence);
-    const stored = selected.flatMap((item) => {
+    const stored = selected.flatMap<Decision>((item) => {
       // Identity follows the source URL even when a new observation changes price.
       const candidate = candidateFor(item.sourceUrl);
       if (candidate) {
@@ -142,6 +146,12 @@ export async function investmentReport(now = new Date()) {
             ...decision,
             id: item.id,
             origin: "DATABASE" as const,
+            quality: decision.quality?.eligible
+              ? dataQuality(
+                  { ...item, identityReviewRequired: !reconciled },
+                  now,
+                )
+              : decision.quality,
             ...(reconciled
               ? {}
               : {
@@ -163,7 +173,9 @@ export async function investmentReport(now = new Date()) {
                   ],
                 }),
             priceCurrent:
-              reconciled && candidateCurrent(candidate, research, now),
+              reconciled &&
+              candidateCurrent(candidate, research, now) &&
+              dataQuality(item, now).eligible,
           },
         ];
       }
@@ -189,7 +201,19 @@ export async function investmentReport(now = new Date()) {
               ],
             },
           ]
-        : [{ ...decision, priceCurrent: true }];
+        : [
+            {
+              ...decision,
+              quality: dataQuality(item, now),
+              publishedAt: item.publishedAt?.toISOString() ?? null,
+              pageCheckedAt: item.pageCheckedAt?.toISOString() ?? null,
+              sourceUpdatedAt: item.sourceUpdatedAt?.toISOString() ?? null,
+              priceVerifiedAt: item.priceVerifiedAt?.toISOString() ?? null,
+              availabilityVerifiedAt:
+                item.availabilityVerifiedAt?.toISOString() ?? null,
+              priceCurrent: dataQuality(item, now).eligible,
+            },
+          ];
     });
     const researched = profile
       ? research.candidates

@@ -561,6 +561,7 @@ export async function collectResearch(
     segmentId?: SegmentId;
     deferredUrls?: string[];
     refreshEconomy?: boolean;
+    supportingListings?: boolean;
     onProgress?: (progress: {
       checkedUrls: number;
       parsedSources: number;
@@ -963,7 +964,7 @@ export async function collectResearch(
     }
   }
   const catalog =
-    segment.id !== "MARMARA_SUV"
+    options.supportingListings !== false && segment.id !== "MARMARA_SUV"
       ? await permitted("https://www.genccity.com/")
       : null;
   let listingUrls: string[] = [];
@@ -1093,7 +1094,11 @@ export async function collectResearch(
     }
   }
   // Reviewed public catalogs are discovery sources. Unmatched templates are never fabricated.
-  if (segment.id !== "DEGIRMENKOY_LAND" && segment.id !== "MARMARA_SUV") {
+  if (
+    options.supportingListings !== false &&
+    segment.id !== "DEGIRMENKOY_LAND" &&
+    segment.id !== "MARMARA_SUV"
+  ) {
     const catalogUrl =
       "https://www.turyap.com.tr/Portfoyler.aspx?KATEGORI_ID=2";
     const catalog = await permitted(catalogUrl);
@@ -1121,7 +1126,7 @@ export async function collectResearch(
       }
     }
   }
-  if (segment.id === "MARMARA_SUV") {
+  if (options.supportingListings !== false && segment.id === "MARMARA_SUV") {
     const catalog = await permitted("https://www.otomol.com/");
     if (catalog?.status === 200 && (await inspectTerms(catalog))) {
       const policy = await permitted(
@@ -1273,6 +1278,24 @@ export async function collectResearch(
         url,
         "BUDGET_DEFERRED",
         "Kaynak bu turun segmenti dışında; son gerçek kontrol tarihi korunur.",
+      );
+      continue;
+    }
+    if (
+      options.supportingListings === false &&
+      ![
+        "www.tcmb.gov.tr",
+        "tcmb.gov.tr",
+        "www.uab.gov.tr",
+        "www.afad.gov.tr",
+        "www.silivri.bel.tr",
+        "www.togg.com.tr",
+      ].includes(new URL(url).hostname)
+    ) {
+      record(
+        url,
+        "BUDGET_DEFERRED",
+        "Yardımcı yayıncı sayfası ana ilan veri akışı değildir; belgeli ve izinli portföy kaynağı bekleniyor.",
       );
       continue;
     }

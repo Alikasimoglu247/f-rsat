@@ -7,6 +7,7 @@ import { assess } from "./analysis";
 import { normalizeBodyType } from "./constants";
 import { queueBodyReview } from "./vehicle-review";
 import { HttpError } from "./http";
+import { dataQuality, type QualityFields } from "./data-quality";
 
 export const listingInclude = {
   source: true,
@@ -21,7 +22,10 @@ export type StoredListing = Prisma.ListingGetPayload<{
   include: typeof listingInclude;
 }>;
 export function evidence(listing: StoredListing): Evidence {
-  return JSON.parse(JSON.stringify(listing)) as Evidence;
+  return {
+    ...JSON.parse(JSON.stringify(listing)),
+    quality: dataQuality(listing),
+  } as Evidence;
 }
 export function canonicalUrl(value?: string) {
   if (!value) return undefined;
@@ -62,6 +66,7 @@ export type ObservationContext = {
   observedAt?: Date;
   provenance?: Record<string, string | boolean | null>;
   allowWeakCreate?: boolean;
+  quality?: QualityFields;
 };
 async function identityReview(
   tx: Prisma.TransactionClient,
@@ -246,6 +251,10 @@ export async function saveRecord(
     collectedAt: now.toISOString(),
     verification: "USER_PROVIDED_UNVERIFIED",
     originalSourceUrl: input.sourceUrl ?? null,
+    priceVerification: context.quality?.priceVerification ?? "UNVERIFIED",
+    priceVerifiedAt: context.quality?.priceVerifiedAt
+      ? new Date(context.quality.priceVerifiedAt).toISOString()
+      : null,
     ...context.provenance,
   };
   const details = detailFields(input);
@@ -278,6 +287,32 @@ export async function saveRecord(
     transactionType: input.transactionType,
     price: new Prisma.Decimal(input.price),
     lastObservedAt: observedAt,
+    ...(context.quality
+      ? {
+          publishedAt: context.quality.publishedAt
+            ? new Date(context.quality.publishedAt)
+            : undefined,
+          sourceUpdatedAt: context.quality.sourceUpdatedAt
+            ? new Date(context.quality.sourceUpdatedAt)
+            : null,
+          pageCheckedAt: context.quality.pageCheckedAt
+            ? new Date(context.quality.pageCheckedAt)
+            : null,
+          priceVerifiedAt: context.quality.priceVerifiedAt
+            ? new Date(context.quality.priceVerifiedAt)
+            : null,
+          priceVerification: context.quality.priceVerification ?? "UNVERIFIED",
+          availabilityStatus: context.quality.availabilityStatus ?? "UNKNOWN",
+          availabilityVerifiedAt: context.quality.availabilityVerifiedAt
+            ? new Date(context.quality.availabilityVerifiedAt)
+            : null,
+          verificationEvidence: context.quality.verificationEvidence
+            ? (JSON.parse(
+                JSON.stringify(context.quality.verificationEvidence),
+              ) as Prisma.InputJsonValue)
+            : Prisma.DbNull,
+        }
+      : {}),
   };
   if (existing) {
     const changed = !existing.price.equals(input.price);
@@ -461,18 +496,29 @@ export async function analyzeAll(
     include: listingInclude,
   });
   const eligible = (listing: StoredListing) =>
-    listing.source.method !== "PUBLIC_RESEARCH" ||
-    !!options.eligibleResearchIds?.has(listing.id);
+    listing.isDemo ||
+    (dataQuality(listing, options.now).eligible &&
+      (!["PUBLIC_RESEARCH", "LICENSED_FEED"].includes(listing.source.method) ||
+        !!options.eligibleResearchIds?.has(listing.id)));
   const inputs = listings.filter(eligible).map(evidence);
   for (const stored of listings) {
     const listing = evidence(stored);
     const result = assess(listing, inputs, options.now);
     if (!eligible(stored)) {
       result.score = null;
+      result.medianPrice =
+        result.rangeLow =
+        result.rangeHigh =
+        result.relativeDifference =
+          null;
+      result.priceChange = null;
+      result.sampleCount = 0;
+      result.comparables = [];
       result.confidence = "INSUFFICIENT";
       result.riskFlags.push({
         code: "RESEARCH_EVIDENCE",
-        label: "Güncel kaynak ve taşınmaza özgü resmî hukuki kanıt eksik; araştırma beyanı fiyat emsali sayılmadı.",
+        label:
+          "Güncel kaynak ve taşınmaza özgü resmî hukuki kanıt eksik; araştırma beyanı fiyat emsali sayılmadı.",
         verified: false,
       });
     }

@@ -142,7 +142,7 @@ export function selectStrategy(
   const previous =
     history.map((h) => readStrategy(h.summary)).find(Boolean) ?? null;
   const memory = structuredClone(previous?.memory ?? {});
-  const priorId = previous?.segmentId ?? "DEGIRMENKOY_LAND";
+  const priorId = previous?.segmentId ?? "CENTRAL_HOME";
   const freshLand = snapshot.candidates.filter(
     (c) =>
       segmentContains(researchSegments[0], c) &&
@@ -156,7 +156,7 @@ export function selectStrategy(
       researchSegments.length
     : landBlocked
       ? 1
-      : 0;
+      : researchSegments.findIndex((s) => s.id === "CENTRAL_HOME");
   const ordered = [
     ...researchSegments.slice(start),
     ...researchSegments.slice(0, start),

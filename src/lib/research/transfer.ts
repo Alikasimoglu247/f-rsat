@@ -11,7 +11,7 @@ const columns = {
   ListingSource:
     "id name method authorization accessStatus lastSuccessAt lastError freshnessHours categories regions lastNewCount",
   Listing:
-    "id title category province district neighborhood transactionType price sourceUrl externalId identityKey identityVersion identityStatus sourceId isDemo provenance collectedAt lastObservedAt createdAt updatedAt",
+    "id title category province district neighborhood transactionType price sourceUrl externalId identityKey identityVersion identityStatus sourceId isDemo provenance collectedAt lastObservedAt createdAt updatedAt publishedAt sourceUpdatedAt pageCheckedAt priceVerifiedAt priceVerification availabilityStatus availabilityVerifiedAt verificationEvidence",
   PropertyDetails:
     "listingId sizeM2 netM2 grossM2 propertyType rooms buildingAge condition legalStatus earthquakeInfo",
   VehicleDetails:
@@ -34,7 +34,7 @@ type Table = keyof typeof columns;
 type Row = Record<string, unknown>;
 export type ResearchBundle = {
   format: "firsatradar-public-research";
-  version: 1;
+  version: 1 | 2;
   exportedAt: string;
   tables: Record<Table, Row[]>;
   sha256: string;
@@ -89,7 +89,7 @@ export function validateBundle(value: unknown): ResearchBundle {
   const envelope = z
     .object({
       format: z.literal("firsatradar-public-research"),
-      version: z.literal(1),
+      version: z.union([z.literal(1), z.literal(2)]),
       exportedAt: iso,
       tables: z.record(z.string(), z.array(z.record(z.string(), z.unknown()))),
       sha256: z.string().regex(/^[a-f0-9]{64}$/),
@@ -156,7 +156,10 @@ export function validateBundle(value: unknown): ResearchBundle {
       }
       if (["ListingSource", "SearchProfile"].includes(table))
         z.array(z.enum(["EV", "ARSA", "TARLA", "ARABA"])).parse(row.categories);
-      if (table === "ListingSource" && row.method !== "PUBLIC_RESEARCH")
+      if (
+        table === "ListingSource" &&
+        !["PUBLIC_RESEARCH", "LICENSED_FEED"].includes(String(row.method))
+      )
         throw new HttpError(400, "Özel bağlantılar aktarılamaz.");
       if (
         table === "SearchProfile" &&
@@ -179,8 +182,8 @@ export async function exportResearchBundle(
     await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
     const sourceIds = (
       await client.query<Row>(
-        'SELECT id FROM "ListingSource" WHERE method = $1',
-        ["PUBLIC_RESEARCH"],
+        'SELECT id FROM "ListingSource" WHERE method IN ($1, $2)',
+        ["PUBLIC_RESEARCH", "LICENSED_FEED"],
       )
     ).rows.map((r) => r.id);
     const listings = (
@@ -228,7 +231,7 @@ export async function exportResearchBundle(
     await client.query("COMMIT");
     const payload = {
       format: "firsatradar-public-research" as const,
-      version: 1 as const,
+      version: 2 as const,
       exportedAt: new Date().toISOString(),
       tables,
     };
@@ -311,7 +314,12 @@ export async function importResearchBundle(
         )
       ).rows[0];
       if (!existing) await insert(client, "ListingSource", row);
-      else if (existing.method !== "PUBLIC_RESEARCH")
+      else if (
+        !["PUBLIC_RESEARCH", "LICENSED_FEED"].includes(
+          String(existing.method),
+        ) ||
+        existing.method !== row.method
+      )
         throw new HttpError(
           400,
           "Kaynak kimliği mevcut özel kaynakla çakışıyor.",
@@ -374,10 +382,33 @@ export async function importResearchBundle(
             .rowCount
         )
           id = remappedId("Listing", id);
-        await insert(client, "Listing", { ...row, id });
+        const provenance =
+          row.provenance && typeof row.provenance === "object"
+            ? (row.provenance as Row)
+            : {};
+        const legacyPublished = z.iso.date().safeParse(provenance.publishedAt);
+        await insert(client, "Listing", {
+          ...row,
+          id,
+          ...(row.publishedAt === undefined && legacyPublished.success
+            ? { publishedAt: `${legacyPublished.data}T00:00:00.000Z` }
+            : {}),
+          ...(row.pageCheckedAt === undefined
+            ? { pageCheckedAt: row.lastObservedAt }
+            : {}),
+        });
         totals.inserted++;
       } else {
         totals.matched++;
+        if (
+          bundle.version === 2 &&
+          newer(row.pageCheckedAt, current.pageCheckedAt)
+        ) {
+          await client.query(
+            `UPDATE "Listing" l SET "publishedAt"=COALESCE(l."publishedAt", r."publishedAt"), "sourceUpdatedAt"=r."sourceUpdatedAt", "pageCheckedAt"=r."pageCheckedAt", "priceVerifiedAt"=r."priceVerifiedAt", "priceVerification"=r."priceVerification", "availabilityStatus"=r."availabilityStatus", "availabilityVerifiedAt"=r."availabilityVerifiedAt", "verificationEvidence"=r."verificationEvidence" FROM json_populate_record(NULL::"Listing", $1::json) r WHERE l.id=$2`,
+            [JSON.stringify(row), id],
+          );
+        }
         if (newer(row.lastObservedAt, current.lastObservedAt)) {
           await client.query(
             'UPDATE "Listing" SET price=$2, "lastObservedAt"=$3, provenance=$4, "updatedAt"=$5 WHERE id=$1',
@@ -413,6 +444,18 @@ export async function importResearchBundle(
           ...original,
           listingId: idMap.get(String(original.listingId)),
         };
+        if (table === "OpportunityAssessment")
+          Object.assign(row, {
+            score: null,
+            medianPrice: null,
+            rangeLow: null,
+            rangeHigh: null,
+            relativeDifference: null,
+            sampleCount: 0,
+            confidence: "INSUFFICIENT",
+            explanation:
+              "Aktarılan tarihsel değerlendirme; güncel kalite/emsal kapısından geçmeden yeniden puanlanamaz. Özgün kararlar araştırma geçmişinde korunur.",
+          });
         const where =
           table === "ListingPriceHistory"
             ? '"listingId"=$1 AND "observedAt"=$2 AND price=$3'

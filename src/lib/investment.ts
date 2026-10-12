@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import snapshot from "@/data/silivri-research.json";
 import { assess, type Assessment, type Evidence } from "./analysis";
 import { normalizeFuel, money } from "./constants";
+import { dataQuality, type QualityFields } from "./data-quality";
 
 export type ResearchEvidenceField =
   | "classification"
@@ -29,6 +30,7 @@ export type ResearchSource = {
   validForDays: number;
   sha256: string;
   usageNote: string;
+  providerId?: string;
   // A failed current check invalidates an earlier successful observation.
   checkStatus?: string;
 };
@@ -46,7 +48,7 @@ export type ResearchFact = {
   validUntil?: string;
   superseded?: boolean;
 };
-export type ResearchCandidate = {
+export type ResearchCandidate = QualityFields & {
   id: string;
   sourceId: string;
   externalId: string | null;
@@ -121,6 +123,11 @@ export type Decision = {
   unitPrice: string | null;
   publishedAt: string | null;
   priceCurrent?: boolean;
+  quality?: ReturnType<typeof dataQuality>;
+  sourceUpdatedAt?: string | Date | null;
+  pageCheckedAt?: string | Date | null;
+  priceVerifiedAt?: string | Date | null;
+  availabilityVerifiedAt?: string | Date | null;
 };
 
 export const research: ResearchSnapshot = snapshot;
@@ -224,7 +231,7 @@ const normalized = (value: string) =>
 const known = (value: string | null | undefined) =>
   !!value?.trim() && !unknownValues.has(normalized(value));
 
-export function researchCandidateFresh(
+export function researchPageSeen(
   candidate: ResearchCandidate,
   now = new Date(),
   data: ResearchSnapshot = research,
@@ -235,6 +242,37 @@ export function researchCandidateFresh(
     source.url === candidate.sourceUrl &&
     source.retrievedAt === candidate.observedAt &&
     sourceFresh(source, now)
+  );
+}
+
+export function researchCandidateQuality(
+  candidate: ResearchCandidate,
+  now = new Date(),
+  data: ResearchSnapshot = research,
+) {
+  const source = data.sources.find((item) => item.id === candidate.sourceId);
+  return dataQuality(
+    {
+      ...candidate,
+      pageCheckedAt: candidate.pageCheckedAt ?? candidate.observedAt,
+      pageStatus:
+        source && sourceFresh(source, now)
+          ? source.checkStatus
+          : source?.checkStatus && source.checkStatus !== "VALID"
+            ? source.checkStatus
+            : "FAILED",
+    },
+    now,
+  );
+}
+export function researchCandidateFresh(
+  candidate: ResearchCandidate,
+  now = new Date(),
+  data: ResearchSnapshot = research,
+) {
+  return (
+    researchPageSeen(candidate, now, data) &&
+    researchCandidateQuality(candidate, now, data).eligible
   );
 }
 
@@ -350,6 +388,7 @@ export function researchDecision(
   data: ResearchSnapshot = research,
 ): Decision {
   const current = researchCandidateFresh(candidate, now, data);
+  const pageSeen = researchPageSeen(candidate, now, data);
   const alternativeResearch = current
     ? currentAlternativeResearch(candidate, now, data)
     : [];
@@ -381,9 +420,7 @@ export function researchDecision(
       "İlan kimliği/fiyat çelişkisi için inceleme ve veritabanı uzlaştırması",
     );
   if (!current)
-    missing.push(
-      "Güncel kaynak kontrolü: araştırma gözlemi eskidi veya geçersiz",
-    );
+    missing.push(...researchCandidateQuality(candidate, now, data).missing);
   if (!price) missing.push("Güncel TL satış fiyatı");
   if (!known(candidate.neighborhood))
     missing.push("Karşılaştırma için doğrulanabilir mahalle");
@@ -456,7 +493,11 @@ export function researchDecision(
     missing.push("Net alternatif yatırım ve finansman maliyeti");
   const currentAssessment = current ? assessment : null;
   const parcelReasons: Reason[] = [];
-  if (current && ["ARSA", "TARLA"].includes(candidate.category)) {
+  if (pageSeen && ["ARSA", "TARLA"].includes(candidate.category)) {
+    // Preserve historical publisher arithmetic/risk, labelled as unconfirmed;
+    // it is never the current unit price or a valuation input.
+    const price = candidate.price,
+      area = candidateArea;
     const offerIds = candidate.factIds.filter((id) =>
       supportedFact(id, now, data),
     );
@@ -470,7 +511,7 @@ export function researchDecision(
       currentAssessment.sampleCount >= 5;
     if (price && area && unit)
       parcelReasons.push({
-        text: `${identity}: ${price} TL / ${area} m² = ${unit} TL/m² isteniyor. ${comparableReady ? `Mevcut fiyat motoru ${currentAssessment!.sampleCount} eşleşen kaydı değerlendirdi; yatırım sonucu finansman, likidite ve diğer eksik kanıtlarla birlikte okunmalıdır.` : "Bu taşınmazın fiyat avantajı hesaplanamadı: en az 5 güncel, bağımsız ve aynı hukuki sınıftaki emsal doğrulanmadı."} İstenen fiyat, gerçekleşmiş satış bedeli değildir.`,
+        text: `${identity}: ${price} TL / ${area} m² = ${unit} TL/m² isteniyor. ${comparableReady ? `Mevcut fiyat motoru ${currentAssessment!.sampleCount} eşleşen kaydı değerlendirdi; yatırım sonucu finansman, likidite ve diğer eksik kanıtlarla birlikte okunmalıdır.` : "Bu taşınmazın fiyat avantajı hesaplanamadı: en az 5 güncel, bağımsız ve aynı hukuki sınıftaki emsal doğrulanmadı."} İstenen fiyat, gerçekleşmiş satış bedeli değildir. ${current ? "" : "Tarihsel/teyitsiz sayfa beyanı; güncel piyasa fiyatı veya fiyat avantajı sayılmaz."}`,
         evidenceIds: offerIds.slice(0, 1),
         kind: "INFERENCE",
       });
@@ -526,7 +567,7 @@ export function researchDecision(
     missing.push("En az 5 güncel, aynı nitelikte gerçek emsal");
   for (const flag of currentAssessment?.riskFlags ?? [])
     if (!missing.includes(flag.label)) missing.push(flag.label);
-  const factIds = current
+  const factIds = pageSeen
     ? candidate.factIds.filter((id) => supportedFact(id, now, data))
     : [];
   const officialFact = (id: string) => {
@@ -570,9 +611,9 @@ export function researchDecision(
       evidenceIds: [housing!.id, inflation!.id],
       kind: "INFERENCE",
     });
-  const risks = current ? [...candidate.riskSignals] : [];
+  const risks = pageSeen ? [...candidate.riskSignals] : [];
   if (
-    current &&
+    pageSeen &&
     normalized(candidate.sharedOwnership ?? "").includes("hisseli") &&
     !risks.length
   )
@@ -600,6 +641,11 @@ export function researchDecision(
       : null,
     observedAt: candidate.observedAt,
     publishedAt: candidate.publishedAt,
+    sourceUpdatedAt: candidate.sourceUpdatedAt ?? null,
+    pageCheckedAt: candidate.pageCheckedAt ?? candidate.observedAt,
+    priceVerifiedAt: candidate.priceVerifiedAt ?? null,
+    availabilityVerifiedAt: candidate.availabilityVerifiedAt ?? null,
+    quality: researchCandidateQuality(candidate, now, data),
     // Keep the dated observation visible; it cannot support current valuation.
     price: observedUnitPrice(candidate.price, "1") ? candidate.price : null,
     priceCurrent: !!price,
@@ -632,13 +678,13 @@ export function researchDecision(
         : [],
     whyNot: [
       ...parcelReasons,
-      ...(current &&
+      ...(pageSeen &&
       candidate.category === "ARABA" &&
       candidate.vehicle &&
-      price
+      candidate.price
         ? [
             {
-              text: `${candidate.vehicle.make} ${candidate.vehicle.model} ${candidate.vehicle.trim ?? ""}: yayıncı ${candidate.vehicle.modelYear} model, ${candidate.vehicle.mileage?.toLocaleString("tr-TR")} km ve ${money(price)} istiyor. ${currentAssessment?.score != null && currentAssessment.sampleCount >= 5 ? `Karşılaştırma ${currentAssessment.sampleCount} aynı segmentte fiyat beyanına dayanır; gerçekleşmiş satış veya net yatırım getirisi değildir.` : "Aynı model/donanım, yakın yıl/km ve doğrulanmış hasar durumunda en az 5 bağımsız emsal bulunmadığı sürece fiyat avantajı hesaplanmaz."}`,
+              text: `${candidate.vehicle.make} ${candidate.vehicle.model} ${candidate.vehicle.trim ?? ""}: yayıncı ${candidate.vehicle.modelYear} model, ${candidate.vehicle.mileage?.toLocaleString("tr-TR")} km ve ${money(candidate.price)} istiyor. ${currentAssessment?.score != null && currentAssessment.sampleCount >= 5 ? `Karşılaştırma ${currentAssessment.sampleCount} aynı segmentte fiyat beyanına dayanır; gerçekleşmiş satış veya net yatırım getirisi değildir.` : "Aynı model/donanım, yakın yıl/km ve doğrulanmış hasar durumunda en az 5 bağımsız emsal bulunmadığı sürece fiyat avantajı hesaplanmaz."}`,
               evidenceIds: factIds.slice(0, 1),
               kind: "INFERENCE" as const,
             },

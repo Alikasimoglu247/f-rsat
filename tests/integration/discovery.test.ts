@@ -5,6 +5,7 @@ import { ensureSources } from "../../src/lib/providers/registry";
 import { ingestEml, approveMessage } from "../../src/lib/email/ingestion";
 import { sourceCoverage } from "../../src/lib/email/coverage";
 import { importRecords } from "../../src/lib/listings";
+import { confirmTestRows } from "../helpers/quality";
 import { demoListings } from "../../prisma/demo";
 import { runDaily } from "../../src/lib/jobs";
 beforeEach(async () => {
@@ -79,6 +80,7 @@ it("09.00 motoru yeterli gerçek emsalleri rapora alır; demo ve yetersiz kanıt
     "manual",
     "MANUAL",
   );
+  await confirmTestRows({ category: "EV" });
   const result = await runDaily({ key: "m2-real-report", providers: [] });
   expect(result.status).toBe("COMPLETED");
   const report = await db.dailyReport.findUniqueOrThrow({

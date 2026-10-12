@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { researchCandidateFresh, type ResearchSnapshot } from "../investment";
+import { researchPageSeen, type ResearchSnapshot } from "../investment";
 import { canonicalUrl } from "../listings";
 
 /** Same parcel/area can be a repost or separate shares; neither is assumed. */
@@ -10,7 +10,7 @@ export function potentialParcelGroups(snapshot: ResearchSnapshot, now: Date) {
       !["ARSA", "TARLA"].includes(candidate.category) ||
       !/^\d+\/\d+$/.test(candidate.parcelNumber ?? "") ||
       !candidate.sizeM2 ||
-      !researchCandidateFresh(candidate, now, snapshot)
+      !researchPageSeen(candidate, now, snapshot)
     )
       continue;
     const key = [

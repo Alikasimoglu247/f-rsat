@@ -36,6 +36,14 @@ model Listing {
   lastObservedAt  DateTime               @default(now())
   createdAt       DateTime               @default(now())
   updatedAt       DateTime               @updatedAt
+  publishedAt             DateTime?
+  sourceUpdatedAt         DateTime?
+  pageCheckedAt           DateTime?
+  priceVerifiedAt         DateTime?
+  priceVerification       String @default("UNVERIFIED")
+  availabilityStatus      String @default("UNKNOWN")
+  availabilityVerifiedAt  DateTime?
+  verificationEvidence    Json?
   property        PropertyDetails?
   vehicle         VehicleDetails?
   land            LandDetails?

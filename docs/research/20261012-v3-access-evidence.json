@@ -1,0 +1,346 @@
+{
+  "scope": "Official integration/permission documentation only; no API or real-feed success claimed",
+  "evidence": [
+    {
+      "provider": "REIDIN",
+      "state": "ROBOTS_UNCONFIRMED",
+      "checks": [
+        {
+          "url": "https://reidin.com/robots.txt",
+          "status": 301,
+          "checkedAt": "2026-10-12T06:45:13.306Z",
+          "redirect": "https://reidin.com/robots.txt/"
+        }
+      ],
+      "documents": [],
+      "listingReadApiVerified": false,
+      "authorizedAccountConnected": false
+    },
+    {
+      "provider": "DOD",
+      "state": "PUBLIC_DOCUMENTATION_READ",
+      "checks": [
+        {
+          "url": "https://dod.com.tr/robots.txt",
+          "status": 200,
+          "checkedAt": "2026-10-12T06:45:13.620Z",
+          "redirect": null,
+          "sha256": "eb5d89cf7a529f2b75dab1f14ef8b0b2f2ca63b892065fd9411dc78881e6a502"
+        },
+        {
+          "url": "https://dod.com.tr/",
+          "status": 200,
+          "checkedAt": "2026-10-12T06:45:13.877Z",
+          "redirect": null,
+          "sha256": "cc197e9e66bfa32f3b218b614cb37b858b6bd6395873704f0bff767751e65bc8"
+        },
+        {
+          "url": "https://dod.com.tr/dod/kurumsal/kullanim-sartlari-ve-gizlilik",
+          "status": 200,
+          "checkedAt": "2026-10-12T06:45:14.168Z",
+          "redirect": null,
+          "sha256": "924e7786c0c4ba1bc50168bc482960dbcdec7517581b1f3613b9acde19e1d8aa"
+        },
+        {
+          "url": "https://dod.com.tr/dod/kurumsal/kurumsal-kimlik",
+          "status": 200,
+          "checkedAt": "2026-10-12T06:45:14.384Z",
+          "redirect": null,
+          "sha256": "be0262bb3053fbb3c26006ca4321636d9162cbdc2ef7798cfd6dc7202e52c18e"
+        }
+      ],
+      "documents": [
+        {
+          "url": "https://dod.com.tr/dod/kurumsal/kullanim-sartlari-ve-gizlilik",
+          "quotes": []
+        },
+        {
+          "url": "https://dod.com.tr/dod/kurumsal/kurumsal-kimlik",
+          "quotes": []
+        }
+      ],
+      "listingReadApiVerified": false,
+      "authorizedAccountConnected": false
+    },
+    {
+      "provider": "Hepsiemlak",
+      "state": "PUBLIC_DOCUMENTATION_READ",
+      "checks": [
+        {
+          "url": "https://www.hepsiemlak.com/robots.txt",
+          "status": 200,
+          "checkedAt": "2026-10-12T06:45:14.595Z",
+          "redirect": null,
+          "sha256": "a8a1d151076b4becf19b57a338b04d9e27cfba2bf94205c3c12955e85485a3be"
+        },
+        {
+          "url": "https://www.hepsiemlak.com/",
+          "status": 200,
+          "checkedAt": "2026-10-12T06:45:14.664Z",
+          "redirect": null,
+          "sha256": "31b2f12f5e333c09c9827f1beb4eaec67336529acfe40edec1380bf68cd9f0a0"
+        },
+        {
+          "url": "https://www.hepsiemlak.com/kullanim-kosullari",
+          "status": 200,
+          "checkedAt": "2026-10-12T06:45:14.968Z",
+          "redirect": null,
+          "sha256": "4baff7ff2332b395996af790744cd42b461fa3c5e0effd51a683208674ed2ffe"
+        }
+      ],
+      "documents": [
+        {
+          "url": "https://www.hepsiemlak.com/kullanim-kosullari",
+          "quotes": [
+            "ük tarihleri Site'nin ilgili bölümlerinde ilan edilecektir. Hepsiemlak tarafından her zaman Site’de çeşitli Hizmetlerin ücretsiz veya indirimli olarak sunulması imkanı bulunmakta olup, hepsiemlak, her zaman söz konusu indirimli veya ücretsiz Hizmet sunumundan tek taraflı olarak vazgeçip, Hizmeti ücretli vey"
+          ]
+        }
+      ],
+      "listingReadApiVerified": false,
+      "authorizedAccountConnected": false
+    },
+    {
+      "provider": "Emlakjet",
+      "state": "PUBLIC_DOCUMENTATION_READ",
+      "checks": [
+        {
+          "url": "https://www.emlakjet.com/robots.txt",
+          "status": 200,
+          "checkedAt": "2026-10-12T06:45:15.209Z",
+          "redirect": null,
+          "sha256": "e39d16cd3b8768477372b355e7f2632cd2ec2e2ba0eb253d1892ccea5e941388"
+        },
+        {
+          "url": "https://www.emlakjet.com/",
+          "status": 200,
+          "checkedAt": "2026-10-12T06:45:15.262Z",
+          "redirect": null,
+          "sha256": "86d30a31258500a9c3b64082b0fb248748ebfa4524edc096ed0b667923ab891e"
+        },
+        {
+          "url": "https://www.emlakjet.com/kullanim-kosullari",
+          "status": 200,
+          "checkedAt": "2026-10-12T06:45:15.433Z",
+          "redirect": null,
+          "sha256": "9d6e2e411c2969c7532ff59d143809437610fb135ef5935946f50d38e32c1a58"
+        },
+        {
+          "url": "https://www.emlakjet.com/kurumsal-materyaller",
+          "status": 200,
+          "checkedAt": "2026-10-12T06:45:15.520Z",
+          "redirect": null,
+          "sha256": "1e0197a8ad70c4b3214ade78b3288de53a251b1eb634c0f7ebae126a7836811d"
+        }
+      ],
+      "documents": [
+        {
+          "url": "https://www.emlakjet.com/kullanim-kosullari",
+          "quotes": [
+            "sel ilan sahiplerini ve son kullanıcıları bir araya getirmeyi amaçlamaktadır. Site bünyesinde sunulan Endeksa Platformu entegrasyonu aracılığıyla gayrimenkul değerleme, piyasa analizi ve veri hizmetleri de sağlanmaktadır.1.3 İşbu Kullanım Koşulları, Site'nin tamamında geçerli olan çerçeve kuralları içermektedi"
+          ]
+        },
+        {
+          "url": "https://www.emlakjet.com/kurumsal-materyaller",
+          "quotes": []
+        }
+      ],
+      "listingReadApiVerified": false,
+      "authorizedAccountConnected": false
+    },
+    {
+      "provider": "Endeksa",
+      "state": "PUBLIC_DOCUMENTATION_READ",
+      "checks": [
+        {
+          "url": "https://www.endeksa.com/robots.txt",
+          "status": 200,
+          "checkedAt": "2026-10-12T06:45:15.707Z",
+          "redirect": null,
+          "sha256": "f9b5aff82df22f82886549413836645901b10ad1dad97f396d2fbfc4b261b0e0"
+        },
+        {
+          "url": "https://www.endeksa.com/tr/",
+          "status": 200,
+          "checkedAt": "2026-10-12T06:45:15.823Z",
+          "redirect": null,
+          "sha256": "710d75ede6c77affb66f382af16652bc0c2fda328d4ba8b789ad460b7b3a8aaa"
+        }
+      ],
+      "documents": [],
+      "listingReadApiVerified": false,
+      "authorizedAccountConnected": false
+    },
+    {
+      "provider": "arabam.com",
+      "state": "PUBLIC_DOCUMENTATION_READ",
+      "checks": [
+        {
+          "url": "https://www.arabam.com/robots.txt",
+          "status": 200,
+          "checkedAt": "2026-10-12T06:45:15.927Z",
+          "redirect": null,
+          "sha256": "8a10e573adcddebb882540a219077aca9abe5df16cf06df6350d94e9740bd216"
+        },
+        {
+          "url": "https://www.arabam.com/",
+          "status": 200,
+          "checkedAt": "2026-10-12T06:45:16.056Z",
+          "redirect": null,
+          "sha256": "ebcaf715b14e0dea3113a250047d1afac13dbcfcde897e88c52902e5b445d29f"
+        }
+      ],
+      "documents": [],
+      "listingReadApiVerified": false,
+      "authorizedAccountConnected": false
+    },
+    {
+      "provider": "Toyota",
+      "state": "PUBLIC_DOCUMENTATION_READ",
+      "checks": [
+        {
+          "url": "https://www.toyota.com.tr/robots.txt",
+          "status": 200,
+          "checkedAt": "2026-10-12T06:45:17.153Z",
+          "redirect": null,
+          "sha256": "c9d2605a0ec9742a481046410c67e13ff8c81a4bd6962e17c6433eda7d596117"
+        },
+        {
+          "url": "https://www.toyota.com.tr/",
+          "status": 200,
+          "checkedAt": "2026-10-12T06:45:17.980Z",
+          "redirect": null,
+          "sha256": "173cb9b2299d2d132c3e5921d2265ded3ae1217bc36a5976c4c162c723f318f1"
+        }
+      ],
+      "documents": [],
+      "listingReadApiVerified": false,
+      "authorizedAccountConnected": false
+    },
+    {
+      "provider": "Otokoç",
+      "state": "ACCESS_RESTRICTED",
+      "checks": [
+        {
+          "url": "https://www.otokoc.com.tr/robots.txt",
+          "status": 200,
+          "checkedAt": "2026-10-12T06:42:31.593Z",
+          "redirect": null,
+          "sha256": "0d6d911458c7eaf5eb45307304772f05e5d8aec4a741c3d6869d0982f225fcfa"
+        }
+      ],
+      "listingReadApiVerified": false,
+      "authorizedAccountConnected": false
+    },
+    {
+      "provider": "İkinciyeni",
+      "state": "PUBLIC_DOCUMENTATION_READ",
+      "checks": [
+        {
+          "url": "https://www.ikinciyeni.com/robots.txt",
+          "status": 200,
+          "checkedAt": "2026-10-12T06:42:31.694Z",
+          "redirect": null,
+          "sha256": "fae931b2788b2d082d0aa5e938fc7dc6bb6f6949c559f6a897bb5c4acebd89f6"
+        },
+        {
+          "url": "https://www.ikinciyeni.com/",
+          "status": 200,
+          "checkedAt": "2026-10-12T06:42:32.029Z",
+          "redirect": null,
+          "sha256": "0ef224491ec2177293e6322ebc40a038b648755fa91334f640556e7b0b7da914"
+        },
+        {
+          "url": "https://www.ikinciyeni.com/kurumsal-uyelik-sozlesmesi",
+          "status": 200,
+          "checkedAt": "2026-10-12T06:42:32.325Z",
+          "redirect": null,
+          "sha256": "62ac1cfbccc36f5f6ad91b02ef43459cc6e79198b34fbed0a4d13f9496adaee7"
+        },
+        {
+          "url": "https://www.ikinciyeni.com/kullanim-kosullari",
+          "status": 200,
+          "checkedAt": "2026-10-12T06:42:32.758Z",
+          "redirect": null,
+          "sha256": "ed410f906d4842b7f17a3aa3dfae2537804653de7ed62bf2e594f24e0273f5a0"
+        },
+        {
+          "url": "https://www.ikinciyeni.com/kurumsal-emanet-alim-sozlesmesi",
+          "status": 200,
+          "checkedAt": "2026-10-12T06:42:32.886Z",
+          "redirect": null,
+          "sha256": "c2f5cab1f4438350f3d7d56e514c895ea973067bc28c8e87d30b0947a6d4ea4f"
+        }
+      ],
+      "listingReadApiVerified": false,
+      "authorizedAccountConnected": false
+    },
+    {
+      "provider": "VavaCars",
+      "state": "ROBOTS_UNCONFIRMED",
+      "checks": [
+        {
+          "url": "https://www.vava.cars/robots.txt",
+          "status": 301,
+          "checkedAt": "2026-10-12T06:42:32.810Z",
+          "redirect": "https://tr.vava.cars"
+        }
+      ],
+      "listingReadApiVerified": false,
+      "authorizedAccountConnected": false
+    },
+    {
+      "provider": "Hepsiemlak",
+      "state": "DOCUMENT_READ",
+      "url": "https://www.hepsiemlak.com/kullanim-kosullari",
+      "checkedAt": "2026-10-12T06:58:34.293Z",
+      "httpStatus": 200,
+      "sha256": "fceb850ec399654e352691a1dbba5d0483de029f7832653e493d1b5f6380edde",
+      "permissionQuotes": [
+        " bir lisana çevirmek amacıyla ya da izin ve yetki verilmeyen başka amaçlarla ve önceden hepsiemlak’ın açık ve yazılı iznini almadan herhangi bir robot, örümcek veya başka otomatik aletler ya da manuel süreçler kullanmayacaklarını, kopyalamayacaklarını, çoğaltmayacaklarını, değiştirmeyeceklerini, yaymayacaklarını bu içer",
+        "'ler, Site'nin çalışmasına müdahale etmek veya müdahaleye teşebbüs etmek amacıyla herhangi bir araç, yazılım, robot, örümcek, veya başka otomatik aletler ya da manuel süreçler kullanmayacaklarını, Site’ye yetkisiz olarak bağlanmayacaklarını ve işlem yapmayacaklarını, diğer internet kullanıcılarının yazılımlarına v"
+      ]
+    },
+    {
+      "provider": "Emlakjet",
+      "state": "DOCUMENT_READ",
+      "url": "https://www.emlakjet.com/kullanim-kosullari",
+      "checkedAt": "2026-10-12T06:58:35.525Z",
+      "httpStatus": 200,
+      "sha256": "abb7151d6042ef9ec0e5ea99bbe3090dc2fe51f66bbd8507d13d0a4002533c56",
+      "permissionQuotes": [
+        "isiz erişimi önlemek.Site'de yer alan diğer Kullanıcıların/Üyelerin verilerine, içeriklerine veya hesaplarına izinsiz erişmemek veya bunları kopyalamamak.Site'nin normal işleyişini engelleyecek veya bozacak herhangi bir eylemde bulunmamak.6.2 Yasak KullanımlarAşağıda belirtilen eylemler kesinlikle yasaktır ve hukuki",
+        "/cezai sorumluluğa yol açabilir:Site üzerinde Emlakjet'in önceden yazılı izni olmaksızın otomatik program, robot, web crawler, örümcek, veri madenciliği (data mining), ekran kazıma (screen scraping) yazılımları veya benzeri araçlar kullanmak.Site'nin bütününü veya herhangi bir bölümünü bozma, değiştirme ya da t"
+      ]
+    },
+    {
+      "provider": "İkinciyeni",
+      "state": "DOCUMENT_READ",
+      "url": "https://www.ikinciyeni.com/kullanim-kosullari",
+      "checkedAt": "2026-10-12T06:58:35.766Z",
+      "httpStatus": 200,
+      "sha256": "8fb86abc75dc78b05d59968159cdf6660b142253dfce0bba8bb4188ff8b156ee",
+      "permissionQuotes": [
+        "n veya dolaylı olarak aynen ya da başka bir şekilde Site’nin içeriği dağıtılamaz, iletilemez, değiştirilemez, kopyalanamaz, görüntülenemez, çoğaltılamaz, yayınlanamaz, işlenemez veya başka bir şekilde kullanılamaz.3. Site’de yer alan ya da Site aracılığı ile verilen bilgiler, herhangi bir şekilde tavsiye olarak kullanılm",
+        "ak bağlanmayacaklarını ve işlem yapmayacaklarını, diğer internet kullanıcılarının yazılımlarına ve verilerine izinsiz olarak ulaşmayacaklarını veya bunları kullanmayacaklarını kabul, beyan ve taahhüt ederler.8. Site’de, bu Site’den tamamen bağımsız ve Yes Oto’nun kendi kontrolünde olmayan üçüncü kişilere ait başka w"
+      ]
+    },
+    {
+      "provider": "Sahibinden — yalnız belge",
+      "state": "ROBOTS_UNCONFIRMED",
+      "url": "https://www.sahibinden.com/kurumsal",
+      "checkedAt": "2026-10-12T06:58:36.504Z",
+      "httpStatus": 429,
+      "sha256": null,
+      "permissionQuotes": []
+    }
+  ],
+  "accidentalDocumentationMatches": {
+    "listingPagesRead": 4,
+    "blogPagesRead": 1,
+    "recordsImported": 0,
+    "pricesUsed": 0,
+    "listingPathsNowExcluded": true
+  },
+  "actualAuthorizedListingConnections": 0,
+  "syntheticTestsAreNotLiveValidation": true
+}

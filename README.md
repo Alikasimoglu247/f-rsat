@@ -37,6 +37,8 @@ Seed dört kategoride dokuzar, toplam **36 açıkça DEMO etiketli kayıt** olu�
 
 ## Kaynaklara dayalı Silivri yatırım pilotu
 
+**V3 veri kalitesi:** Sayfanın yeniden okunması fiyat veya satış teyidi değildir. Yayın, kaynak güncellemesi, sayfa kontrolü ve iki teyit tarihi ayrıdır; eski/teyitsiz kayıtlar güncel emsal ve puandan dışlanır. Ana ilan alımı belgeli izinli akışa bağlıdır; bağlantı yokken yalnız resmî yardımcı araştırma yapılır. [Resmî erişim matrisi, çalışan sözleşme ve sınırlar](docs/V3_REAL_DATA_ACCESS.md).
+
 **Product V2:** Ana deneyim artık Genel Bakış, Keşfet, Yatırım Analizi, Araştırma Merkezi ve Takip Listem'dir. Araştırma uygulama içinden başlatılır; kaynak kontrolü, kalıcı görev ve gerçek worker durumu görünür. Cloud araştırma kayıtları güvenli paketle mevcut Windows PostgreSQL'e birleştirilebilir. [Windows güncelleme](docs/WINDOWS_V2_GUNCELLEME.md) · [Kabul sonuçları ve sınırlar](docs/PRODUCT_V2_ACCEPTANCE.md).
 
 Boş veritabanında eski JSON adayları aktif ilan veya canlı fırsat olarak gösterilmez. JSON aşağıdaki ilk pilotun tarihsel arşividir. Gerçek kayıtlar PostgreSQL'den, güncel kararlar araştırma kanıtlarından gelir; veri aktarımı eski gözlemleri yeniden tarihlemez.

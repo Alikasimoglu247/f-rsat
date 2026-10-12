@@ -3,6 +3,7 @@ import {
   research,
   sourceFresh,
   observedUnitPrice,
+  researchCandidateFresh,
   type ResearchSnapshot,
 } from "../investment";
 import type { AcquisitionResult, ResearchChange } from "./types";
@@ -148,13 +149,24 @@ export function researchChanges(
         const pricesValid =
           !!observedUnitPrice(old.price, "1") &&
           !!observedUnitPrice(candidate.price, "1");
+        const verified =
+          pricesValid &&
+          previous &&
+          researchCandidateFresh(old, new Date(old.observedAt), previous) &&
+          researchCandidateFresh(candidate, now, next);
         changes.push({
-          kind: pricesValid ? "PRICE_CHANGED" : "CANDIDATE_CHANGED",
+          kind: pricesValid
+            ? verified
+              ? "PRICE_CHANGED"
+              : "PRICE_CLAIM_CHANGED"
+            : "CANDIDATE_CHANGED",
           key: candidate.sourceUrl,
           before: old.price,
           after: candidate.price,
           reason: pricesValid
-            ? "Aynı kaynak/ilan kimliğinin ardışık geçerli fiyat gözlemleri değişti."
+            ? verified
+              ? "Aynı kaynak/ilan kimliğinin ardışık teyitli fiyat gözlemleri değişti."
+              : "Yayıncı fiyat beyanı değişti; fiyat/satış teyidi bulunmadığından güncel piyasa fiyat değişimi değildir."
             : "Fiyat artık açıklanmıyor veya geçerli pozitif sayıya dönüşmüyor; önceki fiyat yeni gözlem olarak kopyalanmadı.",
         });
       } else if (candidateValue(old) !== candidateValue(candidate))

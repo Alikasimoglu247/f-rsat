@@ -11,6 +11,7 @@ import {
   type ResearchSnapshot,
 } from "../../src/lib/investment";
 import { researchListingInput } from "../../src/lib/research-import";
+import { confirmCandidate } from "../helpers/quality";
 
 // These controlled snapshots test revisions; they are not live market observations.
 const now = new Date("2026-10-09T21:05:00Z");
@@ -94,6 +95,7 @@ it("reports age in Istanbul calendar days without claiming time on market or rev
 it("yeni aynı segment adayı alternatif gerekçesini değiştirir; belge eksikliği fırsata dönüşmez", () => {
   const snapshot = data();
   const subject = candidateById(snapshot);
+  confirmCandidate(subject, now);
   const before = researchDecision(subject, now, null, snapshot);
   const url = "https://example.com/synthetic-alternative";
   snapshot.sources.push({
@@ -124,6 +126,7 @@ it("yeni aynı segment adayı alternatif gerekçesini değiştirir; belge eksikl
     observedAt: now.toISOString(),
     factIds: ["synthetic-alt-offer"],
   });
+  confirmCandidate(snapshot.candidates[snapshot.candidates.length - 1], now);
   const after = researchDecision(subject, now, null, snapshot);
   expect(after.alternatives).not.toBe(before.alternatives);
   expect(after.alternatives).toContain(
@@ -185,6 +188,7 @@ describe("tekrar araştırma ile kanıta bağlı karar revizyonu", () => {
     const second = data();
     const candidate = candidateById(second, "genc-farm250");
     candidate.price = "270000";
+    confirmCandidate(candidate, now);
     candidate.sharedOwnership = "Müstakil";
     candidate.riskSignals = [];
     candidate.limitations = [
@@ -309,6 +313,7 @@ describe("tekrar araştırma ile kanıta bağlı karar revizyonu", () => {
       roadAccess: "Yasal yola cephe",
       legalStatus: "Takyidat yok",
     });
+    confirmCandidate(candidate, now);
     for (const field of [
       "classification",
       "zoning",

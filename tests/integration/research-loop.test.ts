@@ -6,6 +6,7 @@ import type { AcquisitionResult } from "../../src/lib/research/types";
 import { ensureSources } from "../../src/lib/providers/registry";
 import { ensurePilotProfiles } from "../../src/lib/pilots";
 import { investmentReport } from "../../src/lib/investment-report";
+import { syntheticConfirmation } from "../helpers/quality";
 
 const clock = new Date("2026-10-09T21:05:00Z");
 const url = "https://www.genccity.com/satilik-arsa/synthetic-test/099099099099";
@@ -42,6 +43,10 @@ function fixture(
     observedAt,
     factIds: ["synthetic-claim"],
     riskSignals: risk ? ["SENTETİK çelişkili hisse beyanı"] : [],
+    ...syntheticConfirmation(
+      { externalId: "synthetic-test", sourceUrl: url, price },
+      when,
+    ),
   };
   return {
     sources: [source, policy],

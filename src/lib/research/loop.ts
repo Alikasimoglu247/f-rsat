@@ -19,6 +19,7 @@ import {
 } from "../investment";
 import { researchListingInput } from "../research-import";
 import { collectResearch } from "./acquisition";
+import { collectPriorityResearch } from "./priority-acquisition";
 import { potentialParcelGroups } from "./parcel-review";
 import { mergeResearch, researchChanges, stableJson } from "./store";
 import type { AcquisitionResult, ResearchTrigger } from "./types";
@@ -204,7 +205,7 @@ export async function runResearch(
           .map((item) => item.url),
       ]),
     ];
-    acquired = await (options.acquire ?? collectResearch)({
+    acquired = await (options.acquire ?? collectPriorityResearch)({
       onProgress: (progress) => {
         if (Date.now() - lastProgressAt < 1000) return;
         lastProgressAt = Date.now();
@@ -315,11 +316,13 @@ export async function runResearch(
       const host = new URL(candidate.sourceUrl).hostname;
       // Preserve the first pilot's source namespaces and price histories.
       const sourceId =
-        host === "www.genccity.com"
-          ? "research-genccity"
-          : host === "www.gayrimenkulakgun.com"
-            ? "research-akgun"
-            : `research-${host.replace(/^www\./, "").replace(/[^a-z0-9-]/g, "-")}`;
+        source.kind === "AUTHORIZED_FEED"
+          ? `licensed-${source.providerId}`
+          : host === "www.genccity.com"
+            ? "research-genccity"
+            : host === "www.gayrimenkulakgun.com"
+              ? "research-akgun"
+              : `research-${host.replace(/^www\./, "").replace(/[^a-z0-9-]/g, "-")}`;
       const existingSource = await db.listingSource.findUnique({
         where: { id: sourceId },
       });
@@ -343,7 +346,10 @@ export async function runResearch(
         create: {
           id: sourceId,
           name: sourceName,
-          method: "PUBLIC_RESEARCH",
+          method:
+            source.kind === "AUTHORIZED_FEED"
+              ? "LICENSED_FEED"
+              : "PUBLIC_RESEARCH",
           accessStatus: "AVAILABLE",
           ...coverage,
           authorization: source.usageNote,
@@ -356,6 +362,16 @@ export async function runResearch(
       });
       const result = await importRecords([input], sourceId, "PUBLIC_RESEARCH", {
         observedAt: new Date(candidate.observedAt),
+        quality: {
+          publishedAt: candidate.publishedAt,
+          sourceUpdatedAt: candidate.sourceUpdatedAt,
+          pageCheckedAt: candidate.pageCheckedAt ?? candidate.observedAt,
+          priceVerifiedAt: candidate.priceVerifiedAt,
+          priceVerification: candidate.priceVerification ?? "UNVERIFIED",
+          availabilityStatus: candidate.availabilityStatus ?? "UNKNOWN",
+          availabilityVerifiedAt: candidate.availabilityVerifiedAt,
+          verificationEvidence: candidate.verificationEvidence,
+        },
         provenance: {
           researchRunId: run.id,
           researchCandidateId: candidate.id,
@@ -378,7 +394,8 @@ export async function runResearch(
         counts[key] += result[key];
     }
     for (const change of changes) {
-      if (change.kind !== "PRICE_CHANGED") continue;
+      if (!["PRICE_CHANGED", "PRICE_CLAIM_CHANGED"].includes(change.kind))
+        continue;
       if (importedUrls.has(resourceUrl(change.key)))
         change.reason +=
           " Kanonik ilan kimliği doğrulandı ve fiyat geçmişi mevcut içe aktarma motoruyla kaydedildi.";
@@ -426,7 +443,10 @@ export async function runResearch(
     const eligibleResearchIds = new Set(
       records
         .filter((record) => {
-          if (record.source.method !== "PUBLIC_RESEARCH") return false;
+          if (
+            !["PUBLIC_RESEARCH", "LICENSED_FEED"].includes(record.source.method)
+          )
+            return false;
           const candidate = snapshot.candidates.find(
             (item) => resourceUrl(item.sourceUrl) === record.sourceUrl,
           );
@@ -441,6 +461,13 @@ export async function runResearch(
               candidate.id === "akgun-3653" ||
               candidate.externalId === record.externalId) &&
             candidateLegalVerified(candidate, completedAt, snapshot) &&
+            (candidate.category !== "ARABA" ||
+              verifiedResearchField(
+                candidate,
+                "vehicleCondition",
+                completedAt,
+                snapshot,
+              )) &&
             verifiedResearchField(
               candidate,
               "availability",
@@ -454,8 +481,9 @@ export async function runResearch(
     const pool = records
       .filter(
         (record) =>
-          record.source.method !== "PUBLIC_RESEARCH" ||
-          eligibleResearchIds.has(record.id),
+          !["PUBLIC_RESEARCH", "LICENSED_FEED"].includes(
+            record.source.method,
+          ) || eligibleResearchIds.has(record.id),
       )
       .map(evidence);
     await db.$transaction(

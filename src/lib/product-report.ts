@@ -5,6 +5,7 @@ import { researchSegments, selectStrategy } from "./research/strategy";
 import { loadResearchState } from "./research/store";
 import { research } from "./investment";
 import { recentPriceDrops } from "./price-drops";
+import { authorizedFeedStatus } from "./research/authorized-feed";
 
 export async function productReport(now = new Date()) {
   const [
@@ -70,7 +71,17 @@ export async function productReport(now = new Date()) {
       vehicles: listings.filter((l) => l.category === "ARABA").length,
     },
     recentDrops: listings.flatMap((listing) =>
-      recentPriceDrops(listing.id, listing.prices, now).map((drop) => ({
+      recentPriceDrops(
+        listing.id,
+        listing.prices.filter(
+          (p) =>
+            p.provenance &&
+            typeof p.provenance === "object" &&
+            !Array.isArray(p.provenance) &&
+            p.provenance.priceVerification === "VERIFIED",
+        ),
+        now,
+      ).map((drop) => ({
         title: listing.title,
         ...drop,
       })),
@@ -82,6 +93,7 @@ export async function productReport(now = new Date()) {
         "Bekleme",
     },
     databaseReady: true,
+    dataAcquisition: authorizedFeedStatus(),
   };
 }
 export type ProductReport = Awaited<ReturnType<typeof productReport>>;

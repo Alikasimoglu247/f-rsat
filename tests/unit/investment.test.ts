@@ -74,12 +74,13 @@ describe("kaynaklara dayalı yatırım kararları", () => {
   it("gerçek TL/m² aritmetiği farklı imar/hisse sınıflarını ucuzluk sıralamasına dönüştürmez", () => {
     const c = research.candidates.find((item) => item.id === "genc-300")!;
     expect(researchDecision(c, now)).toMatchObject({
-      unitPrice: "1466.67",
+      unitPrice: null,
       verdict: "Yetersiz veri",
     });
     expect(researchDecision(c, now).alternatives).toContain(
       "doğrudan emsal yapılmaz",
     );
+    expect(researchDecision(c, now).quality?.eligible).toBe(false);
   });
   it("eskimiş/future tarihli veya bütünlük kanıtı olmayan kaynak karar sayısını desteklemez", () => {
     const source = research.sources[0];

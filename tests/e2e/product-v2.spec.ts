@@ -10,6 +10,42 @@ const researchSegments = [
   "MARMARA_SUV",
   "CENTRAL_THREE_ROOM",
 ].map((id) => ({ id }));
+test("V3: bugün kontrol edilen 2024 ilanı güncel fiyat etiketi ve emsal sayısı kazanmaz", async ({
+  page,
+}) => {
+  await publicFixture();
+  await poolWork(async (p) => {
+    await p.query(
+      'UPDATE "Listing" SET "publishedAt"=$1::timestamp,"pageCheckedAt"=now() WHERE id=$2',
+      ["2024-10-18", "v2-land"],
+    );
+    await p.query(
+      "UPDATE \"ResearchRun\" SET snapshot=jsonb_set(snapshot,'{candidates,0,publishedAt}',to_jsonb($1::text))",
+      ["2024-10-18"],
+    );
+  });
+  await page.goto("/kesfet");
+  const card = page
+    .getByRole("article")
+    .filter({ hasText: "SENTETİK V2 v2-land" });
+  await expect(card).toContainText("Eski ilan / arşiv");
+  await expect(card).not.toContainText("Kaynak güncel");
+  await card.getByRole("button", { name: "Analizi aç", exact: true }).click();
+  await expect(page.getByRole("dialog")).toContainText("2024-10-18");
+  await expect(page.getByRole("dialog")).toContainText("Fiyat teyidi: Yok");
+  await expect(page.getByRole("dialog")).toContainText("Satış teyidi: Yok");
+  await page.getByRole("button", { name: "Pencereyi kapat" }).click();
+  await page.getByText("Diğer filtreler", { exact: true }).click();
+  await page.getByLabel("Kaynak güncelliği").selectOption("current");
+  await expect(page.getByRole("article")).toHaveCount(0);
+  const data = await (await page.request.get("/api/product")).json();
+  expect(
+    data.investment.pilots.every(
+      (p: { activeCount: number; comparableSupported: number }) =>
+        p.activeCount === 0 && p.comparableSupported === 0,
+    ),
+  ).toBe(true);
+});
 async function poolWork(work: (pool: pg.Pool) => Promise<void>) {
   const url = process.env.DATABASE_URL;
   if (!url || !new URL(url).pathname.endsWith("_e2e")) throw new Error("Guard");

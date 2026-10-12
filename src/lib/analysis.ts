@@ -13,6 +13,7 @@ export type Evidence = {
   transactionType?: string | null;
   price: string;
   isDemo: boolean;
+  quality?: { eligible: boolean };
   lastObservedAt: Date | string;
   property?: {
     sizeM2?: string | null;
@@ -166,6 +167,8 @@ export function comparablePrice(
   now = new Date(),
 ): D | null {
   if (
+    (!subject.isDemo && subject.quality?.eligible === false) ||
+    (!candidate.isDemo && candidate.quality?.eligible === false) ||
     subject.id === candidate.id ||
     subject.category !== candidate.category ||
     subject.isDemo !== candidate.isDemo ||

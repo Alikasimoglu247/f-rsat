@@ -56,6 +56,7 @@ export type ResearchChange = {
   kind:
     | "NEW_CANDIDATE"
     | "PRICE_CHANGED"
+    | "PRICE_CLAIM_CHANGED"
     | "FACT_CHANGED"
     | "SOURCE_INVALIDATED"
     | "DECISION_REVISED"

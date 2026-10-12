@@ -8,18 +8,18 @@ import {
   selectStrategy,
 } from "@/lib/research/strategy";
 const now = new Date("2026-10-09T21:05:00Z");
-it("hukuki kanıtı eksik Değirmenköy örneklemi Selimpaşa'ya gerekçeli geçer", () => {
+it("teyitsiz Değirmenköy örneklemi merkez konut stratejisini değiştirmez", () => {
   const plan = selectStrategy([], research, now);
-  expect(plan.segmentId).toBe("SELIMPASA_HOME");
-  expect(plan.reason).toContain("imar/tapu");
-  expect(plan.changedFrom).toBe("DEGIRMENKOY_LAND");
+  expect(plan.segmentId).toBe("CENTRAL_HOME");
+  expect(plan.reason).toContain("segment");
+  expect(plan.changedFrom).toBeNull();
 });
 it("sonuçsuz tur hafızasını yeniden yükler; sonraki segmenti seçer, kalite eşiğini düşürmez", () => {
   const empty = { ...research, candidates: [] };
   const plan = selectStrategy([], empty, now);
   const finished = finishStrategy(plan, empty, now, 0);
   const stored = JSON.parse(JSON.stringify({ strategy: finished }));
-  expect(readStrategy(stored)?.memory.DEGIRMENKOY_LAND).toMatchObject({
+  expect(readStrategy(stored)?.memory.CENTRAL_HOME).toMatchObject({
     attempts: 1,
     emptyRounds: 1,
     eligibleCandidates: 0,
@@ -27,8 +27,8 @@ it("sonuçsuz tur hafızasını yeniden yükler; sonraki segmenti seçer, kalite
   expect(
     selectStrategy([{ summary: stored, status: "PARTIAL" }], empty, now)
       .segmentId,
-  ).toBe("SELIMPASA_HOME");
-  expect(finished.memory.DEGIRMENKOY_LAND?.missing.join(" ")).toContain(
+  ).toBe("SILIVRI_LAND");
+  expect(finished.memory.CENTRAL_HOME?.missing.join(" ")).toContain(
     "beş bağımsız",
   );
 });
@@ -55,10 +55,10 @@ it("tüm sonuçsuz segmentler beklemedeyken ağ turu önermez; süre dolunca yen
 it("kaynak hatası altı saat bekler; ilan fiyatı veya fırsat sonucu üretmez", () => {
   const plan = selectStrategy([], research, now);
   const completed = finishStrategy(plan, research, now, 0, true);
-  expect(completed.memory.SELIMPASA_HOME?.missing).toContain(
+  expect(completed.memory.CENTRAL_HOME?.missing).toContain(
     "Kaynak/çalışma hatası",
   );
-  expect(completed.memory.SELIMPASA_HOME?.retryAfter).toBe(
+  expect(completed.memory.CENTRAL_HOME?.retryAfter).toBe(
     "2026-10-10T03:05:00.000Z",
   );
 });

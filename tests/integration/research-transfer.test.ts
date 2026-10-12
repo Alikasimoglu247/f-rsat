@@ -9,6 +9,8 @@ import { importRecords } from "../../src/lib/listings";
 import { investmentReport } from "../../src/lib/investment-report";
 import { ensurePilotProfiles } from "../../src/lib/pilots";
 import { claimResearchTask } from "../../src/lib/research/control";
+import { createHash } from "node:crypto";
+import { stableJson } from "../../src/lib/research/store";
 
 beforeEach(async () => {
   await db.$executeRawUnsafe(
@@ -135,6 +137,37 @@ it("değiştirilmiş paket bütünlüğünü reddeder", async () => {
   bundle.tables.Listing[0].price = "1";
   expect(() => validateBundle(bundle)).toThrow("bütünlük");
   expect(await db.listing.count()).toBe(1);
+});
+it("V2'nin sürüm 1 paketi V3'te yayın tarihini korur ve eski fiyatı teyitli yapmaz", async () => {
+  const b = await publicFixture();
+  b.version = 1;
+  for (const row of b.tables.Listing) {
+    row.provenance = { publishedAt: "2024-10-18" };
+    for (const key of [
+      "publishedAt",
+      "sourceUpdatedAt",
+      "pageCheckedAt",
+      "priceVerifiedAt",
+      "priceVerification",
+      "availabilityStatus",
+      "availabilityVerifiedAt",
+      "verificationEvidence",
+    ])
+      delete row[key];
+  }
+  const { sha256: _, ...payload } = b;
+  void _;
+  b.sha256 = createHash("sha256").update(stableJson(payload)).digest("hex");
+  await db.listing.deleteMany();
+  await importResearchBundle(b, true);
+  const row = await db.listing.findFirstOrThrow({ include: { prices: true } });
+  expect(row.publishedAt?.toISOString()).toBe("2024-10-18T00:00:00.000Z");
+  expect(row.priceVerifiedAt).toBeNull();
+  expect(row.priceVerification).toBe("UNVERIFIED");
+  expect(row.prices[0].observedAt.toISOString()).toBe(
+    b.tables.ListingPriceHistory[0].observedAt,
+  );
+  expect((await importResearchBundle(b, true)).inserted).toBe(0);
 });
 it("kamusal araştırma dışa aktarımı notlardaki kişisel bilgileri ve gömülü sırları temizler", async () => {
   await publicFixture();

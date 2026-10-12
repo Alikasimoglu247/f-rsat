@@ -295,7 +295,7 @@ test("başarısız güncel kontrol eski fiyatı ve uyumsuz dönemleri fırsat ka
     .getByRole("button", { name: "Analizi aç", exact: true })
     .click();
   await expect(page.getByRole("dialog")).toContainText(
-    "Geçmiş veya uzlaştırılmamış fiyat/özellik gözlemi",
+    "Kaldırılmış veya erişilemeyen ilan",
   );
   await page.getByRole("button", { name: "Pencereyi kapat" }).click();
   await expect(candidate).toContainText("Yetersiz veri");

@@ -420,7 +420,7 @@ function Overview({
               </p>
               <div className="v2-domain-metrics">
                 <span>
-                  <b>{p.activeCount}</b> Güncel kaynaklı kayıt
+                  <b>{p.activeCount}</b> Teyitli güncel kayıt
                 </span>
                 <span>
                   <b>{p.comparableSupported}</b> Yeterli emsal
@@ -846,7 +846,7 @@ function Candidates({
                 onChange={(e) => set("fresh", e.target.value)}
               >
                 <option value="">Tümü</option>
-                <option value="current">Güncel kaynak gözlemi</option>
+                <option value="current">İlan ve fiyat teyidi var</option>
                 <option value="old">Eski / uzlaştırılmamış</option>
               </select>
             </label>
@@ -978,7 +978,10 @@ function CandidateCard({
           >
             {d.verdict}
           </Pill>
-          <Pill>{d.priceCurrent ? "Kaynak güncel" : "Eski / arşiv"}</Pill>
+          <Pill>
+            {d.quality?.label ??
+              "Sayfa yeniden görüldü; satış/fiyat teyidi yok"}
+          </Pill>
         </div>
         <button className="v2-card-title" onClick={onOpen}>
           <h2>{d.title}</h2>
@@ -1018,8 +1021,8 @@ function CandidateCard({
           {riskTitle(d)}
         </p>
         <small>
-          Gözlem: {dateTime(d.observedAt)} · {d.assessment?.sampleCount ?? 0}{" "}
-          uygun emsal
+          Sayfa kontrolü: {dateTime(d.pageCheckedAt ?? d.observedAt)} ·{" "}
+          {d.assessment?.sampleCount ?? 0} uygun emsal
         </small>
         <div className="v2-card-bottom">
           <button onClick={onOpen}>
@@ -1093,7 +1096,9 @@ function SourceLibrary({
               </a>
               <Pill>{s.kind === "OFFICIAL" ? "Resmî" : "Yayıncı beyanı"}</Pill>
               <Pill tone={s.fresh ? "green" : "amber"}>
-                {s.fresh ? "Güncel" : "Arşiv / geçersiz"}
+                {s.fresh
+                  ? "Kaynak belgesi yeniden kontrol edildi"
+                  : "Arşiv / geçersiz"}
               </Pill>
             </div>
             <small>Kaynak gözlemi: {dateTime(s.retrievedAt)}</small>
@@ -1161,9 +1166,20 @@ function CandidateDetail({
             </div>
             <p>
               {riskTitle(d)}.{" "}
-              {d.priceCurrent
-                ? "Güncel sayfa gözlemi satış mevcudiyetinin teyidi değildir."
-                : "Geçmiş veya uzlaştırılmamış fiyat/özellik gözlemi; güncel fiyat karşılaştırmasında kullanılmaz."}
+              {d.quality?.label ??
+                "Geçmiş veya teyitsiz fiyat; güncel emsal değildir."}
+            </p>
+            <p>
+              Yayın: {d.publishedAt ?? "Bilinmiyor"} · Kaynak güncellemesi:{" "}
+              {d.sourceUpdatedAt ? dateTime(d.sourceUpdatedAt) : "Bilinmiyor"}
+            </p>
+            <p>
+              Fiyat teyidi:{" "}
+              {d.priceVerifiedAt ? dateTime(d.priceVerifiedAt) : "Yok"} · Satış
+              teyidi:{" "}
+              {d.availabilityVerifiedAt
+                ? dateTime(d.availabilityVerifiedAt)
+                : "Yok"}
             </p>
             <div className="v2-actions">
               <a
@@ -1454,6 +1470,11 @@ function Research({ data }: { data: ProductReport }) {
           <small>Europe/Istanbul · {s.schedule}</small>
         </div>
       </div>
+      <p role="status">
+        {data.dataAcquisition.configured
+          ? "İzinli veri sağlayıcısı ayarları tanımlı; bağlantı ve gerçek veri başarısı çalışma sonuçlarıyla ayrıca doğrulanmalı."
+          : "Yetkili güncel ilan veri akışı bağlı değil. Araştırma şu anda resmî ekonomik/bölgesel yardımcı kaynakları kontrol eder; eski sayfa fiyatlarını güncel emsal yapmaz."}
+      </p>
       <p>
         {cycle.dailyRunCount
           ? `${cycle.dailyRunCount} günlük programla tamamlanan veya kısmi araştırma (son kayıtlar).`

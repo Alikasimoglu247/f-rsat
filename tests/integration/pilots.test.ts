@@ -11,6 +11,7 @@ import { listingSchema } from "../../src/lib/validation";
 import { verifyBodyType } from "../../src/lib/vehicle-review";
 import { runDaily } from "../../src/lib/jobs";
 import { demoListings } from "../../prisma/demo";
+import { confirmTestRows } from "../helpers/quality";
 const home = (id: string, extra: Record<string, unknown> = {}) =>
   listingSchema.parse({
     title: `Sentetik Silivri konut ${id}`,
@@ -241,6 +242,7 @@ it("gerçek emsalli ilk 5 pilot fırsatını sıralar; rapor canlı alım yokken
     "csv",
     "CSV",
   );
+  await confirmTestRows({ category: "EV" });
   await runDaily({ key: "m21-pilot-report", providers: [] });
   const pilots = await pilotSummaries(db),
     p = pilots.find((p) => p.pilotKey === "SILIVRI")!;

@@ -2,7 +2,7 @@ import type { SearchProfile } from "@prisma/client";
 import { Prisma } from "@prisma/client";
 import {
   research,
-  researchCandidateFresh,
+  researchPageSeen,
   verifiedResearchField,
   type ResearchCandidate,
   type ResearchSnapshot,
@@ -16,7 +16,7 @@ export function researchListingInput(
   now = new Date(),
   data: ResearchSnapshot = research,
 ) {
-  if (!researchCandidateFresh(candidate, now, data) || candidate.price == null)
+  if (!researchPageSeen(candidate, now, data) || candidate.price == null)
     return null;
   const verified = (field: Parameters<typeof verifiedResearchField>[1]) =>
     verifiedResearchField(candidate, field, now, data);
